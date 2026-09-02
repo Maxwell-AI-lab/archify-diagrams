@@ -1,0 +1,296 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SONIC 训练流程：从人体动捕到 50Hz 真机策略",
+    "quality_profile": "showcase",
+    "output": "sonic-training-workflow.html",
+    "views": [
+      {
+        "id": "data-path",
+        "label": "数据准备链",
+        "focus": [
+          "seed_csv",
+          "convert",
+          "filter",
+          "motion_lib"
+        ],
+        "note": "Bones-SEED 动捕数据转换、过滤，进入动作库。"
+      },
+      {
+        "id": "train-loop",
+        "label": "PPO 训练主循环",
+        "focus": [
+          "env",
+          "encoder",
+          "actor",
+          "reward"
+        ],
+        "note": "采样→编码→策略→奖励→更新的循环。"
+      },
+      {
+        "id": "deploy-path",
+        "label": "导出与部署",
+        "focus": [
+          "checkpoint",
+          "onnx",
+          "g1"
+        ],
+        "note": "checkpoint 到 ONNX/TensorRT 再到真机 50Hz。"
+      }
+    ],
+    "viewBox": [
+      1240,
+      652
+    ]
+  },
+  "lanes": [
+    {
+      "id": "data",
+      "label": "数据准备"
+    },
+    {
+      "id": "train",
+      "label": "训练循环 (Isaac Lab · 4096 env)"
+    },
+    {
+      "id": "algo",
+      "label": "奖励与更新"
+    },
+    {
+      "id": "deploy",
+      "label": "导出与部署"
+    }
+  ],
+  "phases": [
+    {
+      "id": "prep",
+      "label": "数据准备",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "rl",
+      "label": "训练循环",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ship",
+      "label": "上机",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "seed_csv",
+    "convert",
+    "filter",
+    "motion_lib",
+    "env",
+    "encoder",
+    "actor"
+  ],
+  "nodes": [
+    {
+      "id": "seed_csv",
+      "lane": "data",
+      "col": 0,
+      "type": "external",
+      "label": "Bones-SEED",
+      "sublabel": "142K 动作 · 288h 动捕",
+      "width": 150
+    },
+    {
+      "id": "convert",
+      "lane": "data",
+      "col": 1,
+      "type": "backend",
+      "label": "格式转换",
+      "sublabel": "CSV→motion lib · SMPL 重定向",
+      "width": 150
+    },
+    {
+      "id": "filter",
+      "lane": "data",
+      "col": 2,
+      "type": "backend",
+      "label": "质量过滤",
+      "sublabel": "滤除越限/坏段",
+      "width": 150
+    },
+    {
+      "id": "motion_lib",
+      "lane": "data",
+      "col": 3,
+      "type": "database",
+      "label": "动作库",
+      "sublabel": "G1 重定向轨迹",
+      "width": 150
+    },
+    {
+      "id": "env",
+      "lane": "train",
+      "col": 3,
+      "type": "cloud",
+      "label": "并行环境",
+      "sublabel": "4096 × G1 仿真 · 域随机化",
+      "width": 150
+    },
+    {
+      "id": "encoder",
+      "lane": "train",
+      "col": 4,
+      "type": "backend",
+      "label": "Encoder",
+      "sublabel": "本体感知+目标动作编码",
+      "width": 150
+    },
+    {
+      "id": "actor",
+      "lane": "train",
+      "col": 5,
+      "type": "backend",
+      "label": "Actor + Decoder",
+      "sublabel": "latent → PD 关节力矩",
+      "width": 150
+    },
+    {
+      "id": "reward",
+      "lane": "algo",
+      "col": 5,
+      "type": "security",
+      "label": "奖励 + PPO 更新",
+      "sublabel": "跟踪误差+风格-惩罚 · GAE+clip",
+      "width": 150
+    },
+    {
+      "id": "checkpoint",
+      "lane": "deploy",
+      "col": 3,
+      "type": "database",
+      "label": "Checkpoint",
+      "sublabel": "sonic_release/last.pt",
+      "width": 150
+    },
+    {
+      "id": "onnx",
+      "lane": "deploy",
+      "col": 4,
+      "type": "cloud",
+      "label": "ONNX 导出",
+      "sublabel": "TensorRT · encoder/decoder",
+      "width": 150
+    },
+    {
+      "id": "g1",
+      "lane": "deploy",
+      "col": 5,
+      "type": "external",
+      "label": "Unitree G1",
+      "sublabel": "C++ 50Hz 实时执行",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "seed_csv",
+      "to": "convert",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e2",
+      "from": "convert",
+      "to": "filter",
+      "variant": "default"
+    },
+    {
+      "id": "e4",
+      "from": "filter",
+      "to": "motion_lib",
+      "variant": "default"
+    },
+    {
+      "id": "e5",
+      "from": "motion_lib",
+      "to": "env",
+      "label": "采样目标动作",
+      "variant": "default"
+    },
+    {
+      "id": "e6",
+      "from": "env",
+      "to": "encoder",
+      "label": "观测",
+      "variant": "default"
+    },
+    {
+      "id": "e7",
+      "from": "encoder",
+      "to": "actor",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e9",
+      "from": "actor",
+      "to": "env",
+      "label": "力矩回注仿真",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e10",
+      "from": "env",
+      "to": "reward",
+      "label": "跟踪误差",
+      "variant": "default"
+    },
+    {
+      "id": "e12",
+      "from": "reward",
+      "to": "actor",
+      "label": "PPO 梯度",
+      "variant": "dashed"
+    },
+    {
+      "id": "e13",
+      "from": "reward",
+      "to": "checkpoint",
+      "label": "收敛保存",
+      "variant": "default"
+    },
+    {
+      "id": "e14",
+      "from": "checkpoint",
+      "to": "onnx",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e15",
+      "from": "onnx",
+      "to": "g1",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "数据与训练",
+      "items": [
+        "convert_soma_csv：Bones-SEED 重采样 120→30fps + SMPL 重定向",
+        "PPO：4096 并行环境，GAE+clip，奖励=跟踪误差+风格-惩罚",
+        "域随机化（质量/摩擦/推力）保障 sim-to-real"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "部署",
+      "items": [
+        "checkpoint → ONNX（encoder/decoder）→ TensorRT C++ 上机",
+        "控制器 50Hz，输出 64 维 latent token"
+      ]
+    }
+  ]
+}
