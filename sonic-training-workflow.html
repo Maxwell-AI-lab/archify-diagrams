@@ -5445,20 +5445,33 @@
           <h3>数据与训练</h3>
         </div>
         <ul>
-          <li>&bull; convert_soma_csv：Bones-SEED 重采样 120→30fps + SMPL 重定向</li>
-          <li>&bull; PPO：4096 并行环境，GAE+clip，奖励=跟踪误差+风格-惩罚</li>
+          <li>&bull; Bones-SEED 重采样 120→30fps + SMPL 重定向</li>
+          <li>&bull; PPO：GAE+clip，奖励=跟踪误差+风格-惩罚</li>
           <li>&bull; 域随机化（质量/摩擦/推力）保障 sim-to-real</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <div class="card-dot emerald"></div>
-          <h3>部署</h3>
+          <div class="card-dot rose"></div>
+          <h3>单步控制环（20ms × 500 步）</h3>
         </div>
         <ul>
-          <li>&bull; checkpoint → ONNX（encoder/decoder）→ TensorRT C++ 上机</li>
-          <li>&bull; 控制器 50Hz，输出 64 维 latent token</li>
+          <li>&bull; 观测→Actor→64维latent→Decoder→29目标关节角</li>
+          <li>&bull; PD 控制器转力矩（纯物理），网络不直接输出力矩</li>
+          <li>&bull; 引擎积分出新状态回给 Actor 闭环；真机共用同一 PD</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot emerald"></div>
+          <h3>环境关联与部署</h3>
+        </div>
+        <ul>
+          <li>&bull; Manager-Based：mdp/ 插件 + YAML 组合，env.step() 统一接口</li>
+          <li>&bull; 4096 环境张量化并行，物理后端可换（PhysX/MuJoCo）</li>
+          <li>&bull; ONNX → TensorRT C++ 上机 50Hz</li>
         </ul>
       </div>
     </div>
