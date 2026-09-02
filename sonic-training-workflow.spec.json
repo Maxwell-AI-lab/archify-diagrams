@@ -279,17 +279,27 @@
       "dot": "cyan",
       "title": "数据与训练",
       "items": [
-        "convert_soma_csv：Bones-SEED 重采样 120→30fps + SMPL 重定向",
-        "PPO：4096 并行环境，GAE+clip，奖励=跟踪误差+风格-惩罚",
+        "Bones-SEED 重采样 120→30fps + SMPL 重定向",
+        "PPO：GAE+clip，奖励=跟踪误差+风格-惩罚",
         "域随机化（质量/摩擦/推力）保障 sim-to-real"
       ]
     },
     {
-      "dot": "emerald",
-      "title": "部署",
+      "dot": "rose",
+      "title": "单步控制环（20ms × 500 步）",
       "items": [
-        "checkpoint → ONNX（encoder/decoder）→ TensorRT C++ 上机",
-        "控制器 50Hz，输出 64 维 latent token"
+        "观测→Actor→64维latent→Decoder→29目标关节角",
+        "PD 控制器转力矩（纯物理），网络不直接输出力矩",
+        "引擎积分出新状态回给 Actor 闭环；真机共用同一 PD"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "环境关联与部署",
+      "items": [
+        "Manager-Based：mdp/ 插件 + YAML 组合，env.step() 统一接口",
+        "4096 环境张量化并行，物理后端可换（PhysX/MuJoCo）",
+        "ONNX → TensorRT C++ 上机 50Hz"
       ]
     }
   ]
