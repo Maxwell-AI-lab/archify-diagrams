@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GR00T N1.7 大脑 × SONIC 小脑：双仓协作架构",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      640
+    ],
+    "output": "gr00t-sonic-architecture.html",
+    "views": [
+      {
+        "id": "brain-path",
+        "label": "大脑推理链路",
+        "focus": [
+          "camera",
+          "language",
+          "vlm_backbone",
+          "dit_head",
+          "action_chunk"
+        ],
+        "note": "GR00T N1.7 从多模态输入到动作块输出的路径。"
+      },
+      {
+        "id": "cerebellum-path",
+        "label": "小脑执行链路",
+        "focus": [
+          "motion_lib",
+          "ppo_training",
+          "sonic_policy",
+          "onnx_deploy",
+          "g1_robot"
+        ],
+        "note": "SONIC 从动作库训练到真机部署的路径。"
+      },
+      {
+        "id": "interface",
+        "label": "大小脑对接",
+        "focus": [
+          "action_chunk",
+          "sonic_policy",
+          "g1_robot"
+        ],
+        "note": "大脑输出动作块交给 SONIC 跟踪执行——两个仓库的正式对接点。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "camera",
+      "type": "frontend",
+      "label": "机载相机",
+      "sublabel": "视频流输入",
+      "pos": [
+        50,
+        100
+      ],
+      "size": [
+        120,
+        58
+      ]
+    },
+    {
+      "id": "language",
+      "type": "frontend",
+      "label": "语言指令",
+      "sublabel": "自然语言任务",
+      "pos": [
+        50,
+        220
+      ],
+      "size": [
+        120,
+        58
+      ]
+    },
+    {
+      "id": "proprio",
+      "type": "frontend",
+      "label": "本体感知",
+      "sublabel": "关节状态",
+      "pos": [
+        50,
+        370
+      ],
+      "size": [
+        120,
+        58
+      ]
+    },
+    {
+      "id": "vlm_backbone",
+      "type": "backend",
+      "label": "VLM 骨干",
+      "sublabel": "Cosmos-Reason2-2B",
+      "pos": [
+        250,
+        160
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "gr00t/model"
+    },
+    {
+      "id": "dit_head",
+      "type": "backend",
+      "label": "DiT 动作头",
+      "sublabel": "Flow Matching",
+      "pos": [
+        460,
+        160
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "gr00t/model/modules"
+    },
+    {
+      "id": "action_chunk",
+      "type": "messagebus",
+      "label": "动作块输出",
+      "sublabel": "action chunk · 5-20Hz",
+      "pos": [
+        700,
+        285
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "接口"
+    },
+    {
+      "id": "motion_lib",
+      "type": "database",
+      "label": "Bones-SEED 动作库",
+      "sublabel": "142K 动作 · 288h 动捕",
+      "pos": [
+        250,
+        370
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "训练数据"
+    },
+    {
+      "id": "ppo_training",
+      "type": "backend",
+      "label": "PPO 训练栈",
+      "sublabel": "Isaac Lab · 64+ GPU",
+      "pos": [
+        250,
+        495
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "gear_sonic/"
+    },
+    {
+      "id": "sonic_policy",
+      "type": "backend",
+      "label": "SONIC 策略",
+      "sublabel": "统一动作跟踪 · 50Hz",
+      "pos": [
+        700,
+        435
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "gear_sonic/"
+    },
+    {
+      "id": "onnx_deploy",
+      "type": "cloud",
+      "label": "C++ 部署栈",
+      "sublabel": "ONNX · TensorRT",
+      "pos": [
+        930,
+        435
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "gear_sonic_deploy/"
+    },
+    {
+      "id": "g1_robot",
+      "type": "external",
+      "label": "Unitree G1",
+      "sublabel": "29 DOF 人形机器人",
+      "pos": [
+        930,
+        285
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "大脑 · NVIDIA/Isaac-GR00T（VLA 基础模型）",
+      "wraps": [
+        "vlm_backbone",
+        "dit_head"
+      ],
+      "pad": 18
+    },
+    {
+      "kind": "region",
+      "label": "小脑 · NVlabs/GR00T-WholeBodyControl（运动基础模型）",
+      "wraps": [
+        "motion_lib",
+        "ppo_training",
+        "sonic_policy",
+        "onnx_deploy"
+      ],
+      "pad": 18
+    }
+  ],
+  "connections": [
+    {
+      "from": "camera",
+      "to": "vlm_backbone",
+      "label": "视频",
+      "variant": "emphasis"
+    },
+    {
+      "from": "language",
+      "to": "vlm_backbone",
+      "label": "指令",
+      "labelAt": [
+        185,
+        340
+      ]
+    },
+    {
+      "from": "proprio",
+      "to": "vlm_backbone",
+      "label": "状态",
+      "labelDy": -20
+    },
+    {
+      "from": "vlm_backbone",
+      "to": "dit_head",
+      "label": "隐状态",
+      "variant": "emphasis"
+    },
+    {
+      "from": "dit_head",
+      "to": "action_chunk",
+      "label": "动作块",
+      "variant": "emphasis"
+    },
+    {
+      "from": "motion_lib",
+      "to": "ppo_training",
+      "label": "参考动作",
+      "labelDy": 24
+    },
+    {
+      "from": "ppo_training",
+      "to": "sonic_policy",
+      "label": "训练产出",
+      "variant": "emphasis"
+    },
+    {
+      "from": "sonic_policy",
+      "to": "onnx_deploy",
+      "label": "导出 ONNX",
+      "variant": "emphasis"
+    },
+    {
+      "from": "onnx_deploy",
+      "to": "g1_robot",
+      "label": "关节力矩 50Hz",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelAt": [
+        1030,
+        410
+      ]
+    },
+    {
+      "from": "action_chunk",
+      "to": "sonic_policy",
+      "label": "目标动作序列",
+      "variant": "security",
+      "labelAt": [
+        880,
+        370
+      ]
+    },
+    {
+      "from": "g1_robot",
+      "to": "proprio",
+      "label": "状态反馈",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1180,
+          317
+        ],
+        [
+          1180,
+          600
+        ],
+        [
+          110,
+          600
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "大脑仓 · Isaac-GR00T",
+      "items": [
+        "gr00t/model/gr00t_n1d7：3B VLA，VLM 骨干 + DiT Flow Matching 动作头",
+        "LeRobot 集成：数据格式、微调脚本、实体标签体系",
+        "examples/GR00TWholeBodyControl：与 SONIC 协作的真机评测入口"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "小脑仓 · GR00T-WholeBodyControl",
+      "items": [
+        "gear_sonic：PPO + 142K 人体动捕，统一动作跟踪策略",
+        "gear_sonic_deploy：C++/ONNX/TensorRT 实时推理，50Hz 上机",
+        "另含 Decoupled WBC（N1.5/1.6 旧方案）与 MotionBricks（VQVAE 生成）"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "对接与实测",
+      "items": [
+        "对接协议：大脑输出 action chunk → SONIC 作为目标动作跟踪执行",
+        "真机任务「走到桌边拿起物体」：216 次试验 73.6% 成功率",
+        "失败模式以抓取失误为主（漏抓/不稳抓/推出范围），非运动控制问题"
+      ]
+    }
+  ]
+}
