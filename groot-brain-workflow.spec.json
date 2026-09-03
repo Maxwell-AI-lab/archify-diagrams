@@ -1,0 +1,318 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "GR00T N1.7 大脑模型流程：从多模态输入到动作块输出",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1188,
+      660
+    ],
+    "output": "groot-brain-workflow.html",
+    "views": [
+      {
+        "id": "infer-path",
+        "label": "推理链路",
+        "focus": [
+          "camera_in",
+          "lang_in",
+          "state_in",
+          "backbone",
+          "dit",
+          "action_out"
+        ],
+        "note": "多模态输入经 VLM 骨干和 DiT 动作头输出动作块。"
+      },
+      {
+        "id": "finetune-path",
+        "label": "微调闭环",
+        "focus": [
+          "dataset",
+          "lerobot",
+          "finetune",
+          "checkpoint"
+        ],
+        "note": "LeRobot 数据集微调新实体/新任务。"
+      },
+      {
+        "id": "deploy-path",
+        "label": "部署",
+        "focus": [
+          "checkpoint",
+          "onnx",
+          "trt"
+        ],
+        "note": "ONNX 导出、TensorRT 引擎、边缘设备推理。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "input",
+      "label": "多模态输入"
+    },
+    {
+      "id": "model",
+      "label": "模型前向 (3B VLA)"
+    },
+    {
+      "id": "data",
+      "label": "数据与微调"
+    },
+    {
+      "id": "deploy",
+      "label": "部署"
+    }
+  ],
+  "phases": [
+    {
+      "id": "perc",
+      "label": "感知编码",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "gen",
+      "label": "动作生成",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "ship",
+      "label": "上机",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "camera_in",
+    "backbone",
+    "dit",
+    "action_out"
+  ],
+  "nodes": [
+    {
+      "id": "camera_in",
+      "lane": "input",
+      "col": 0,
+      "type": "frontend",
+      "label": "相机视频",
+      "sublabel": "机载摄像头流",
+      "width": 150
+    },
+    {
+      "id": "lang_in",
+      "lane": "input",
+      "col": 1,
+      "type": "frontend",
+      "label": "语言指令",
+      "sublabel": "自然语言任务",
+      "width": 150
+    },
+    {
+      "id": "state_in",
+      "lane": "input",
+      "col": 2,
+      "type": "frontend",
+      "label": "本体感知",
+      "sublabel": "关节状态",
+      "width": 150
+    },
+    {
+      "id": "backbone",
+      "lane": "model",
+      "col": 1,
+      "type": "backend",
+      "label": "VLM 骨干",
+      "sublabel": "Qwen3-VL / Cosmos-Reason2",
+      "tag": "gr00t/model/",
+      "width": 160
+    },
+    {
+      "id": "dit",
+      "lane": "model",
+      "col": 2,
+      "type": "backend",
+      "label": "DiT 动作头",
+      "sublabel": "Flow Matching 去噪",
+      "tag": "modules/dit.py",
+      "width": 150
+    },
+    {
+      "id": "action_out",
+      "lane": "model",
+      "col": 3,
+      "type": "messagebus",
+      "label": "动作块输出",
+      "sublabel": "action chunk · 5-20Hz",
+      "width": 150
+    },
+    {
+      "id": "emb_mlp",
+      "lane": "model",
+      "col": 0,
+      "type": "backend",
+      "label": "实体嵌入",
+      "sublabel": "embodiment tag 条件",
+      "tag": "modules/",
+      "width": 150
+    },
+    {
+      "id": "dataset",
+      "lane": "data",
+      "col": 0,
+      "type": "database",
+      "label": "LeRobot 数据集",
+      "sublabel": "遥操作演示轨迹",
+      "width": 150
+    },
+    {
+      "id": "lerobot",
+      "lane": "data",
+      "col": 1,
+      "type": "backend",
+      "label": "LeRobot 训练",
+      "sublabel": "groot policy 类型",
+      "width": 150
+    },
+    {
+      "id": "finetune",
+      "lane": "data",
+      "col": 2,
+      "type": "backend",
+      "label": "LoRA/全参微调",
+      "sublabel": "新实体/新任务",
+      "width": 150
+    },
+    {
+      "id": "checkpoint",
+      "lane": "deploy",
+      "col": 3,
+      "type": "database",
+      "label": "Checkpoint",
+      "sublabel": "nvidia/GR00T-N1.7-3B",
+      "width": 150
+    },
+    {
+      "id": "onnx",
+      "lane": "deploy",
+      "col": 4,
+      "type": "cloud",
+      "label": "ONNX 导出",
+      "sublabel": "export_onnx_n1d7.py",
+      "width": 150
+    },
+    {
+      "id": "trt",
+      "lane": "deploy",
+      "col": 5,
+      "type": "cloud",
+      "label": "TensorRT + 边缘设备",
+      "sublabel": "Jetson/dGPU 实时推理",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "b1",
+      "from": "camera_in",
+      "to": "backbone",
+      "label": "视觉",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b2",
+      "from": "lang_in",
+      "to": "backbone",
+      "label": "指令",
+      "variant": "default"
+    },
+    {
+      "id": "b3",
+      "from": "state_in",
+      "to": "dit",
+      "label": "状态",
+      "variant": "default"
+    },
+    {
+      "id": "b4",
+      "from": "emb_mlp",
+      "to": "backbone",
+      "label": "实体条件",
+      "variant": "dashed"
+    },
+    {
+      "id": "b5",
+      "from": "backbone",
+      "to": "dit",
+      "label": "隐状态",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b6",
+      "from": "dit",
+      "to": "action_out",
+      "label": "动作块",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b7",
+      "from": "dataset",
+      "to": "lerobot",
+      "variant": "default"
+    },
+    {
+      "id": "b8",
+      "from": "lerobot",
+      "to": "finetune",
+      "variant": "default"
+    },
+    {
+      "id": "b9",
+      "from": "finetune",
+      "to": "checkpoint",
+      "label": "产出",
+      "variant": "default"
+    },
+    {
+      "id": "b10",
+      "from": "checkpoint",
+      "to": "onnx",
+      "variant": "emphasis"
+    },
+    {
+      "id": "b11",
+      "from": "onnx",
+      "to": "trt",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "推理链路",
+      "items": [
+        "VLM 骨干理解视觉+语言，DiT 头 Flow Matching 去噪出动作",
+        "输出 action chunk（相对关节运动序列）交小脑执行"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "微调",
+      "items": [
+        "LeRobot groot policy 全流程；实体标签区分 zero-shot/微调",
+        "基准配方：LIBERO / SimplerEnv / SO100"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "部署",
+      "items": [
+        "ONNX → TensorRT → Jetson/dGPU 边缘推理",
+        "大脑出动作块，SONIC 小脑跟踪执行"
+      ]
+    }
+  ]
+}
