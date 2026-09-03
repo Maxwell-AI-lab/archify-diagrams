@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>递归自演进</title>
+<meta name="description" content="RSI 递归自演进深度研究：从 Good 的智能爆炸到 Gödel 机到 STaR/Self-Rewarding，核心机制、数学困境、真实实现与护栏设计。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4;
+    --ink: #1A2332;
+    --ink-soft: #4A5568;
+    --loop: #B45309;
+    --loop-soft: #FBEAD5;
+    --guard: #0F766E;
+    --guard-soft: #DCEFEA;
+    --theory: #6B7280;
+    --done: #15803D;
+    --part: #B45309;
+    --line: #D8D8D0;
+    --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --loop: #E8A33D; --loop-soft: #2E2416;
+      --guard: #4FB8AC; --guard-soft: #172B28;
+      --theory: #9AA1AD; --done: #4ADE80; --part: #E8A33D;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --loop: #E8A33D; --loop-soft: #2E2416;
+    --guard: #4FB8AC; --guard-soft: #172B28;
+    --theory: #9AA1AD; --done: #4ADE80; --part: #E8A33D;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .m-theory { color: var(--theory); font-weight: 600; }
+  .m-done { color: var(--done); font-weight: 600; }
+  .m-part { color: var(--part); font-weight: 600; }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .duo > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .duo .l { border-top: 4px solid var(--loop); }
+  .duo .g { border-top: 4px solid var(--guard); border-left: 1px solid var(--line); }
+  .duo h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .duo .l h3 { color: var(--loop); }
+  .duo .g h3 { color: var(--guard); }
+  .duo p { font-size: 0.92rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } .duo .g { border-left: none; border-top: 1px solid var(--line); } }
+
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--guard); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">RSI · 递归自演进深度研究</div>
+  <h1>递归自演进</h1>
+  <p class="lede">一个系统改进自己的手段，而改进后的自己又能更好地改进自己——这就是递归自演进（Recursive Self-Improvement）。这个 1965 年就提出的想法，在六十年里从哲学论证、数学构造走到了今天的真实工程：STaR 在自举推理，Self-Rewarding 在自我打分。这份报告解剖这个概念的定义、三大源流、五个真实实现、一个数学困境，以及最关键的问题——飞轮到底会不会转起来。</p>
+</header>
+
+<!-- ============ 概念 ============ -->
+<h2>精确定义</h2>
+<div class="claim">RSI 的构成要件只有一个闭环：系统 A 的输出成为改进 A 自身的输入。判断一个系统是不是 RSI，看的是<b>改进回路是否穿过被改进的对象本身</b>。</div>
+
+<p>把定义拆成可操作的三级——这个分级决定了后文所有系统怎么归类：</p>
+
+<figure role="img" aria-label="RSI 的三级定义：工具性自改进、闭环自改进、递归自演进">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="rArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- L1: 工具性自改进 -->
+  <rect x="20" y="20" width="210" height="130" rx="8" fill="none" stroke="var(--theory)" stroke-width="1.3"/>
+  <text x="125" y="42" font-family="IBM Plex Mono" font-size="10" fill="var(--theory)" text-anchor="middle" font-weight="700">L1 工具性自改进</text>
+  <rect x="55" y="58" width="60" height="34" rx="5" fill="none" stroke="currentColor"/>
+  <text x="85" y="79" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">模型 A</text>
+  <rect x="140" y="58" width="70" height="34" rx="5" fill="none" stroke="currentColor"/>
+  <text x="175" y="79" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">改进工具</text>
+  <path d="M 175 92 L 100 100" stroke="currentColor" stroke-width="1.2" marker-end="url(#rArr)"/>
+  <text x="125" y="120" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">A 用工具变强</text>
+  <text x="125" y="136" font-family="Noto Sans SC" font-size="9" fill="var(--theory)" text-anchor="middle">工具不因 A 变强而变强 ✗</text>
+
+  <!-- L2: 闭环 -->
+  <rect x="255" y="20" width="210" height="130" rx="8" fill="none" stroke="var(--part)" stroke-width="1.5"/>
+  <text x="360" y="42" font-family="IBM Plex Mono" font-size="10" fill="var(--part)" text-anchor="middle" font-weight="700">L2 闭环自改进</text>
+  <rect x="290" y="58" width="60" height="34" rx="5" fill="none" stroke="currentColor"/>
+  <text x="320" y="79" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">模型 A</text>
+  <rect x="375" y="58" width="70" height="34" rx="5" fill="none" stroke="var(--part)"/>
+  <text x="410" y="79" font-family="Noto Sans SC" font-size="9.5" fill="var(--part)" text-anchor="middle">A 的输出</text>
+  <path d="M 410 92 L 335 100" stroke="var(--part)" stroke-width="1.4" marker-end="url(#rArr)"/>
+  <path d="M 325 55 L 400 55" stroke="var(--part)" stroke-width="1.4" marker-end="url(#rArr)"/>
+  <text x="360" y="120" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">输出回流当训练数据</text>
+  <text x="360" y="136" font-family="Noto Sans SC" font-size="9" fill="var(--part)" text-anchor="middle">但改的是权重, 不改改进方法 △</text>
+
+  <!-- L3: 递归 -->
+  <rect x="490" y="20" width="210" height="130" rx="8" fill="none" stroke="var(--loop)" stroke-width="1.8"/>
+  <text x="595" y="42" font-family="IBM Plex Mono" font-size="10" fill="var(--loop)" text-anchor="middle" font-weight="700">L3 递归自演进 ★</text>
+  <rect x="525" y="58" width="60" height="34" rx="5" fill="none" stroke="currentColor"/>
+  <text x="555" y="79" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">模型 A</text>
+  <rect x="610" y="58" width="70" height="34" rx="5" fill="none" stroke="var(--loop)"/>
+  <text x="645" y="79" font-family="Noto Sans SC" font-size="9.5" fill="var(--loop)" text-anchor="middle">改进过程P</text>
+  <path d="M 645 92 L 570 100" stroke="var(--loop)" stroke-width="1.6" marker-end="url(#rArr)"/>
+  <path d="M 555 55 L 640 55" stroke="var(--loop)" stroke-width="1.6" marker-end="url(#rArr)"/>
+  <path d="M 700 100 C 730 120, 730 40, 690 45" stroke="var(--loop)" stroke-width="1.6" fill="none" marker-end="url(#rArr)" stroke-dasharray="4 3"/>
+  <text x="595" y="120" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">A 改进 A, 且改进方法 P</text>
+  <text x="595" y="136" font-family="Noto Sans SC" font-size="9" fill="var(--loop)" text-anchor="middle">本身也被 A 改进 ✓✓</text>
+
+  <text x="20" y="180" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">举例归位:</text>
+  <g font-family="Noto Sans SC" font-size="9.5">
+    <text x="95" y="180" fill="var(--theory)">模型帮自己写代码→编译器优化</text>
+    <text x="330" y="180" fill="var(--part)">STaR/Self-Rewarding(输出回流)</text>
+    <text x="565" y="180" fill="var(--loop)">Gödel机/AI研究员造AI(方法也升级)</text>
+  </g>
+  <text x="20" y="205" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">注: 大众语境的"RSI"常混指三级; 本报告严格区分——判断式: 回路是否穿过被改进对象+是否含改进方法本身</text>
+  <text x="20" y="225" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.85">今天的 LLM 自改进全部是 L2; L3 至今没有工作实现——这个差距是全篇的主线</text>
+</svg>
+<figcaption><b>三级定义。</b>L1 工具性自改进：模型用工具变强，但工具不随模型变强（模型用 IDE 写更好的代码，IDE 没变聪明）；L2 闭环自改进：输出回流当训练数据，改的是权重，不是改进方法本身（STaR/Self-Rewarding 都在此级）；L3 递归自演进：被改进的不仅是模型，还有改进过程本身（Gödel 机的设计、AI 研究员造 AI 的想象）。今天所有"LLM 自我改进"的新闻都在 L2，L3 是六十年来仍未兑现的核心承诺。</figcaption>
+</figure>
+
+<!-- ============ 三大源流 ============ -->
+<h2>三大源流<span class="chip" style="background:var(--loop-soft);color:var(--loop)">1965-2003</span></h2>
+<div class="claim">RSI 不是一门学科的产物，是三条独立河流的汇合：哲学家的论证、数学家的构造、风险学家的警告——它们至今分别活在 AI 的不同角落里。</div>
+
+<p><b>源流一：Good 的飞轮（1965）。</b>统计学家 I.J. Good 在《关于第一台超智能机器的推测》里给出了完整的原始论证：一旦机器在几乎所有领域超越人类（超智能机器），它能设计更好的机器——包括改进版的自己——由此触发"智能爆炸"，人类智能被远远甩开。他为此留下名言：这将是"人类需要做出的最后一项发明"。注意这个论证的形式：<b>纯逻辑推演，零工程内容</b>——它规定了 RSI 的形状，没有给出任何零件。</p>
+
+<p><b>源流二：Gödel 机（2003）。</b>Schmidhuber 把 Good 的哲学论证第一次翻译成数学构造：一台完全自指的机器，把自身的效用函数、硬件、初始代码全部编码为公理；内置的证明搜索器系统地寻找"可证明有益"的自我重写——一旦找到就执行，包括重写证明搜索器本身。它的形式化优美在于全局最优性定理：任何重写生效前必须先证明"继续搜索其他重写不会更好"，所以没有局部最优陷阱。它至今没有实用实现，原因写在它的美里：<b>必须对"整个代码+所有可能重写"做推理，证明负担天文数字；且只吃"可证明的改进"，不可证明但有用的改进永远不碰</b>。</p>
+
+<p><b>源流三：Yudkowsky 的种子 AI 与对齐担忧（2000s）。</b>Good 的飞轮在安全社区被反向解读：如果爆炸是真的，那第一次点火就是不可逆的单行道。由此发展出"种子 AI"概念（一个能自改进到超智能的初始系统）和整个 AI 对齐研究纲领——RSI 从技术问题变成风险问题，"递归"一词在公众语境里的不安感主要来自这条源流。</p>
+
+<figure role="img" aria-label="三大源流汇合图：哲学论证、数学构造、风险警告">
+<svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="rArr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 三条源流 -->
+  <rect x="20" y="20" width="200" height="120" rx="8" fill="none" stroke="var(--theory)" stroke-width="1.4"/>
+  <text x="120" y="44" font-family="IBM Plex Mono" font-size="10" fill="var(--theory)" text-anchor="middle" font-weight="700">哲学论证</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="120" y="68" text-anchor="middle">I.J. Good 1965</text>
+    <text x="120" y="88" text-anchor="middle">"超智能机器设计更好的机器</text>
+    <text x="120" y="106" text-anchor="middle">→ 智能爆炸"</text>
+    <text x="120" y="128" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="var(--theory)">纯逻辑推演·零工程</text>
+  </g>
+
+  <rect x="260" y="20" width="200" height="120" rx="8" fill="none" stroke="var(--loop)" stroke-width="1.4"/>
+  <text x="360" y="44" font-family="IBM Plex Mono" font-size="10" fill="var(--loop)" text-anchor="middle" font-weight="700">数学构造</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="360" y="68" text-anchor="middle">Schmidhuber 2003</text>
+    <text x="360" y="88" text-anchor="middle">Gödel 机: 证明搜索器</text>
+    <text x="360" y="106" text-anchor="middle">可证明有益才自我重写</text>
+    <text x="360" y="128" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="var(--loop)">全局最优·从未实用</text>
+  </g>
+
+  <rect x="500" y="20" width="200" height="120" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.4"/>
+  <text x="600" y="44" font-family="IBM Plex Mono" font-size="10" fill="var(--guard)" text-anchor="middle" font-weight="700">风险警告</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="600" y="68" text-anchor="middle">Yudkowsky 2000s</text>
+    <text x="600" y="88" text-anchor="middle">种子 AI·对齐问题</text>
+    <text x="600" y="106" text-anchor="middle">"第一次点火不可逆"</text>
+    <text x="600" y="128" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">安全研究纲领的起点</text>
+  </g>
+
+  <!-- 汇合 -->
+  <path d="M 120 140 C 180 180, 280 180, 340 175" stroke="currentColor" stroke-width="1.3" fill="none" marker-end="url(#rArr2)"/>
+  <path d="M 360 140 L 360 170" stroke="currentColor" stroke-width="1.3" fill="none" marker-end="url(#rArr2)"/>
+  <path d="M 600 140 C 540 180, 440 180, 380 175" stroke="currentColor" stroke-width="1.3" fill="none" marker-end="url(#rArr2)"/>
+
+  <rect x="240" y="180" width="240" height="36" rx="7" fill="none" stroke="var(--loop)" stroke-width="1.8"/>
+  <text x="360" y="203" font-family="Noto Sans SC" font-size="11" fill="var(--loop)" text-anchor="middle" font-weight="700">现代 AI 的三个角落</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="30" y="203">↘ 今天活在: Scaling 叙事</text>
+    <text x="500" y="203">活在: 对齐/安全研究 ↙</text>
+  </g>
+</svg>
+<figcaption><b>三流汇合。</b>Good 的哲学论证规定了 RSI 的形状（今天活在 Scaling 法则的叙事里）；Gödel 机给出唯一的严格数学构造（活在"可证明安全"的研究角落）；Yudkowsky 的风险解读塑造了公众印象与整个对齐领域。三源流没有合并成一门学科——RSI 至今是三个共同体各自谈论的不同事物。</figcaption>
+</figure>
+
+<!-- ============ 当代实现 ============ -->
+<h2>当代实现：飞轮真的在转的五个系统<span class="chip" style="background:var(--loop-soft);color:var(--loop)">2022-2024</span></h2>
+<div class="claim">LLM 时代让 RSI 从思辨变成了每周都能看到的工程——但要看清：转起来的都是 L2 闭环，没有一个碰到改进方法本身。</div>
+
+<p><b>STaR（2022）：自举推理。</b>模型自己给无标注问题生成推理链，只保留答案正确的链做微调数据，答错的给正确答案让它"合理化"重推再回收——三轮迭代后，CommonsenseQA 上匹敌 30 倍大的模型。这是最干净的 L2 样本：推理输出→训练数据→更强的推理。</p>
+
+<p><b>Self-Rewarding（2024）：自己当裁判。</b>Meta 的工作把奖励模型也搬进回路——LLM 用 LLM-as-Judge 提示给自己生成的回答打分，打分结果通过迭代 DPO 回流训练。妙处在于双螺旋：训练不仅提升了指令遵循，<b>也提升了打分能力本身</b>——Llama-2-70B 三轮迭代后在 AlpacaEval 2.0 上超过 Claude 2 和 GPT-4-0613。这是最接近 L3 的现有系统（裁判也是自己），但注意裁判的提示词还是人写的——改进方法没有完全进入回路。</p>
+
+<table>
+  <tr><th>系统</th><th>年份</th><th>自改什么</th><th>谁提供验证信号</th><th>级别</th></tr>
+  <tr><td class="m-theory">Gödel 机</td><td class="num-cell">2003</td><td>任意代码+证明搜索器</td><td>形式化证明</td><td class="m-theory">L3（理论）</td></tr>
+  <tr><td class="m-part">STaR</td><td class="num-cell">2022</td><td>推理能力（权重）</td><td>标准答案比对</td><td class="m-part">L2</td></tr>
+  <tr><td class="m-part">RLHF / RLAIF</td><td class="num-cell">2022-</td><td>对齐（权重）</td><td>人类 / 冻结的 RM</td><td class="m-part">L1.5（RM 不随之进步）</td></tr>
+  <tr><td class="m-part">Self-Rewarding</td><td class="num-cell">2024</td><td>指令+打分能力</td><td><b>自己当裁判</b> ★</td><td class="m-part">L2+（裁判提示词仍是人写）</td></tr>
+  <tr><td class="m-done">RL 后训练（你的 CyberGym）</td><td class="num-cell">2025-</td><td>策略（权重）</td><td>环境执行结果</td><td class="m-part">L2</td></tr>
+  <tr><td class="m-part">AI 研究员（Sakana/AI Scientist 等）</td><td class="num-cell">2024-</td><td>产出论文/代码</td><td>LLM 评审</td><td class="m-part">L2（声称 L3，实为工具链）</td></tr>
+</table>
+
+<figure role="img" aria-label="现代 L2 闭环的解剖：四个环节，人卡在哪一环">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="rArr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--loop)"/>
+    </marker>
+    <marker id="gArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--guard)"/>
+    </marker>
+  </defs>
+
+  <!-- 循环四环节 -->
+  <g font-family="Noto Sans SC" font-size="10" fill="currentColor">
+    <rect x="60" y="30" width="140" height="52" rx="7" fill="none" stroke="var(--loop)" stroke-width="1.5"/>
+    <text x="130" y="52" text-anchor="middle" font-weight="700">① 生成</text>
+    <text x="130" y="70" text-anchor="middle" font-size="9">推理链/回答/轨迹</text>
+
+    <rect x="290" y="30" width="140" height="52" rx="7" fill="none" stroke="var(--loop)" stroke-width="1.5"/>
+    <text x="360" y="52" text-anchor="middle" font-weight="700">② 验证打分</text>
+    <text x="360" y="70" text-anchor="middle" font-size="9">标准答案/裁判/环境</text>
+
+    <rect x="290" y="170" width="140" height="52" rx="7" fill="none" stroke="var(--loop)" stroke-width="1.5"/>
+    <text x="360" y="192" text-anchor="middle" font-weight="700">③ 筛选回流</text>
+    <text x="360" y="210" text-anchor="middle" font-size="9">过滤→训练数据</text>
+
+    <rect x="60" y="170" width="140" height="52" rx="7" fill="none" stroke="var(--loop)" stroke-width="1.5"/>
+    <text x="130" y="192" text-anchor="middle" font-weight="700">④ 训练更新</text>
+    <text x="130" y="210" text-anchor="middle" font-size="9">SFT/DPO/RL</text>
+  </g>
+  <path d="M 200 56 L 286 56" stroke="var(--loop)" stroke-width="1.8" marker-end="url(#rArr3)"/>
+  <path d="M 360 82 L 360 166" stroke="var(--loop)" stroke-width="1.8" marker-end="url(#rArr3)"/>
+  <path d="M 286 196 L 200 196" stroke="var(--loop)" stroke-width="1.8" marker-end="url(#rArr3)"/>
+  <path d="M 130 166 L 130 86" stroke="var(--loop)" stroke-width="1.8" marker-end="url(#rArr3)"/>
+
+  <!-- 人在哪里 -->
+  <g font-family="Noto Sans SC" font-size="9" fill="var(--guard)">
+    <rect x="248" y="98" width="112" height="26" rx="13" fill="none" stroke="var(--guard)" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <text x="304" y="115" text-anchor="middle">🧑 人: 设计验证器 ★</text>
+  </g>
+  <path d="M 304 98 L 304 82" stroke="var(--guard)" stroke-width="1.2" marker-end="url(#gArr)" stroke-dasharray="3 3"/>
+  <text x="130" y="120" font-family="Noto Sans SC" font-size="9" fill="var(--guard)" text-anchor="middle">🧑 人: 架构+超参</text>
+  <text x="130" y="136" font-family="IBM Plex Mono" font-size="8" fill="var(--guard)" text-anchor="middle">(固定, 不在回路内)</text>
+
+  <!-- 关键标注 -->
+  <rect x="470" y="30" width="230" height="192" rx="8" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="585" y="52" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">回路里 vs 回路外</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="486" y="76">在回路内(自动):</text>
+    <text x="500" y="94" fill="var(--loop)">· 生成→验证→回流→更新 全自动</text>
+    <text x="500" y="112" fill="var(--loop)">· 每转一圈, 权重变好一点</text>
+    <text x="486" y="140">在回路外(人手):</text>
+    <text x="500" y="158" fill="var(--guard)">· 验证器本身(答案标准/裁判提示)</text>
+    <text x="500" y="176" fill="var(--guard)">· 网络架构/训练算法</text>
+    <text x="500" y="194" fill="var(--guard)">· 数据分布/课程设计</text>
+    <text x="500" y="212" fill="var(--guard)">→ 这些不进步, 飞轮就有天花板</text>
+  </g>
+
+  <text x="60" y="252" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">对应你的实践: CyberGym 的 RL 闭环里, "验证器"=vul/fix 双容器(人设计, 不自动进化); coevolve 构想 = 让数据分布也进回路 ← 下一步的方向</text>
+  <text x="60" y="274" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">Self-Rewarding 的突破: 把②的裁判从"人写规则"换成"自己" — 但提示词仍在回路外, 所以是 L2+ 而非 L3</text>
+</svg>
+<figcaption><b>现代闭环的解剖。</b>四环节（生成→验证→回流→更新）可以全自动旋转——这是 L2。但三样东西始终在回路外：验证器本身、网络架构、数据分布。飞轮的天花板由回路外的部分决定——Self-Rewarding 把②的裁判换成自己（最接近 L3 的一步），你讨论过的 coevolve 构想把数据分布拉进回路，而架构的自动搜索（AutoML 一脉）至今没有与 LLM 自改进合流。L3 = 三个"回路外"全部入环。</figcaption>
+</figure>
+
+<!-- ============ 数学困境 ============ -->
+<h2>核心困境：飞轮为什么转不成爆炸<span class="chip" style="background:var(--loop-soft);color:var(--loop)">收敛分析</span></h2>
+<div class="claim">Good 的论证在逻辑上无懈可击，在动力学上是错的——它假设每一圈的增益不衰减。现实中每个回路都有摩擦：验证器噪声、数据分布塌缩、算力墙。真实曲线是 S 形，不是指数。</div>
+
+<figure role="img" aria-label="指数爆炸假设与 S 曲线现实的对比，以及三种摩擦源">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="50" y1="230" x2="680" y2="230" stroke="currentColor" stroke-width="1.3"/>
+  <line x1="50" y1="230" x2="50" y2="30" stroke="currentColor" stroke-width="1.3"/>
+  <text x="30" y="140" font-family="IBM Plex Mono" font-size="9" fill="currentColor" transform="rotate(-90 30 140)" text-anchor="middle">能力</text>
+  <text x="365" y="258" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">迭代轮数</text>
+
+  <!-- Good 的指数 -->
+  <path d="M 50 226 C 200 220, 320 180, 400 120 C 440 90, 470 50, 490 20" stroke="var(--loop)" stroke-width="2.2" fill="none" stroke-dasharray="7 4"/>
+  <text x="510" y="40" font-family="Noto Sans SC" font-size="9.5" fill="var(--loop)">Good 1965 的假设:</text>
+  <text x="510" y="56" font-family="Noto Sans SC" font-size="9.5" fill="var(--loop)">增益不衰减 → 指数爆炸</text>
+
+  <!-- 现实 S 曲线 -->
+  <path d="M 50 228 C 180 224, 280 190, 360 150 C 440 110, 540 78, 670 66" stroke="var(--guard)" stroke-width="2.4" fill="none"/>
+  <text x="540" y="110" font-family="Noto Sans SC" font-size="9.5" fill="var(--guard)">现实的 S 曲线:</text>
+  <text x="540" y="126" font-family="Noto Sans SC" font-size="9.5" fill="var(--guard)">增益逐轮递减 → 收敛平台</text>
+
+  <!-- 摩擦标注 -->
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <circle cx="180" cy="222" r="4" fill="none" stroke="var(--theory)" stroke-width="1.4"/>
+    <text x="120" y="200" fill="var(--theory)">摩擦① 验证器噪声:</text>
+    <text x="120" y="214" fill="var(--theory)">错误奖励被放大 → 模型漂移</text>
+
+    <circle cx="380" cy="140" r="4" fill="none" stroke="var(--theory)" stroke-width="1.4"/>
+    <text x="300" y="60" fill="var(--theory)">摩擦② 分布塌缩:</text>
+    <text x="300" y="74" fill="var(--theory)">只吃自己产的数据 →</text>
+    <text x="300" y="88" fill="var(--theory)">多样性递减(model collapse)</text>
+
+    <circle cx="560" cy="72" r="4" fill="none" stroke="var(--theory)" stroke-width="1.4"/>
+    <text x="560" y="180" fill="var(--theory)">摩擦③ 算力墙:</text>
+    <text x="560" y="194" fill="var(--theory)">每圈重训成本固定,</text>
+    <text x="560" y="208" fill="var(--theory)">增益却在缩小</text>
+  </g>
+  <text x="60" y="272" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">判断式: 看每轮增益比 r = Δcapability(n+1)/Δcapability(n) — r>1 持续才有爆炸; 现有系统全部 r<1 且递减</text>
+</svg>
+<figcaption><b>爆炸与收敛。</b>Good 的论证假设增益不衰减（橙色虚线的指数）；现实的每圈增益都被三种摩擦消耗——验证器噪声（错误信号被回路放大）、分布塌缩（自产数据的多样性递减，即 model collapse 现象）、算力墙（成本固定而增益缩小）。现有 L2 系统的每轮增益比全部小于 1 且逐轮递减——飞轮在转，但在减速。真正的分界问题不是"会不会爆炸"而是"什么条件下 r 能持续 >1"。</figcaption>
+</figure>
+
+<div class="duo">
+  <div class="l">
+    <h3>乐观者的证据</h3>
+    <p>· Self-Rewarding 三轮迭代内指令+裁判双提升（r 短暂 >1）</p>
+    <p>· STaR 用极少种子撬动大幅推理提升——回路有真实杠杆</p>
+    <p>· 你的 coevolve 构想（数据分布入环）正是把摩擦②变成推力的设计</p>
+  </div>
+  <div class="g">
+    <h3>悲观者的证据</h3>
+    <p>· model collapse 实证：自产数据训练几代后尾部多样性消失</p>
+    <p>· AI Scientist 类系统的"自我改进"经审计多为工具链拼接</p>
+    <p>· 三十年 AutoML 未与 LLM 自改进合流——架构进化这一环始终缺位</p>
+  </div>
+</div>
+
+<!-- ============ 护栏 ============ -->
+<h2>护栏：如果飞轮真要转快<span class="chip" style="background:var(--guard-soft);color:var(--guard)">工程视角</span></h2>
+<div class="claim">对从业者的意义不是预测爆炸，而是知道哪些环节<b>必须留人类</b>——不是出于哲学，是工程上的单点故障分析。</div>
+
+<p>把回路当系统做故障分析：②（验证）是唯一能阻止错误被回路放大的环节，③（筛选）是多样性守卫。所以护栏设计集中在两处——<b>验证器的独立性与数据多样性的保底注入</b>。你在 CyberGym 的实践已经是范式：执行验证（环境说了算，不信模型自述——E2E 论文的"对抗行为"分析证明 Agent 自述不可信）、探针任务保底（arvo:3933 保证 group 有方差）、外部数据回混（DeepSWE 剔除污染仓库）。这些都不是为对齐而设计的安全哲学，是让飞轮不把自己转散架的工程必需。</p>
+
+<figure role="img" aria-label="护栏的三个位置：验证器独立性、多样性保底、变化率熔断">
+<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <!-- 护栏1 -->
+    <rect x="20" y="20" width="220" height="120" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.6"/>
+    <text x="130" y="44" font-size="10.5" fill="var(--guard)" text-anchor="middle" font-weight="700">护栏① 验证器独立性</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="130" y="68">验证信号不能来自被验证的</text>
+      <text x="130" y="86">模型自己（或需交叉验证）</text>
+      <text x="130" y="112" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">CyberGym: 环境执行说了算</text>
+      <text x="130" y="128" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">不信 Agent 自述 ✓</text>
+    </g>
+    <!-- 护栏2 -->
+    <rect x="260" y="20" width="220" height="120" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.6"/>
+    <text x="370" y="44" font-size="10.5" fill="var(--guard)" text-anchor="middle" font-weight="700">护栏② 多样性保底</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="370" y="68">每轮强制混入外部数据/</text>
+      <text x="370" y="86">留出验证集监控塌缩</text>
+      <text x="370" y="112" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">DeepSWE: 剔评测重叠仓库</text>
+      <text x="370" y="128" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">探针任务保底 ✓</text>
+    </g>
+    <!-- 护栏3 -->
+    <rect x="500" y="20" width="200" height="120" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.6"/>
+    <text x="600" y="44" font-size="10.5" fill="var(--guard)" text-anchor="middle" font-weight="700">护栏③ 变化率熔断</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="600" y="68">监控每轮增益比 r 与</text>
+      <text x="600" y="86">能力突变量；异常即停</text>
+      <text x="600" y="112" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">r 突然>1 且加速 = 告警</text>
+      <text x="600" y="128" font-family="IBM Plex Mono" font-size="8.5" fill="var(--guard)">而非庆功 ★</text>
+    </g>
+  </g>
+  <text x="20" y="168" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">护栏的工程本质: 回路里唯一能阻止错误被放大的两个位置(②验证/③筛选) + 一个外部观察哨(变化率)</text>
+  <text x="20" y="188" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.85">这不是安全哲学, 是让飞轮不把自己转散架的必需——护栏①②同时也是训练质量的保障</text>
+</svg>
+<figcaption><b>三道护栏。</b>① 验证器独立性：验证信号不能来自被验证的模型本身（CyberGym 的执行验证是这个原则的最严格形态）；② 多样性保底：外部数据强制回混+污染剔除+探针任务（对抗 model collapse）；③ 变化率熔断：监控每轮增益比——r 突然持续大于 1 在工程上是告警信号而非庆功理由，因为最常见的"异常加速"来源是验证器被攻破（reward hacking）而非真实进步。</figcaption>
+</figure>
+
+<!-- ============ 判断 ============ -->
+<h2>结语：给从业者的定位</h2>
+<p>RSI 六十年的历史可以压缩成一句话：<b>哲学上无懈可击，数学上仅有一个不可实现的构造，工程上实现了三分之一</b>。L2 闭环（输出回流）已是日常工具，你的 RL 后训练、STaR、Self-Rewarding 都在其中；L3（改进方法本身入环）六十年无人做到——Self-Rewarding 挪进半步（裁判自己当），coevolve 构想想挪动数据分布这一步，而架构自动进化至今缺位。</p>
+<p>对你最实用的一条判断：当下所有声称"AI 自我改进"的系统，先问两个问题——<b>验证信号从哪来？回路外还有什么？</b>前者判断它会不会把自己练歪（验证器独立性），后者判断它的天花板在哪（回路外的环节不进步，飞轮必然收敛）。这两个问题把 RSI 从科幻叙事还原成了可审计的工程设计——而可审计，恰恰是它从 L2 走向 L3 的真正门槛。</p>
+
+<footer>
+  史料来源：Good (1965) "Speculations Concerning the First Ultraintelligent Machine"；Schmidhuber Gödel Machine (IDSIA 官方页)；STaR (arXiv:2203.14465)；Self-Rewarding Language Models (arXiv:2401.10020, Meta, ICML 2024)；model collapse 相关实证研究。系列前作：<a href="brain-cerebellum-report.html">大脑与小脑</a> · <a href="embodied-evolution-report.html">四次范式跃迁</a>。
+</footer>
+
+</div>
+</body>
+</html>
