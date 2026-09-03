@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四次范式跃迁</title>
+<meta name="description" content="具身智能技术演进深度对比：从行为克隆到 VLA 到连续生成到世界模型的四次范式跃迁，代表系统、数据规模与分水岭。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4;
+    --ink: #1A2332;
+    --ink-soft: #4A5568;
+    --era1: #8B7355;
+    --era1-soft: #EFE8E0;
+    --era2: #C2410C;
+    --era2-soft: #FDEBDD;
+    --era3: #0F766E;
+    --era3-soft: #DCEFEA;
+    --era4: #6D28D9;
+    --era4-soft: #EDE6FB;
+    --line: #D8D8D0;
+    --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --era1: #C4A882; --era1-soft: #2A241C;
+      --era2: #F08C5A; --era2-soft: #2E211A;
+      --era3: #4FB8AC; --era3-soft: #172B28;
+      --era4: #A78BFA; --era4-soft: #241E38;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --era1: #C4A882; --era1-soft: #2A241C;
+    --era2: #F08C5A; --era2-soft: #2E211A;
+    --era3: #4FB8AC; --era3-soft: #172B28;
+    --era4: #A78BFA; --era4-soft: #241E38;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .era-chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .duo > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .duo .b { border-top: 4px solid var(--era2); }
+  .duo .c { border-top: 4px solid var(--era3); border-left: 1px solid var(--line); }
+  .duo h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .duo .b h3 { color: var(--era2); }
+  .duo .c h3 { color: var(--era3); }
+  .duo p { font-size: 0.92rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } .duo .c { border-left: none; border-top: 1px solid var(--line); } }
+
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.era-cell-1 { color: var(--era1); font-weight: 600; }
+  td.era-cell-2 { color: var(--era2); font-weight: 600; }
+  td.era-cell-3 { color: var(--era3); font-weight: 600; }
+  td.era-cell-4 { color: var(--era4); font-weight: 600; }
+
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--era3); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">具身智能 · 技术演进深度对比</div>
+  <h1>四次范式跃迁</h1>
+  <p class="lede">从模仿学习到今天的人形机器人，具身智能在二十多年里换了四次引擎：行为克隆、VLA 离散生成、连续动作生成、世界模型。这份报告沿时间轴对比每一代的代表系统、数据规模与范式内核，并回答一个问题——每次跃迁，到底是什么被换掉了。</p>
+</header>
+
+<!-- ============ 时间轴总览 ============ -->
+<h2>演进全景</h2>
+<div class="claim">四次跃迁不是平滑改良，是四次"引擎更换"——每次换掉的都是同一个东西：任务知识与控制能力的<b>载体</b>。</div>
+
+<figure role="img" aria-label="2003到2026年具身智能四代范式时间轴，四色色带标注代表系统">
+<svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="eArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 年份轴 -->
+  <line x1="40" y1="240" x2="730" y2="240" stroke="currentColor" stroke-width="1.5" marker-end="url(#eArr)"/>
+  <g font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">
+    <text x="60" y="262">2003</text><text x="180" y="262">2016</text><text x="300" y="262">2021</text>
+    <text x="420" y="262">2022</text><text x="540" y="262">2023</text><text x="660" y="262">2024-26</text>
+  </g>
+  <g stroke="currentColor" stroke-width="1.2">
+    <line x1="60" y1="235" x2="60" y2="245"/><line x1="180" y1="235" x2="180" y2="245"/>
+    <line x1="300" y1="235" x2="300" y2="245"/><line x1="420" y1="235" x2="420" y2="245"/>
+    <line x1="540" y1="235" x2="540" y2="245"/><line x1="660" y1="235" x2="660" y2="245"/>
+  </g>
+
+  <!-- 色带1: 行为克隆时代 -->
+  <rect x="40" y="60" width="220" height="34" rx="6" fill="var(--era1)" opacity="0.85"/>
+  <text x="150" y="81" font-family="Noto Sans SC" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="700">① 行为克隆时代</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="60" y="112">DAgger'11</text>
+    <text x="130" y="112">guided policy</text>
+    <text x="60" y="128">learning'16</text>
+    <text x="190" y="128">diffusion policy'23</text>
+  </g>
+
+  <!-- 色带2: VLA离散时代 -->
+  <rect x="270" y="60" width="160" height="34" rx="6" fill="var(--era2)" opacity="0.88"/>
+  <text x="350" y="81" font-family="Noto Sans SC" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="700">② VLA 离散生成</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="290" y="112">RT-1'22</text>
+    <text x="360" y="112">RT-2'23</text>
+    <text x="410" y="128">Octo'24</text>
+  </g>
+
+  <!-- 色带3: 连续生成时代 -->
+  <rect x="440" y="60" width="150" height="34" rx="6" fill="var(--era3)" opacity="0.9"/>
+  <text x="515" y="81" font-family="Noto Sans SC" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="700">③ 连续生成</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="460" y="112">OpenVLA'24</text>
+    <text x="540" y="112">π0'24</text>
+    <text x="600" y="112">GR00T N1'25</text>
+    <text x="520" y="128">LeRobot 生态</text>
+  </g>
+
+  <!-- 色带4: 世界模型 -->
+  <rect x="600" y="60" width="130" height="34" rx="6" fill="var(--era4)" opacity="0.85"/>
+  <text x="665" y="81" font-family="Noto Sans SC" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="700">④ 世界模型</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="620" y="112">Dreamer系</text>
+    <text x="680" y="128">Genie/NVIDIA</text>
+    <text x="680" y="144">Cosmos'25</text>
+  </g>
+
+  <!-- 载体变迁注 -->
+  <text x="150" y="176" font-family="Noto Sans SC" font-size="9.5" fill="var(--era1)" text-anchor="middle">知识载体：人工设计的特征</text>
+  <text x="350" y="176" font-family="Noto Sans SC" font-size="9.5" fill="var(--era2)" text-anchor="middle">知识载体：语言模型的权重</text>
+  <text x="515" y="176" font-family="Noto Sans SC" font-size="9.5" fill="var(--era3)" text-anchor="middle">知识载体：VLM + 扩散头</text>
+  <text x="665" y="176" font-family="Noto Sans SC" font-size="9.5" fill="var(--era4)" text-anchor="middle">知识载体：想象的动力学</text>
+
+  <!-- 数据规模刻度 -->
+  <text x="40" y="206" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">数据规模:</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="130" y="206">~1万演示</text>
+    <text x="290" y="206">13万 episodes</text>
+    <text x="450" y="206">100万+episodes</text>
+    <text x="620" y="206">互联网视频+仿真</text>
+  </g>
+  <line x1="118" y1="202" x2="590" y2="202" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+
+  <text x="40" y="286" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">四色贯穿本报告: 棕=行为克隆 橙=VLA离散 青=连续生成 紫=世界模型</text>
+</svg>
+<figcaption><b>二十年四次换引擎。</b>① 行为克隆时代（2003-2021）：知识装在人工设计的特征里，数据以万计；② VLA 离散生成（2022-2023）：RT 系把知识搬进语言模型权重，动作离散成 token；③ 连续生成（2023-2025）：π0/GR00T 用 VLM+扩散头出连续动作，数据破百万 episodes；④ 世界模型（进行中）：知识装进"想象的物理"，用互联网视频和仿真喂养。数据规模每个时代涨一个数量级——这正是每次跃迁的燃料。</figcaption>
+</figure>
+
+<!-- ============ 时代1 ============ -->
+<h2>① 行为克隆时代<span class="era-chip" style="background:var(--era1-soft);color:var(--era1)">2003-2021 · 手工范式</span></h2>
+<div class="claim">范式内核："看人怎么做，就照抄怎么做"——把控制当监督学习。二十年里最大的进步不是模型，是<b>怎么让抄不歪</b>。</div>
+
+<p>2003 年的 DAGger 论文奠定了这个时代的基调：行为克隆（BC）在训练分布上抄得很好，一旦自己走进没见过的状态就崩（分布漂移，distribution shift——你在「大脑与小脑」报告里见过的 off-policy 问题的表亲）。此后近二十年的主线全是围绕"怎么抄不歪"：DAgger 让人给偏航状态补标注，2016 年引导策略学习把 CV 卷积网络接上机器人，直到 2023 年 Diffusion Policy 才把这一代推到顶——用扩散模型出动作，第一次优雅解决了"同一状态多种正确动作"（多峰分布）的建模问题。</p>
+
+<figure role="img" aria-label="行为克隆的分布漂移问题与 DAgger 修正">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="e1a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--era1)"/>
+    </marker>
+    <marker id="e1b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 演示轨迹 -->
+  <path d="M 40 180 C 150 175, 280 90, 420 80" stroke="var(--era1)" stroke-width="2.5" fill="none" stroke-dasharray="7 4"/>
+  <g fill="var(--era1)">
+    <circle cx="40" cy="180" r="4"/><circle cx="230" cy="120" r="4"/><circle cx="420" cy="80" r="4"/>
+  </g>
+  <text x="42" y="205" font-family="IBM Plex Mono" font-size="9.5" fill="var(--era1)">人的演示轨迹</text>
+
+  <!-- BC 机器人轨迹: 小误差累积到偏离 -->
+  <path d="M 40 180 C 160 172, 300 108, 430 150" stroke="currentColor" stroke-width="2" fill="none"/>
+  <g fill="currentColor"><circle cx="150" cy="170" r="3"/><circle cx="290" cy="112" r="3"/></g>
+  <circle cx="430" cy="150" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="445" y="152" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">误差累积</text>
+  <text x="445" y="166" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">进入没见过的状态</text>
+
+  <!-- 偏离区域 -->
+  <rect x="330" y="60" width="120" height="130" rx="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+  <text x="390" y="50" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.7" text-anchor="middle">分布外 (OOD)</text>
+
+  <!-- DAgger 修正 -->
+  <path d="M 400 60 L 360 20" stroke="currentColor" stroke-width="1.2" marker-end="url(#e1b)" stroke-dasharray="3 3"/>
+  <text x="520" y="26" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">DAgger: 偏航状态</text>
+  <text x="520" y="42" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">请人补标注 → 收回训练</text>
+
+  <text x="40" y="228" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">核心矛盾: 抄得越久, 积累误差越大 — 这正是后来 RL 和分层架构要接管的原因</text>
+</svg>
+<figcaption><b>抄不歪难题。</b>行为克隆的机器人沿演示轨迹走，小误差逐步累积，最终进入训练数据没覆盖的状态区（OOD 框）后崩溃。DAgger 的修法是把偏航状态送回给人标注、收进训练集。这个"分布漂移"问题是整个时代的中心矛盾——也是后来范式更替的根因。</figcaption>
+</figure>
+
+<table>
+  <tr><th>代表系统</th><th>年份</th><th>规模</th><th>历史贡献</th></tr>
+  <tr><td class="era-cell-1">DAgger</td><td class="num-cell">2011</td><td class="num-cell">算法</td><td>指出并命名了分布漂移问题</td></tr>
+  <tr><td class="era-cell-1">Guided Policy Learning</td><td class="num-cell">2016</td><td class="num-cell">~1万演示</td><td>CNN 首次端到端接上真机</td></tr>
+  <tr><td class="era-cell-1">Diffusion Policy</td><td class="num-cell">2023</td><td class="num-cell">~1千演示</td><td>多峰动作建模的解法（后续被 VLA 继承）</td></tr>
+</table>
+
+<!-- ============ 时代2 ============ -->
+<h2>② VLA 离散生成<span class="era-chip" style="background:var(--era2-soft);color:var(--era2)">2022-2023 · RT 系</span></h2>
+<div class="claim">范式内核："把动作当文字写"——Google 的 RT 系发现，把控制问题翻译成语言模型问题，互联网级的语义知识就能流进机器人。</div>
+
+<p>2022 年 12 月的 RT-1 是分水岭前的引信：Transformer 架构、13 万条真机 episodes、700+ 任务，把"任务无关的开放训练"第一次做实。真正的跃迁是 2023 年 7 月的 RT-2——它不再训练机器人模型，而是<b>微调一个现成的视觉语言模型</b>（PaLI-X 55B / PaLM-E 5B），把机器人动作离散成 256 个 token，当作"另一种语言"输出。动作和"把杯子放在数字 3 上"从此在同一个输出空间里，6000 次评估里涌现出训练数据里从未出现过的能力：听懂"捡起最小的一个"、捡起石头当锤子使。</p>
+
+<p>同年的 Open X-Embodiment（21 家机构、22 种机器人、16 万任务）证实了一个反直觉结论：<b>混着训比分开训好</b>——多机器人共训的模型在单机器人上反而更强。这给了"机器人基础模型"这条路第一份实证。</p>
+
+<figure role="img" aria-label="RT-2 把动作离散成 token 的机制与代价">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- 输入 -->
+  <rect x="20" y="60" width="130" height="70" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="85" y="85" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle">📷 图像</text>
+  <text x="85" y="105" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle">"捡最小的"</text>
+
+  <path d="M 150 95 L 185 95" stroke="currentColor" stroke-width="1.6" marker-end="url(#e1b)"/>
+
+  <!-- VLM -->
+  <rect x="188" y="60" width="150" height="70" rx="7" fill="none" stroke="var(--era2)" stroke-width="2"/>
+  <text x="263" y="85" font-family="Noto Sans SC" font-size="11" fill="currentColor" text-anchor="middle" font-weight="700">VLM 55B</text>
+  <text x="263" y="105" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">互联网预训练权重</text>
+
+  <path d="M 338 95 L 373 95" stroke="currentColor" stroke-width="1.6" marker-end="url(#e1b)"/>
+
+  <!-- 动作token -->
+  <rect x="376" y="60" width="200" height="70" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="476" y="80" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">输出: [187][42][200][9]…</text>
+  <text x="476" y="100" font-family="Noto Sans SC" font-size="9.5" fill="var(--era2)" text-anchor="middle">每个数字 = 一档离散动作</text>
+  <text x="476" y="117" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">7维×256档 → 7个token</text>
+
+  <!-- 量化示意 -->
+  <g font-family="IBM Plex Mono" font-size="8" fill="currentColor">
+    <rect x="600" y="60" width="110" height="70" rx="6" fill="none" stroke="var(--era2)" stroke-width="1.2"/>
+    <text x="655" y="78" text-anchor="middle" fill="var(--era2)" font-weight="700">量化栅格</text>
+    <line x1="615" y1="92" x2="695" y2="92" stroke="currentColor" stroke-width="1.2"/>
+    <g stroke="currentColor" stroke-width="1">
+      <line x1="615" y1="88" x2="615" y2="96"/><line x1="631" y1="88" x2="631" y2="96"/><line x1="647" y1="88" x2="647" y2="96"/>
+      <line x1="663" y1="88" x2="663" y2="96"/><line x1="679" y1="88" x2="679" y2="96"/><line x1="695" y1="88" x2="695" y2="96"/>
+    </g>
+    <text x="655" y="115" text-anchor="middle">连续值被夹到最近的档</text>
+    <path d="M 653 108 L 646 88" stroke="var(--era2)" stroke-width="1.4" fill="none"/>
+    <circle cx="646" cy="88" r="2.5" fill="var(--era2)"/>
+  </g>
+
+  <!-- 收益与代价 -->
+  <rect x="20" y="160" width="330" height="80" rx="7" fill="none" stroke="var(--era2)" stroke-width="1.3"/>
+  <text x="185" y="182" font-family="Noto Sans SC" font-size="10.5" fill="var(--era2)" text-anchor="middle" font-weight="700">收益: 语义知识直接流入 ★</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="36" y="204">"最小的"这类概念不用重新教——</text>
+    <text x="36" y="222">VLM 在互联网上已经见过千万次</text>
+  </g>
+
+  <rect x="370" y="160" width="340" height="80" rx="7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="5 3"/>
+  <text x="540" y="182" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">代价: 精度天花板 ★</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="386" y="204">256 档的栅格锁死动作分辨率——</text>
+    <text x="386" y="222">灵巧手/插销等毫米级任务做不了</text>
+  </g>
+</svg>
+<figcaption><b>把动作当文字写的双刃。</b>RT-2 把 7 维连续动作离散成 256 档的 token，与文字共享同一个输出空间——这是语义知识流入的开关（"捡最小的"直接可用）；但量化栅格（右上图）同时锁死了动作精度，毫米级灵巧任务从此有了天花板。这个"语义收益换精度代价"的交换，定义了整个第二代——也正是第三代要打破的墙。</figcaption>
+</figure>
+
+<!-- ============ 时代3 ============ -->
+<h2>③ 连续生成<span class="era-chip" style="background:var(--era3-soft);color:var(--era3)">2023-2025 · π0/GR00T</span></h2>
+<div class="claim">范式内核："理解用语言模型，动手用扩散"——把 RT-2 的单一输出空间拆成两个头，精度墙被推倒，灵巧度一夜解锁。</div>
+
+<p>2024 年的 π0（Physical Intelligence）给出了新公式：3B VLM 骨干 + 一个专门的 flow-matching 动作专家，动作以 <b>50Hz 连续值</b>输出。训练数据是当时史上最大的机器人交互集（OXE + 8 种机器人的专有数据，含叠一堆缠住的衣物、组装压扁的纸箱——此前没有任何系统展示过的长程灵巧任务）。评估对比是碾压式的：餐盘收拾任务上 π0 得 0.971，Octo 只有 0.043；π0-small（470M、无 VLM 预训练）性能腰斩——语义接地和连续生成缺一不可。</p>
+
+<p>GR00T N1.7 沿这条公式走（你已在前一份报告拆过：VLM 骨干 + DiT 头 + action chunk + SONIC 小脑的完整分层），开源生态侧 LeRobot 同期成型。这一代的行业共识沉淀成一句话：<b>语言是离散的，动作是连续的，强行统一是 RT-2 的原罪，各取所长是 π0 的正解。</b></p>
+
+<figure role="img" aria-label="RT-2 单一输出空间与 π0 双头架构的分水岭对比">
+<svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- RT-2 侧 -->
+  <text x="20" y="26" font-family="IBM Plex Mono" font-size="11" fill="var(--era2)" font-weight="600">RT-2 (2023) · 一个输出空间</text>
+  <rect x="20" y="40" width="300" height="90" rx="8" fill="none" stroke="var(--era2)" stroke-width="1.5"/>
+  <rect x="40" y="58" width="110" height="54" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="95" y="80" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">VLM 主干</text>
+  <text x="95" y="98" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">语义+动作</text>
+  <text x="250" y="80" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">→ [187][42][200]</text>
+  <text x="250" y="98" font-family="IBM Plex Mono" font-size="9" fill="var(--era2)" text-anchor="middle">离散·~1-3Hz·粗粒度</text>
+  <text x="170" y="152" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" opacity="0.8">文字和动作挤同一个出口 — 互相迁就</text>
+
+  <!-- 分水岭 -->
+  <line x1="360" y1="20" x2="360" y2="240" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.5"/>
+  <text x="360" y="212" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" opacity="0.8" transform="rotate(-90 360 212)">分水岭</text>
+
+  <!-- π0 侧 -->
+  <text x="400" y="26" font-family="IBM Plex Mono" font-size="11" fill="var(--era3)" font-weight="600">π0 / GR00T (2024-25) · 双头</text>
+  <rect x="400" y="40" width="310" height="90" rx="8" fill="none" stroke="var(--era3)" stroke-width="1.6"/>
+  <rect x="420" y="58" width="110" height="54" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="475" y="80" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">VLM 骨干</text>
+  <text x="475" y="98" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">只管理解</text>
+  <rect x="560" y="58" width="130" height="54" rx="6" fill="none" stroke="var(--era3)" stroke-width="1.6"/>
+  <text x="625" y="78" font-family="Noto Sans SC" font-size="10" fill="var(--era3)" text-anchor="middle" font-weight="700">flow-matching</text>
+  <text x="625" y="96" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">动作专家·连续</text>
+  <path d="M 530 85 L 556 85" stroke="var(--era3)" stroke-width="1.6" marker-end="url(#e1b)"/>
+  <text x="543" y="76" font-family="IBM Plex Mono" font-size="7.5" fill="currentColor" text-anchor="middle">隐状态</text>
+  <text x="555" y="152" font-family="IBM Plex Mono" font-size="9" fill="var(--era3)" text-anchor="middle">→ 连续·50Hz·毫米级</text>
+  <text x="555" y="170" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" opacity="0.8">两个头各干各的 — 互不迁就</text>
+
+  <!-- 底部: 三个解锁 -->
+  <text x="20" y="200" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" font-weight="700">连续输出解锁的三件事:</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="212" width="210" height="44" rx="6" fill="none" stroke="var(--era3)" stroke-width="1"/>
+    <text x="125" y="230" text-anchor="middle">① 多峰动作: 左抓右抓都采样得出</text>
+    <text x="125" y="248" text-anchor="middle">② 精度: 无栅格天花板, 灵巧任务开锁</text>
+  </g>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="250" y="212" width="210" height="44" rx="6" fill="none" stroke="var(--era3)" stroke-width="1"/>
+    <text x="355" y="230" text-anchor="middle">③ 频率: 50Hz 满足实时控制</text>
+    <text x="355" y="248" text-anchor="middle">chunk 预付未来(大脑小脑接口)</text>
+  </g>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="480" y="212" width="230" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="595" y="230" text-anchor="middle">实证: π0 叠衣物/装纸箱</text>
+    <text x="595" y="248" text-anchor="middle">vs Octo 同任务 0.971 : 0.043</text>
+  </g>
+</svg>
+<figcaption><b>分水岭：拆开输出空间。</b>左（RT-2）：文字与动作共享一个离散输出，语义与精度互相迁就；右（π0/GR00T）：VLM 骨干只管理解，flow-matching/DiT 动作专家专管连续输出——互不迁就。连续输出一次解锁三件事：多峰采样、毫米精度、50Hz 频率；π0 在长程灵巧任务上的碾压级对比（0.971 vs Octo 的 0.043）是这条路线的实证。</figcaption>
+</figure>
+
+<!-- ============ 时代4 ============ -->
+<h2>④ 世界模型<span class="era-chip" style="background:var(--era4-soft);color:var(--era4)">2024-进行中 · 未竟之路</span></h2>
+<div class="claim">范式内核："先学会想象物理，再在想象里学控制"——前两代学的是"看到 X 就做 Y"的映射，这一代想学的是"做了 Y 之后世界会变成什么样"。</div>
+
+<p>三代范式的共同软肋是样本效率：它们只从"做过的事"里学，而人类儿童看世界就能形成直觉物理。Dreamer 系列（v1 到 v3）证明了"在学到的世界模型里做想象 rollout 训练策略"可行；2024 年后的分岔是两条路——Genie/NVIDIA Cosmos 用互联网视频训"通用世界模拟器"，另一条路（你之前分析过的 MJWarp/mjlab）用 GPU 物理引擎做"可微的、精确的想象"。世界模型路线要解决的正是你在「VLA 局限」里看到的数据瓶颈：交互数据不够，就用想象的填充。</p>
+
+<p>但要诚实标注它的未竟之处：想象会漂（预测误差随步数指数累积——长程规划受限），物理直觉从视频里学不到"力"（触觉/动力学不可观测）。这也解释了为什么当前的工业主力仍是第三代——第四代更像是第三代的"弹药工厂"（数据增广器），而非替代者。</p>
+
+<figure role="img" aria-label="三代学习范式的信息来源对比：演示、交互、想象">
+<svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC" font-size="10.5">
+    <!-- 时代2 -->
+    <rect x="20" y="20" width="220" height="140" rx="8" fill="none" stroke="var(--era2)" stroke-width="1.4"/>
+    <text x="130" y="44" fill="var(--era2)" text-anchor="middle" font-weight="700">②③ 前三代</text>
+    <text x="130" y="72" fill="currentColor" text-anchor="middle">从【做过的事】里学</text>
+    <g fill="currentColor" text-anchor="middle" font-size="9.5">
+      <text x="130" y="98">来源: 人演示 + 机器人交互</text>
+      <text x="130" y="120">样本成本: 每条都要真机采</text>
+      <text x="130" y="142">上限: 交互数据不可能互联网级</text>
+    </g>
+    <!-- 时代4 -->
+    <rect x="290" y="20" width="220" height="140" rx="8" fill="none" stroke="var(--era4)" stroke-width="1.6"/>
+    <text x="400" y="44" fill="var(--era4)" text-anchor="middle" font-weight="700">④ 世界模型</text>
+    <text x="400" y="72" fill="currentColor" text-anchor="middle">从【想象的结果】里学</text>
+    <g fill="currentColor" text-anchor="middle" font-size="9.5">
+      <text x="400" y="98">来源: 视频预测/物理引擎</text>
+      <text x="400" y="120">样本成本: 想象近乎免费</text>
+      <text x="400" y="142">上限: 想象的保真度 ★</text>
+    </g>
+  </g>
+  <!-- 中间转化箭头 -->
+  <path d="M 242 90 L 288 90" stroke="var(--era4)" stroke-width="2" marker-end="url(#e1b)"/>
+  <text x="265" y="80" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">换弹药</text>
+
+  <!-- 两条实现路线 -->
+  <rect x="540" y="20" width="170" height="66" rx="7" fill="none" stroke="var(--era4)" stroke-width="1.2"/>
+  <text x="625" y="42" font-family="Noto Sans SC" font-size="9.5" fill="var(--era4)" text-anchor="middle" font-weight="700">路线A: 学习的想象</text>
+  <text x="625" y="60" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">Genie/Cosmos</text>
+  <text x="625" y="76" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">视频→通用模拟器</text>
+  <rect x="540" y="94" width="170" height="66" rx="7" fill="none" stroke="var(--era4)" stroke-width="1.2"/>
+  <text x="625" y="116" font-family="Noto Sans SC" font-size="9.5" fill="var(--era4)" text-anchor="middle" font-weight="700">路线B: 精确的想象</text>
+  <text x="625" y="134" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">MJWarp/mjlab</text>
+  <text x="625" y="150" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">GPU物理引擎可微化</text>
+
+  <text x="20" y="190" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.85">未竟之处: 想象会漂(误差随步数累积) · 视频学不到"力" — 所以当前更像第三代的弹药工厂, 而非替代者</text>
+  <text x="20" y="210" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">类比: 三代学"条件反射", 四代学"心智模型" — 前者可靠, 后者潜力未兑现</text>
+</svg>
+<figcaption><b>换弹药。</b>前三代从"做过的事"里学——每条样本都要真机采集，数据规模天然受限；世界模型从"想象的结果"里学——想象近乎免费，瓶颈变成想象的保真度。两条实现路线：学习的想象（Genie/Cosmos，从视频学）与精确的想象（MJWarp，物理引擎可微化）。但想象会漂、视频学不到力——当前它更像第三代的弹药工厂（数据增广器），而非替代者。</figcaption>
+</figure>
+
+<!-- ============ 总对比表 ============ -->
+<h2>四代同屏对比</h2>
+<div class="claim">一张表收拢四代——每个维度上相邻两代的差异，就是那一代人解决的核心问题。</div>
+
+<table>
+  <tr><th>维度</th><th>① 行为克隆</th><th>② VLA 离散</th><th>③ 连续生成</th><th>④ 世界模型</th></tr>
+  <tr><td>年份</td><td class="num-cell">2003-2021</td><td class="num-cell">2022-23</td><td class="num-cell">2023-25</td><td class="num-cell">2024-</td></tr>
+  <tr><td>代表系统</td><td class="era-cell-1">DAgger·GPL·Diffusion Policy</td><td class="era-cell-2">RT-1·RT-2·Octo·OXE</td><td class="era-cell-3">π0·GR00T N1·OpenVLA</td><td class="era-cell-4">Dreamer·Genie·Cosmos</td></tr>
+  <tr><td>知识载体</td><td>人工特征</td><td>语言模型权重</td><td>VLM+扩散头</td><td>想象的动力学</td></tr>
+  <tr><td>动作表示</td><td>连续回归（单峰）</td><td>离散 token（256档）</td><td>连续 flow-matching（多峰）</td><td>—（供训练用）</td></tr>
+  <tr><td>数据规模</td><td class="num-cell">~万级演示</td><td class="num-cell">13万+16万任务</td><td class="num-cell">100万+ episodes</td><td class="num-cell">互联网视频+仿真</td></tr>
+  <tr><td>频率</td><td class="num-cell">~3Hz</td><td class="num-cell">1-3Hz</td><td class="num-cell">50Hz（chunk）</td><td class="num-cell">离线</td></tr>
+  <tr><td>语义理解</td><td>✗</td><td>✓ 涌现推理</td><td>✓ + 直觉接地</td><td>潜在的</td></tr>
+  <tr><td>核心突破</td><td>命名分布漂移</td><td>语义知识流入</td><td>精度墙拆除</td><td>样本效率换轨</td></tr>
+  <tr><td>核心局限</td><td>抄会漂·无语义</td><td>精度天花板</td><td>数据仍要真机采</td><td>想象会漂</td></tr>
+</table>
+
+<h2>结语：跃迁的规律</h2>
+<p>回看四次换引擎，规律只有一条：<b>每次跃迁都发生在"上一代的知识载体无法装下下一代需要的知识"的时刻</b>。人工特征装不下语义 → 换语言模型权重；离散 token 装不下毫米级动作 → 换连续生成头；真机交互装不下互联网级数据量 → 换想象。载体每次更换，数据规模就涨一个数量级——燃料与引擎的交替推进，和 LLM 从 RNN 到 Transformer 到 Scaling 的历史同构。</p>
+
+<p>对从业者的一个实用推论：判断下一波的方向，不必预测算法，只需问一个问题——<b>还有什么知识，现在的载体装不下？</b>候选答案里最热的两个：力觉与触觉（视觉载体装不下），和长程的物理因果（单帧/chunk 载体装不下）。前者通向触觉传感器与多模态融合的硬件-算法协同，后者正是世界模型路线的赌注。</p>
+
+<footer>
+  史料来源：RT-1 (arXiv:2212.06817)、RT-2 (arXiv:2307.15818)、Open X-Embodiment (arXiv:2310.08864)、π0 (Physical Intelligence 官方博客) 及各项目公开资料；GR00T/SONIC 部分基于 NVIDIA 官方仓库源码（详见前一份《大脑与小脑》报告）。系列前作：<a href="brain-cerebellum-report.html">大脑与小脑 — GR00T×SONIC 双系统深度分析</a>。
+</footer>
+
+</div>
+</body>
+</html>
