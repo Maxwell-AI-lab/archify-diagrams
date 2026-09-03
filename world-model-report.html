@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>想象的物理学</title>
+<meta name="description" content="世界模型深度研究：Dreamer 的想象训练、Genie 2/Cosmos 的生成式世界、V-JEPA 的潜空间赌注、物理引擎的第三极，以及误差漂移这一根本困境。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --gen: #B45309; --gen-soft: #FBEAD5;
+    --lat: #0F766E; --lat-soft: #DCEFEA;
+    --phys: #6D28D9; --phys-soft: #EDE6FB;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --gen: #E8A33D; --gen-soft: #2E2416;
+      --lat: #4FB8AC; --lat-soft: #172B28;
+      --phys: #A78BFA; --phys-soft: #241E38;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --gen: #E8A33D; --gen-soft: #2E2416;
+    --lat: #4FB8AC; --lat-soft: #172B28;
+    --phys: #A78BFA; --phys-soft: #241E38;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.6rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-gen { color: var(--gen); font-weight: 600; }
+  .c-lat { color: var(--lat); font-weight: 600; }
+  .c-phys { color: var(--phys); font-weight: 600; }
+  .tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .tri > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .tri .g { border-top: 4px solid var(--gen); }
+  .tri .l { border-top: 4px solid var(--lat); border-left: 1px solid var(--line); }
+  .tri .p { border-top: 4px solid var(--phys); border-left: 1px solid var(--line); }
+  .tri h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .tri .g h3 { color: var(--gen); } .tri .l h3 { color: var(--lat); } .tri .p h3 { color: var(--phys); }
+  .tri p { font-size: 0.9rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .tri { grid-template-columns: 1fr; } .tri .l, .tri .p { border-left: none; border-top: 1px solid var(--line); } }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--lat); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">世界模型 · 深度研究报告</div>
+  <h1>想象的物理学</h1>
+  <p class="lede">世界模型是让 AI 在"脑内"预演物理的机器——Dreamer 在想象里训练策略拿下 Minecraft，Genie 2 从一张图片长出可交互的 3D 世界，V-JEPA 2 用 122 万小时视频学会了零样本抓取。这份报告拆解世界模型的三要素、三条路线的哲学分野、误差漂移的根本困境，以及 LeCun 押上声誉的那场赌注：想象的像素是不是一种浪费。</p>
+</header>
+
+<!-- ============ 三要素 ============ -->
+<h2>定义：三要素</h2>
+<div class="claim">一个世界模型 = 表征（世界压缩成什么）+ 动力学（怎么推演下一刻）+ 用途（想象给谁消费）。三条路线的全部分歧，都能追溯到对这三要素的不同回答。</div>
+
+<figure role="img" aria-label="世界模型三要素：表征、动力学、用途">
+<svg viewBox="0 0 720 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="wArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-family="Noto Sans SC">
+    <rect x="20" y="30" width="200" height="150" rx="8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <text x="120" y="56" font-size="12" fill="currentColor" text-anchor="middle" font-weight="700">要素① 表征</text>
+    <g font-size="9.5" fill="currentColor" text-anchor="middle">
+      <text x="120" y="82">世界压缩成什么?</text>
+      <text x="120" y="106">像素 (Genie/Sora)</text>
+      <text x="120" y="124">抽象 latent (V-JEPA)</text>
+      <text x="120" y="142">状态变量 (物理引擎)</text>
+      <text x="120" y="166" font-size="9" fill="var(--ink-soft)">选择 = 选择忽略什么</text>
+    </g>
+    <rect x="260" y="30" width="200" height="150" rx="8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <text x="360" y="56" font-size="12" fill="currentColor" text-anchor="middle" font-weight="700">要素② 动力学</text>
+    <g font-size="9.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="82">怎么推演下一刻?</text>
+      <text x="360" y="106">自回归逐帧 (Genie 2)</text>
+      <text x="360" y="124">扩散整段去噪 (Sora类)</text>
+      <text x="360" y="142">潜空间预测 (V-JEPA/Dreamer)</text>
+      <text x="360" y="166" font-size="9" fill="var(--ink-soft)">物理方程 (MJWarp)</text>
+    </g>
+    <rect x="500" y="30" width="200" height="150" rx="8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <text x="600" y="56" font-size="12" fill="currentColor" text-anchor="middle" font-weight="700">要素③ 用途</text>
+    <g font-size="9.5" fill="currentColor" text-anchor="middle">
+      <text x="600" y="82">想象给谁消费?</text>
+      <text x="600" y="106">策略训练 (Dreamer)</text>
+      <text x="600" y="124">规划搜索 (V-JEPA规划)</text>
+      <text x="600" y="142">数据合成 (Cosmos/GAIA)</text>
+      <text x="600" y="166" font-size="9" fill="var(--ink-soft)">人消费 (Sora)</text>
+    </g>
+  </g>
+  <path d="M 220 105 L 256 105" stroke="currentColor" stroke-width="1.4" marker-end="url(#wArr)"/>
+  <path d="M 460 105 L 496 105" stroke="currentColor" stroke-width="1.4" marker-end="url(#wArr)"/>
+  <text x="20" y="212" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">判断任何"世界模型"系统: 先问这三个问题的答案 — 答案组合起来就是它的路线归属</text>
+</svg>
+<figcaption><b>三要素框架。</b>表征（压缩成什么——像素/latent/状态变量）、动力学（怎么推演——自回归/扩散/潜空间预测/物理方程）、用途（给谁消费——策略训练/规划/数据合成/人类观看）。后面的三条路线分野、LeCun 之争、漂移困境，全部是这三个选择的不同组合。</figcaption>
+</figure>
+
+<!-- ============ 三条路线 ============ -->
+<h2>三条路线：一个概念，三种物理<span class="chip" style="background:var(--gen-soft);color:var(--gen)">分野</span></h2>
+<div class="claim">"世界模型"这个词被三个阵营共用但所指完全不同：<b>学出来的想象</b>（从视频学）、<b>抽象的想象</b>（在 latent 里推演）、<b>精确的想象</b>（物理引擎可微化）——它们不是竞争关系，是三份不同的答卷。</p>
+
+<div class="tri">
+  <div class="g">
+    <h3>生成式 · 像素级想象</h3>
+    <p>代表：<b>Genie 2</b>（DeepMind 2024.12）、<b>Cosmos</b>（NVIDIA 2025.1）、Sora</p>
+    <p>机制：自回归 latent diffusion——潜帧过因果掩码的 Transformer（同 LLM 构造），一张图起步生成可交互 3D 世界</p>
+    <p>强项：通用、逼真、零领域知识也能想象；Genie 2 记得住离开视野的场景，世界一致性能撑到 1 分钟</p>
+    <p>弱项：物理是"看起来对"不是"算得对"；漂移累积；算力昂贵</p>
+  </div>
+  <div class="l">
+    <h3>潜空间 · 抽象想象</h3>
+    <p>代表：<b>V-JEPA 2</b>（Meta 2025.6，LeCun）、<b>Dreamer 系</b>（RSSM）</p>
+    <p>机制：不生成像素，在学到的抽象 latent 里预测；V-JEPA 2 吃 122 万小时视频自监督预训练 + 62 小时机器人视频后训练</p>
+    <p>强项：算力不浪费在像素细节上；V-JEPA 2 零样本控制 Franka（没采过这台机器人的数据）</p>
+    <p>弱项：想象不可视（无法人眼审计）；解释力有限</p>
+  </div>
+  <div class="p">
+    <h3>物理引擎 · 精确想象</h3>
+    <p>代表：<b>MJWarp</b>（DeepMind+NVIDIA）、mjlab、Isaac Lab</p>
+    <p>机制：物理方程直接当动力学——不学习，GPU 并行积分数千世界（你在精度对齐报告里拆过的那条线）</p>
+    <p>强项：物理精确可审计、可微（梯度能穿过仿真）、域随机化可控</p>
+    <p>弱项：只会模型里写过的物理；接触/摩擦建模与现实有差距</p>
+  </div>
+</div>
+
+<figure role="img" aria-label="三条路线在同一想象任务上的分野：一个杯子从桌上掉落">
+<svg viewBox="0 0 720 290" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="20" y="24" font-family="Noto Sans SC" font-size="11" fill="currentColor" font-weight="700">同一道题：想象"杯子从桌沿推下去之后"？</text>
+
+  <!-- 生成式 -->
+  <g font-family="Noto Sans SC">
+    <rect x="20" y="40" width="220" height="220" rx="8" fill="none" stroke="var(--gen)" stroke-width="1.6"/>
+    <text x="130" y="62" font-size="10" fill="var(--gen)" text-anchor="middle" font-weight="700">生成式回答</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <rect x="60" y="75" width="140" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="130" y="95">播放一段"杯子坠落"的</text>
+      <text x="130" y="111">视频: 姿态自然、碎裂逼真</text>
+      <text x="130" y="130" font-size="8.5" fill="var(--gen)">≈ 它见过百万段坠落视频</text>
+      <text x="130" y="165">✓ 新颖场景也能想象</text>
+      <text x="130" y="182">✓ 杯子该碎还是弹, 凭统计直觉</text>
+      <text x="130" y="205">✗ 力从哪来? 精确落点? 说不出</text>
+      <text x="130" y="225" font-size="8.5" fill="var(--ink-soft)">"看起来对" ≠ "算得对"</text>
+    </g>
+  </g>
+
+  <!-- 潜空间 -->
+  <g font-family="Noto Sans SC">
+    <rect x="260" y="40" width="220" height="220" rx="8" fill="none" stroke="var(--lat)" stroke-width="1.6"/>
+    <text x="370" y="62" font-size="10" fill="var(--lat)" text-anchor="middle" font-weight="700">潜空间回答</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <rect x="300" y="75" width="140" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="370" y="95">预测"下个抽象状态":</text>
+      <text x="370" y="111">[掉落][加速][撞击]…</text>
+      <text x="370" y="130" font-size="8.5" fill="var(--lat)">没有画面, 只有语义轨迹</text>
+      <text x="370" y="165">✓ 推演快(不画像素)</text>
+      <text x="370" y="182">✓ 规划直接在 latent 里搜索</text>
+      <text x="370" y="205">✗ 想象不可视, 无法人眼审计</text>
+      <text x="370" y="225" font-size="8.5" fill="var(--ink-soft)">"理解发生了什么" 优先于"画出它"</text>
+    </g>
+  </g>
+
+  <!-- 物理引擎 -->
+  <g font-family="Noto Sans SC">
+    <rect x="500" y="40" width="220" height="220" rx="8" fill="none" stroke="var(--phys)" stroke-width="1.6"/>
+    <text x="610" y="62" font-size="10" fill="var(--phys)" text-anchor="middle" font-weight="700">物理引擎回答</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <rect x="540" y="75" width="140" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text x="610" y="95">解微分方程:</text>
+      <text x="610" y="111">g=9.8, 碰撞冲量, 摩擦锥</text>
+      <text x="610" y="130" font-size="8.5" fill="var(--phys)">每个数字有出处</text>
+      <text x="610" y="165">✓ 精确落点/力/轨迹全可算</text>
+      <text x="610" y="182">✓ 可微 → 梯度能穿过想象</text>
+      <text x="610" y="205">✗ 没建模的物理=不会发生</text>
+      <text x="610" y="225" font-size="8.5" fill="var(--ink-soft)">"算得对" 但只算知道的</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>一道题三份答卷。</b>杯子从桌沿推下去：生成式（Genie 2/Sora）给你一段统计上逼真的坠落视频——新颖场景能想象但说不出力从哪来；潜空间（V-JEPA/Dreamer）给你一条抽象状态轨迹——快且可规划但不可视；物理引擎（MJWarp）解方程——每个数字精确可审计，但没建模的物理不会发生。三条路线不是在赛跑，是在回答不同的部分：逼真×泛化 / 抽象×规划 / 精确×可审计。</figcaption>
+</figure>
+
+<!-- ============ Dreamer 想象环 ============ -->
+<h2>Dreamer：在想象里训练<span class="chip" style="background:var(--lat-soft);color:var(--lat)">RL 路线</span></h2>
+<div class="claim">Dreamer 系的洞见：环境交互贵，想象便宜——先学世界模型，再把整个 RL 训练搬进想象里跑，真机只用来校准世界模型。</div>
+
+<p>DreamerV3（2023）是目前这条线的顶点：单一配置跑赢 150+ 任务的专用方法，Atari 上达到人类均值 1.5 倍附近量级，并且是<b>从零开始（无人类数据、无课程）在 Minecraft 里挖到钻石</b>的第一个算法——这曾是稀疏奖励长程规划的经典难题。它的三网络结构（世界模型 RSSM + Actor + Critic 全在想象里训练）就是"想象的物理学"最纯粹的实现。</p>
+
+<figure role="img" aria-label="Dreamer 想象训练环：真实交互校准世界模型，策略训练全在想象">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="dArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="lArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--lat)"/>
+    </marker>
+  </defs>
+
+  <!-- 真实世界 -->
+  <rect x="20" y="30" width="180" height="180" rx="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="110" y="54" font-family="Noto Sans SC" font-size="11" fill="currentColor" text-anchor="middle" font-weight="700">真实环境（贵）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <rect x="40" y="70" width="140" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="110" y="89">Actor 采少量真实数据</text>
+    <rect x="40" y="110" width="140" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="110" y="129">→ (s,a,r,s') 四元组</text>
+    <text x="110" y="160" font-size="8.5" fill="var(--ink-soft)">只做一件事:</text>
+    <text x="110" y="176" font-size="8.5" fill="var(--ink-soft)">校准世界模型</text>
+  </g>
+
+  <!-- 校准箭头 -->
+  <path d="M 200 90 C 250 90, 260 110, 300 115" stroke="currentColor" stroke-width="1.6" marker-end="url(#dArr)"/>
+  <text x="252" y="82" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">训练WM</text>
+
+  <!-- 世界模型 -->
+  <rect x="300" y="30" width="180" height="180" rx="9" fill="none" stroke="var(--lat)" stroke-width="1.8"/>
+  <text x="390" y="54" font-family="Noto Sans SC" font-size="11" fill="var(--lat)" text-anchor="middle" font-weight="700">世界模型 RSSM（想象）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <rect x="320" y="70" width="140" height="30" rx="5" fill="none" stroke="var(--lat)" stroke-width="1"/>
+    <text x="390" y="89">编码 s → 隐状态 z</text>
+    <rect x="320" y="110" width="140" height="30" rx="5" fill="none" stroke="var(--lat)" stroke-width="1"/>
+    <text x="390" y="129">z,a → 预测 z' 和 r'</text>
+    <text x="390" y="160" font-size="8.5" fill="var(--ink-soft)">可以无限 rollout,</text>
+    <text x="390" y="176" font-size="8.5" fill="var(--ink-soft)">不用碰真环境</text>
+  </g>
+
+  <!-- 策略在想象中训练 -->
+  <path d="M 480 115 C 530 115, 540 115, 570 115" stroke="var(--lat)" stroke-width="1.6" marker-end="url(#lArr)"/>
+  <rect x="574" y="30" width="146" height="180" rx="9" fill="none" stroke="var(--lat)" stroke-width="1.6"/>
+  <text x="647" y="54" font-family="Noto Sans SC" font-size="11" fill="var(--lat)" text-anchor="middle" font-weight="700">想象中训练策略</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <rect x="590" y="70" width="114" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="647" y="89">Actor 试动作</text>
+    <rect x="590" y="110" width="114" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="647" y="129">WM 预测后果</text>
+    <rect x="590" y="150" width="114" height="30" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="647" y="169">Critic 估值→更新</text>
+    <text x="647" y="198" font-size="8.5" fill="var(--lat)">★ RL 全在想象里跑</text>
+  </g>
+
+  <!-- 策略回注 -->
+  <path d="M 647 210 C 647 250, 110 250, 110 214" stroke="var(--lat)" stroke-width="1.8" fill="none" marker-end="url(#lArr)"/>
+  <text x="380" y="244" font-family="IBM Plex Mono" font-size="9" fill="var(--lat)" text-anchor="middle">训好的 Actor 回注真实环境 → 采新数据 → 循环</text>
+
+  <text x="20" y="272" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">收益: 真实交互减少一个量级 · Minecraft 挖钻石 = 想象里练出的稀疏奖励长程规划; 代价: 想象漂移 → 策略可能练在"错误的物理"上</text>
+</svg>
+<figcaption><b>想象的 RL。</b>真实环境只干一件事——采 (s,a,r,s') 校准世界模型；整个 RL 训练（Actor 试动作→世界模型预测后果→Critic 估值→更新）都在想象里跑，真实交互减少一个量级。DreamerV3 用这个环从零挖到 Minecraft 钻石。隐患也在这张图里：策略练在世界模型的预测上——想象漂移多少，策略就学偏多少（下一节的根本困境）。</figcaption>
+</figure>
+
+<!-- ============ 漂移困境 ============ -->
+<h2>根本困境：漂移</h2>
+<div class="claim">世界模型的第一性限制不是"不够大"——是<b>预测误差随步数复合累积</b>。想象 10 步很准，100 步就漂，1000 步必崩。这不是工程 bug，是自回归系统的数学性质（和你在大脑小脑报告里见过的 chunk 抢占、AR 误差累积同构）。</div>
+
+<figure role="img" aria-label="世界模型误差漂移：预测误差随步数复合累积的曲线">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="50" y1="200" x2="680" y2="200" stroke="currentColor" stroke-width="1.3"/>
+  <line x1="50" y1="200" x2="50" y2="30" stroke="currentColor" stroke-width="1.3"/>
+  <text x="365" y="228" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">想象步数</text>
+  <text x="28" y="115" font-family="IBM Plex Mono" font-size="9" fill="currentColor" transform="rotate(-90 28 115)" text-anchor="middle">误差</text>
+
+  <!-- 误差带 -->
+  <path d="M 50 195 C 150 188, 250 165, 340 130 C 420 98, 500 60, 600 35" stroke="var(--gen)" stroke-width="2.2" fill="none"/>
+  <text x="480" y="55" font-family="Noto Sans SC" font-size="9.5" fill="var(--gen)">单步误差 5% → 50步复合到 ~10%</text>
+  <text x="480" y="71" font-family="Noto Sans SC" font-size="9.5" fill="var(--gen)">→ 200步: 世界已不是那个世界</text>
+
+  <!-- 可用区 -->
+  <rect x="50" y="120" width="180" height="80" rx="6" fill="none" stroke="var(--lat)" stroke-width="1.4" stroke-dasharray="5 3"/>
+  <text x="140" y="140" font-family="Noto Sans SC" font-size="9" fill="var(--lat)" text-anchor="middle">可靠想象区 (~10-30步)</text>
+  <text x="140" y="156" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">MPC式短程规划住这里</text>
+  <text x="140" y="170" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">GAIA/Cosmos 合成短片段</text>
+  <text x="140" y="184" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">Dreamer: 训练后定期回真机校准</text>
+
+  <!-- 崩溃区 -->
+  <rect x="450" y="30" width="230" height="55" rx="6" fill="none" stroke="var(--gen)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text x="565" y="50" font-family="Noto Sans SC" font-size="9" fill="var(--gen)" text-anchor="middle">漂移区: 想象自我喂养</text>
+  <text x="565" y="66" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">错的状态上继续预测 → 错上加错</text>
+  <text x="565" y="79" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">(RL 里 off-policy 程度失控的想象版)</text>
+
+  <text x="50" y="240" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">对冲策略: ①短程使用(MPC滚动) ②定期回真机校准 ③不确定性估计决定"何时停止相信想象" ④V-JEPA: 抽象latent漂得慢(细节不进入误差)</text>
+</svg>
+<figcaption><b>漂移的复合。</b>单步预测 95% 准确，误差复合到 50 步就到 10% 量级，200 步后"想象的世界已不是那个世界"。对冲有四招：短程滚动使用（MPC 式，和大脑的 chunk 抢占同构）；定期回真机校准（Dreamer 的真实交互环）；不确定性门控（何时停止相信想象）；以及 V-JEPA 的结构性方案——在抽象 latent 里推演，像素细节不进入误差累积。</figcaption>
+</figure>
+
+<!-- ============ LeCun 赌注 ============ -->
+<h2>LeCun 的赌注<span class="chip" style="background:var(--lat-soft);color:var(--lat)">路线之争</span></h2>
+<div class="claim">生成式与潜空间的分野背后是 LeCun 的著名论断：<b>在像素上做预测是浪费算力</b>——想象一堆云的具体形状对决策毫无帮助，智能需要预测的是抽象状态，不是每一帧。</div>
+
+<p>V-JEPA 2（2025.6，LeCun 团队）是这个赌注目前最大的注脚：122 万小时视频自监督预训练（不生成任何像素）+ 不到 62 小时无标注机器人视频后训练，就能<b>零样本</b>控制两个实验室的 Franka 机械臂做抓放——规划方式是在 latent 空间搜索"哪个动作序列的预测状态最接近目标图像的嵌入"，全程不生成一帧想象画面。反方论据同样真实：Genie 2 能想象出训练数据里没有的全新 3D 世界，通用性是 latent 路线短期难以匹敌的；而且像素级想象虽然贵，它<b>可被人类观看审计</b>——这对安全验证不是小事。</p>
+
+<figure role="img" aria-label="像素级预测与latent级预测的对立：预测云的每一帧 vs 预测抽象状态">
+<svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- 像素路线 -->
+  <rect x="20" y="20" width="320" height="120" rx="8" fill="none" stroke="var(--gen)" stroke-width="1.5"/>
+  <text x="180" y="42" font-family="Noto Sans SC" font-size="10.5" fill="var(--gen)" text-anchor="middle" font-weight="700">像素级预测（Genie/Sora）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <text x="180" y="66">预测: 下一帧每个像素长什么样</text>
+    <text x="180" y="86">"想象一堆云" = 画出云的具体形状 ★</text>
+    <text x="180" y="112" fill="var(--gen)">✓ 通用·可看·可当数据合成器</text>
+    <text x="180" y="130" fill="var(--gen)">✗ 算力烧在决策无关的细节上</text>
+  </g>
+  <!-- latent 路线 -->
+  <rect x="380" y="20" width="320" height="120" rx="8" fill="none" stroke="var(--lat)" stroke-width="1.5"/>
+  <text x="540" y="42" font-family="Noto Sans SC" font-size="10.5" fill="var(--lat)" text-anchor="middle" font-weight="700">latent 级预测（V-JEPA/Dreamer）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <text x="540" y="66">预测: 抽象状态怎么演化</text>
+    <text x="540" y="86">"想象一堆云" = [飘移][遮挡太阳] ★</text>
+    <text x="540" y="112" fill="var(--lat)">✓ 省·快·漂得慢·直接可规划</text>
+    <text x="540" y="130" fill="var(--lat)">✗ 不可视·抽象什么由架构说了算</text>
+  </g>
+
+  <!-- 裁决 -->
+  <rect x="20" y="160" width="680" height="44" rx="7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="360" y="180" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">裁决权在用途: 给人看/合成数据 → 像素赢; 给策略训练/规划 → latent 赢; 要精确可审计 → 物理引擎赢</text>
+  <text x="360" y="197" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.75">注: 三条线正在合流 — Cosmos 做像素但服务于下游策略; V-JEPA latent 但输出目标图像嵌入; MJWarp 可微且与学习模型组合</text>
+</svg>
+<figcaption><b>赌注与裁决。</b>LeCun 的论断"预测像素是浪费"决定了 V-JEPA 的形态：想象云不画云，只预测[飘移][遮挡]这类抽象状态——省下的算力换来了 122 万小时视频的规模。但裁决权其实在用途手里：给人看和合成训练数据，像素路线赢（可看可审计）；给策略训练和规划，latent 赢（快、漂得慢）；要物理精确可审计，物理引擎赢。2025 年的趋势是三条线合流而非互斥。</figcaption>
+</figure>
+
+<!-- ============ 用途图谱 ============ -->
+<h2>用途图谱：想象给谁消费</h2>
+<table>
+  <tr><th>用途</th><th>代表</th><th>消费想象的方式</th><th>漂移容忍度</th></tr>
+  <tr><td>策略训练</td><td class="c-lat">DreamerV3</td><td>Actor-Critic 在想象 rollout 里更新</td><td>中（定期回真机校准）</td></tr>
+  <tr><td>规划搜索</td><td class="c-lat">V-JEPA 2-AC</td><td>latent 里搜"最接近目标嵌入"的动作序列</td><td>高（只比终点不比路径）</td></tr>
+  <tr><td>数据合成</td><td class="c-gen">Cosmos / GAIA 2</td><td>生成稀有场景喂下游端到端/驾驶模型</td><td>低（片段短，不复合）</td></tr>
+  <tr><td>环境生成</td><td class="c-gen">Genie 2</td><td>整座可交互世界，agent 住进去训练</td><td>低（一致性别撑过1分钟）</td></tr>
+  <tr><td>精确仿真</td><td class="c-phys">MJWarp / mjlab</td><td>物理方程积分，域随机化扫参</td><td class="c-phys">无漂移（但模型有偏差）</td></tr>
+  <tr><td>人类观看</td><td class="c-gen">Sora</td><td>视频生成（严格说不算 agent 的世界模型）</td><td>—</td></tr>
+</table>
+
+<h2>结语：与你的工作坐标系</h2>
+<p>把世界模型放进你已有的坐标系：它就是<b>「四次范式跃迁」里的第四代、"WAM vs VLA」里的模拟器、"递归自演进」里 L2 闭环的弹药工厂、自动驾驶报告里补长尾的那一格</b>。四份前作里反复出现的同一个判断在这里得到统一解释：世界模型当前不是任何系统的替代者，而是所有交互数据匮乏场景的<b>增广器</b>——漂移困境（复合误差）决定了它只能短程可信，所以现实中的用法全是短片段消费（MPC 滚动、稀有场景合成、想象内短程 RL）。范式跃迁报告结语提的判断式"还有什么知识现在的载体装不下"——世界模型路线赌的答案正是：交互数据装不下，就用想象补。</p>
+
+<footer>
+  史料来源：DreamerV3 (arXiv:2301.04104, Hafner et al.)；Genie 2 (DeepMind 官方博客, 2024.12)；NVIDIA Cosmos (arXiv:2501.03575, 2025.1)；V-JEPA 2 (arXiv:2506.09985, 2025.6, Meta)；MJWarp (google-deepmind/mujoco_warp，见精度对齐报告)。系列前作：<a href="brain-cerebellum-report.html">大脑与小脑</a> · <a href="embodied-evolution-report.html">四次范式跃迁</a> · <a href="rsi-recursive-self-improvement-report.html">递归自演进</a> · <a href="autonomous-driving-report.html">端到端的代价</a>。
+</footer>
+
+</div>
+</body>
+</html>
