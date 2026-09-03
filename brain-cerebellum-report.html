@@ -582,6 +582,73 @@
   <tr><td>低延迟变体</td><td class="num-cell">4 帧 = 80ms</td><td>遥操作场景：人对延迟敏感，宁可少看未来</td></tr>
 </table>
 
+<h3 style="font-family:'Noto Serif SC',serif;font-size:1.25rem;margin:2.4rem 0 0.6rem">接口上的真实数据</h3>
+<p>两个方向传的东西规模悬殊。VLM 给 DiT 的是 <code>[~800 × 2048]</code> 的语义指纹——把"看见红色方块在左前方、任务是放进碗、手臂还在原位"整个处境压缩成约 164 万个浮点数，<b>其中不含任何运动信息</b>，"手往哪伸"是 DiT 自己看着这份快照推出来的。DiT 给小脑的是 <code>[40 × 7]</code> 的相对动作序列——每行"xyz 再移多少 + 姿态变化 + 夹爪开合"，仅 280 个数。压缩比约 5900:1，正是"理解"与"执行"的信息密度差。下面是 LIBERO 场景（真实 schema 的 7 维：x/y/z/roll/pitch/yaw/gripper）的样例：</p>
+
+<figure role="img" aria-label="VLM 到 DiT 的语义指纹与 DiT 到小脑的动作块样例对照">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="arrK4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- VLM 语义指纹 -->
+  <rect x="20" y="20" width="330" height="120" rx="8" fill="none" stroke="#C2410C" stroke-width="1.6"/>
+  <text x="185" y="42" font-family="IBM Plex Mono" font-size="10.5" fill="#C2410C" text-anchor="middle" font-weight="600">VLM → DiT：语义指纹 [~800 × 2048]</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <rect x="36" y="54" width="140" height="26" rx="4" fill="none" stroke="currentColor"/>
+    <text x="106" y="71" text-anchor="middle">图像token: "红方块在左前"</text>
+    <rect x="36" y="86" width="140" height="26" rx="4" fill="none" stroke="currentColor"/>
+    <text x="106" y="103" text-anchor="middle">语言token: "放进碗里"</text>
+    <rect x="36" y="118" width="140" height="26" rx="4" fill="none" stroke="currentColor"/>
+    <text x="106" y="135" text-anchor="middle">状态: "臂在原位"</text>
+  </g>
+  <text x="200" y="72" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">≈164万个浮点数</text>
+  <text x="200" y="90" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">不含任何运动指令 ★</text>
+  <text x="200" y="108" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">4轮去噪全程冻结,</text>
+  <text x="200" y="126" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">每轮重复注入当"引力"</text>
+
+  <!-- 中间箭头: DiT 雕刻 -->
+  <path d="M 350 80 L 390 80" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK4)"/>
+  <text x="370" y="70" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">DiT</text>
+  <text x="370" y="96" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">雕刻</text>
+
+  <!-- chunk 样例 -->
+  <rect x="396" y="20" width="304" height="120" rx="8" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+  <text x="548" y="42" font-family="IBM Plex Mono" font-size="10.5" fill="#0F766E" text-anchor="middle" font-weight="600">DiT → 小脑：chunk [40 × 7]</text>
+  <g font-family="IBM Plex Mono" font-size="8.8" fill="currentColor">
+    <text x="412" y="62">[ x     y     z    roll pit yaw grip ]</text>
+    <text x="412" y="78">f0 [ 0.00  0.00 -0.02  .   .   .   0.0]  下探</text>
+    <text x="412" y="93">f15[ 0.00  0.00 -0.00  .   .   .  -0.82]  闭爪</text>
+    <text x="412" y="108">f39[ 0.00  0.00  0.05  .   .   .   0.0]  上提</text>
+  </g>
+  <text x="548" y="130" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">280 个数 · 相对增量 · 5900:1 压缩</text>
+  <path d="M 548 140 L 548 170" stroke="#0F766E" stroke-width="1.8" marker-end="url(#arrK4)"/>
+
+  <!-- 产耗账本 -->
+  <text x="20" y="178" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="600">产耗账本：不是入不敷出，是 4 倍产能 + 抢占丢弃</text>
+  <text x="36" y="200" font-family="Noto Sans SC" font-size="10" fill="currentColor">生产：200ms 产 1 块 = 40 帧 ｜ 消费：200ms 吃 10 帧 → 产能 4 倍于食量</text>
+  <!-- 抢占时间轴 -->
+  <g font-family="IBM Plex Mono" font-size="8.5">
+    <rect x="36" y="214" width="220" height="22" rx="4" fill="#C2410C" opacity="0.85"/>
+    <text x="146" y="229" fill="#FFFFFF" text-anchor="middle">chunk₁ f1..f40</text>
+    <rect x="256" y="214" width="220" height="22" rx="4" fill="#C2410C" opacity="0.4"/>
+    <text x="366" y="229" fill="#FFFFFF" text-anchor="middle">被 chunk₂ 抢占 ✂</text>
+    <rect x="476" y="214" width="220" height="22" rx="4" fill="#C2410C" opacity="0.85"/>
+    <text x="586" y="229" fill="#FFFFFF" text-anchor="middle">chunk₂ f1..f40</text>
+  </g>
+  <!-- 消费标记 -->
+  <rect x="36" y="214" width="55" height="22" rx="4" fill="none" stroke="#0F766E" stroke-width="2"/>
+  <text x="63" y="250" font-family="IBM Plex Mono" font-size="8.5" fill="#0F766E" text-anchor="middle">只吃前10帧(200ms)</text>
+  <text x="36" y="272" font-family="Noto Sans SC" font-size="10" fill="currentColor">正常态：每块被吃 25% 就被新块顶掉——丢弃的 75% 是过时预测，抢占保证永远执行最新观测下最准的近 10 帧</text>
+  <text x="36" y="290" font-family="Noto Sans SC" font-size="10" fill="currentColor">异常态：块迟到时 40 帧库存才被真正消费——库存是延迟缓冲，不是常态供给（类比：不等水壶空了才烧水）</text>
+</svg>
+<figcaption><b>接口两侧与抢占机制。</b>上：VLM 交给 DiT 的是不含运动信息的语义指纹（"手往哪伸"是 DiT 自己推断的），DiT 交给小脑的是 280 个数的相对动作块——5900:1 的压缩比是"理解"与"执行"的信息密度差。下：产耗账本——大脑 200ms 产 40 帧、小脑 200ms 只吃 10 帧，产能 4 倍于食量；正常情况下每块只被消费 25% 就被更新的块抢占（吃最新的前 10 帧，丢弃过时的 75%），40 帧库存只在块迟到时救场。导航类比：每 200ms 重新规划一次路线，每次只信前 10 步。</figcaption>
+</figure>
+
+<p>被抢占还有另一层含义：它是大脑<b>唯一</b>的干预通道。世界突变时（方块被碰掉了），没有急停信号——小脑感知不到任务失败，它只管跟踪；大脑在下一帧图像里看到变化，把下一个 chunk 雕成"先下探重新抓取"，修正就这样通过换块平滑送达。闭环的分工由此完整：小脑的 20ms 闭环消化帧级误差（手偏 1cm → 力矩修正），大脑的抢占式换块消化轨迹级误差（世界变了 → 整段计划刷新），两层各管一个量级。</p>
+
 <!-- ============ 3 训练目标 ============ -->
 <h2><span class="sec-no">03</span>训练目标的本质差异</h2>
 <div class="claim">大脑学的是“任务”——从演示数据里学什么动作能完成什么指令；小脑学的是“跟踪”——从 142K 段人体动作里学怎么跟上任何参考。一个目标收敛于语义，一个目标收敛于动力学。</div>
