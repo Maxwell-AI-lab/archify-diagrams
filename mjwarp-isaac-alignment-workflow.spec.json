@@ -1,0 +1,315 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "MJWarp ↔ Isaac Lab 精度对齐：三块工作与可行性",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1188,
+      620
+    ],
+    "output": "mjwarp-isaac-alignment-workflow.html",
+    "views": [
+      {
+        "id": "phenomena",
+        "label": "① 现象层对齐",
+        "focus": [
+          "policy",
+          "mjwarp_env",
+          "isaac_env",
+          "metrics",
+          "verdict"
+        ],
+        "note": "同一策略在两个引擎跑，统计等价性判定。"
+      },
+      {
+        "id": "dynamics",
+        "label": "② 动力学层消融",
+        "focus": [
+          "contact",
+          "integrator",
+          "actuator",
+          "sensor",
+          "ablation"
+        ],
+        "note": "接触/积分器/执行器/传感差异逐一消融定位。"
+      },
+      {
+        "id": "budget",
+        "label": "③ 误差预算裁决",
+        "focus": [
+          "tolerance",
+          "decision",
+          "ablation"
+        ],
+        "note": "对不齐时怎么分配误差预算、走哪条补救路径。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "align1",
+      "label": "① 现象层：统计对齐"
+    },
+    {
+      "id": "align2",
+      "label": "② 动力学层：差异消融"
+    },
+    {
+      "id": "align3",
+      "label": "③ 工程裁决：误差预算"
+    }
+  ],
+  "phases": [
+    {
+      "id": "measure",
+      "label": "度量",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "locate",
+      "label": "定位",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "decide",
+      "label": "裁决",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "policy",
+    "mjwarp_env",
+    "metrics",
+    "verdict",
+    "tolerance",
+    "decision"
+  ],
+  "nodes": [
+    {
+      "id": "policy",
+      "lane": "align1",
+      "col": 0,
+      "type": "backend",
+      "label": "固定策略",
+      "sublabel": "同一 checkpoint + 同种子",
+      "width": 150
+    },
+    {
+      "id": "mjwarp_env",
+      "lane": "align1",
+      "col": 1,
+      "type": "cloud",
+      "label": "MJWarp 批量仿真",
+      "sublabel": "GPU 并行 rollout",
+      "width": 150
+    },
+    {
+      "id": "isaac_env",
+      "lane": "align1",
+      "col": 2,
+      "type": "cloud",
+      "label": "Isaac Lab 仿真",
+      "sublabel": "PhysX rollout",
+      "width": 150
+    },
+    {
+      "id": "metrics",
+      "lane": "align1",
+      "col": 3,
+      "type": "database",
+      "label": "对齐度量",
+      "sublabel": "轨迹散度 + 任务统计",
+      "width": 150
+    },
+    {
+      "id": "verdict",
+      "lane": "align1",
+      "col": 4,
+      "type": "security",
+      "label": "等价性判定",
+      "sublabel": "统计检验通过？",
+      "width": 150
+    },
+    {
+      "id": "ablation",
+      "lane": "align2",
+      "col": 2,
+      "type": "backend",
+      "label": "差异消融",
+      "sublabel": "逐项隔离定位",
+      "width": 150
+    },
+    {
+      "id": "contact",
+      "lane": "align2",
+      "col": 0,
+      "type": "backend",
+      "label": "接触求解器 ★",
+      "sublabel": "MuJoCo convex vs PhysX",
+      "tag": "最大差异源",
+      "width": 160
+    },
+    {
+      "id": "integrator",
+      "lane": "align2",
+      "col": 1,
+      "type": "backend",
+      "label": "积分器",
+      "sublabel": "IMPLICITFAST 缺失",
+      "width": 150
+    },
+    {
+      "id": "actuator",
+      "lane": "align2",
+      "col": 3,
+      "type": "backend",
+      "label": "执行器模型 ★",
+      "sublabel": "PD/延迟/增益语义",
+      "width": 150
+    },
+    {
+      "id": "sensor",
+      "lane": "align2",
+      "col": 4,
+      "type": "backend",
+      "label": "传感器/噪声",
+      "sublabel": "观测生成路径",
+      "width": 150
+    },
+    {
+      "id": "tolerance",
+      "lane": "align3",
+      "col": 4,
+      "type": "database",
+      "label": "误差预算",
+      "sublabel": "逐项容差分配",
+      "width": 150
+    },
+    {
+      "id": "decision",
+      "lane": "align3",
+      "col": 5,
+      "type": "security",
+      "label": "路径裁决",
+      "sublabel": "域随机化/参数辨识",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "a1",
+      "from": "policy",
+      "to": "mjwarp_env",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a2",
+      "from": "policy",
+      "to": "isaac_env",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a3",
+      "from": "mjwarp_env",
+      "to": "metrics",
+      "variant": "default"
+    },
+    {
+      "id": "a4",
+      "from": "isaac_env",
+      "to": "metrics",
+      "variant": "default"
+    },
+    {
+      "id": "a5",
+      "from": "metrics",
+      "to": "verdict",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a6",
+      "from": "verdict",
+      "to": "ablation",
+      "label": "不通过→定位",
+      "variant": "security"
+    },
+    {
+      "id": "a7",
+      "from": "contact",
+      "to": "ablation",
+      "variant": "dashed"
+    },
+    {
+      "id": "a8",
+      "from": "integrator",
+      "to": "ablation",
+      "variant": "dashed"
+    },
+    {
+      "id": "a9",
+      "from": "actuator",
+      "to": "ablation",
+      "variant": "dashed"
+    },
+    {
+      "id": "a10",
+      "from": "sensor",
+      "to": "ablation",
+      "variant": "dashed"
+    },
+    {
+      "id": "a11",
+      "from": "ablation",
+      "to": "tolerance",
+      "variant": "default"
+    },
+    {
+      "id": "a12",
+      "from": "tolerance",
+      "to": "decision",
+      "variant": "emphasis"
+    },
+    {
+      "id": "a14",
+      "from": "verdict",
+      "to": "tolerance",
+      "label": "误差归因",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "① 现象层：统计对齐（可行 ★★★★）",
+      "items": [
+        "同 checkpoint+种子双引擎 rollout，比 episode 长",
+        "轨迹逐帧误差 max|Δq| 早期指数发散属预期（混沌），看统计量",
+        "工具现成：MJWarp testspeed + Isaac Lab eval"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "② 动力学层：两大硬骨头",
+      "items": [
+        "接触求解器：MuJoCo convex(软约束) vs PhysX(刚性/T",
+        "MJWarp 明确不支持 PGS/noslip 求解器 + IMPLICIT",
+        "执行器：PD 增益/隐式执行语义两边实现有差，需参数对表"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "③ 工程裁决（可行 ★★★★★）",
+      "items": [
+        "误差预算：接触>执行器>积分器>传感器，逐项设容差",
+        "补救路径：对不齐→域随机化覆盖 / 系统辨识标定 / 锁 dt 对齐",
+        "Sim2Sim 交叉验证 = 终极标准（SONIC 已用此法）"
+      ]
+    }
+  ]
+}
