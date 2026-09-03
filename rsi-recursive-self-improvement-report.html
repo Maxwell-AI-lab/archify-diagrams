@@ -397,6 +397,45 @@
 
 <!-- ============ 判断 ============ -->
 <h2>结语：给从业者的定位</h2>
+
+<figure role="img" aria-label="审计两问流程：验证信号从哪来、回路外还有什么">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="rjArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 输入: 任何自称自我改进的系统 -->
+  <rect x="20" y="70" width="170" height="60" rx="8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <text x="105" y="94" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">任何自称</text>
+  <text x="105" y="112" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">"AI 自我改进"的系统</text>
+
+  <!-- 两问 -->
+  <path d="M 190 90 L 230 90" stroke="currentColor" stroke-width="1.5" marker-end="url(#rjArr)"/>
+  <rect x="234" y="30" width="220" height="60" rx="8" fill="none" stroke="var(--loop)" stroke-width="1.6"/>
+  <text x="344" y="54" font-family="Noto Sans SC" font-size="10.5" fill="var(--loop)" text-anchor="middle" font-weight="700">问① 验证信号从哪来？</text>
+  <text x="344" y="74" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">自己验证自己 → 会练歪</text>
+
+  <rect x="234" y="110" width="220" height="60" rx="8" fill="none" stroke="var(--loop)" stroke-width="1.6"/>
+  <text x="344" y="134" font-family="Noto Sans SC" font-size="10.5" fill="var(--loop)" text-anchor="middle" font-weight="700">问② 回路外还有什么？</text>
+  <text x="344" y="154" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">回路外不进步 → 有天花板</text>
+
+  <!-- 两判 -->
+  <path d="M 454 60 L 494 80" stroke="currentColor" stroke-width="1.5" marker-end="url(#rjArr)"/>
+  <path d="M 454 140 L 494 120" stroke="currentColor" stroke-width="1.5" marker-end="url(#rjArr)"/>
+  <rect x="498" y="50" width="200" height="48" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.4"/>
+  <text x="598" y="70" font-family="Noto Sans SC" font-size="9.5" fill="var(--guard)" text-anchor="middle" font-weight="700">判① 会不会把自己练歪</text>
+  <text x="598" y="88" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">→ 验证器独立性</text>
+  <rect x="498" y="108" width="200" height="48" rx="8" fill="none" stroke="var(--guard)" stroke-width="1.4"/>
+  <text x="598" y="128" font-family="Noto Sans SC" font-size="9.5" fill="var(--guard)" text-anchor="middle" font-weight="700">判② 天花板在哪</text>
+  <text x="598" y="146" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">→ 回路外清单</text>
+
+  <text x="20" y="192" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">这两个问题把 RSI 从科幻叙事还原成可审计的工程设计 — 而可审计, 恰是它从 L2 走向 L3 的真正门槛</text>
+</svg>
+<figcaption><b>审计两问。</b>遇到任何声称"AI 自我改进"的系统，先问两件事：验证信号从哪来（判断会不会把自己练歪——验证器独立性问题）；回路外还有什么（判断天花板在哪——回路外的环节不进步，飞轮必然收敛）。两个问题把 RSI 从科幻叙事还原成可审计的工程设计。</figcaption>
+</figure>
+
 <p>RSI 六十年的历史可以压缩成一句话：<b>哲学上无懈可击，数学上仅有一个不可实现的构造，工程上实现了三分之一</b>。L2 闭环（输出回流）已是日常工具，你的 RL 后训练、STaR、Self-Rewarding 都在其中；L3（改进方法本身入环）六十年无人做到——Self-Rewarding 挪进半步（裁判自己当），coevolve 构想想挪动数据分布这一步，而架构自动进化至今缺位。</p>
 <p>对你最实用的一条判断：当下所有声称"AI 自我改进"的系统，先问两个问题——<b>验证信号从哪来？回路外还有什么？</b>前者判断它会不会把自己练歪（验证器独立性），后者判断它的天花板在哪（回路外的环节不进步，飞轮必然收敛）。这两个问题把 RSI 从科幻叙事还原成了可审计的工程设计——而可审计，恰恰是它从 L2 走向 L3 的真正门槛。</p>
 
