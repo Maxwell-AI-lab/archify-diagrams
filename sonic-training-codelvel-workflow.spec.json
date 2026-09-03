@@ -1,0 +1,370 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "SONIC 训练流程·代码级：train_agent_trl 到 PPO 损失",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      528
+    ],
+    "output": "sonic-training-codelvel-workflow.html",
+    "views": [
+      {
+        "id": "entry",
+        "label": "入口与组装",
+        "focus": [
+          "entry",
+          "hydra",
+          "wrapper",
+          "universal",
+          "pv_wrap"
+        ],
+        "note": "Hydra 配置组装网络与环境，包装成 PolicyAndValue。"
+      },
+      {
+        "id": "rollout",
+        "label": "Rollout 采样",
+        "focus": [
+          "rollout_step",
+          "policy_step",
+          "env_step",
+          "proc"
+        ],
+        "note": "policy_step 出动作，环境步进，轨迹入 storage。"
+      },
+      {
+        "id": "update",
+        "label": "PPO 更新",
+        "focus": [
+          "mb",
+          "fwd",
+          "loss",
+          "ppo_loss",
+          "aux",
+          "opt"
+        ],
+        "note": "minibatch 前向 → PPO 损失+辅助损失 → 优化。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "setup",
+      "label": "入口与组装 (train_agent_trl.py)"
+    },
+    {
+      "id": "sample",
+      "label": "Rollout (trl/trainer/ppo_trainer.py)"
+    },
+    {
+      "id": "learn",
+      "label": "更新 (ppo_trainer + losses/)"
+    }
+  ],
+  "phases": [
+    {
+      "id": "init",
+      "label": "初始化",
+      "fromCol": 0,
+      "toCol": 2
+    },
+    {
+      "id": "collect",
+      "label": "采样",
+      "fromCol": 3,
+      "toCol": 4,
+      "variant": "emphasis"
+    },
+    {
+      "id": "train",
+      "label": "训练",
+      "fromCol": 5,
+      "toCol": 5,
+      "variant": "emphasis"
+    }
+  ],
+  "mainPath": [
+    "entry",
+    "hydra",
+    "wrapper",
+    "rollout_step",
+    "policy_step",
+    "env_step"
+  ],
+  "nodes": [
+    {
+      "id": "entry",
+      "lane": "setup",
+      "col": 0,
+      "type": "frontend",
+      "label": "train_agent_trl.py",
+      "sublabel": "accelerate 入口",
+      "width": 150
+    },
+    {
+      "id": "hydra",
+      "lane": "setup",
+      "col": 1,
+      "type": "backend",
+      "label": "Hydra 组装",
+      "sublabel": "sonic_release.yaml 组合",
+      "width": 150
+    },
+    {
+      "id": "wrapper",
+      "lane": "setup",
+      "col": 2,
+      "type": "backend",
+      "label": "ManagerEnvWrapper",
+      "sublabel": "envs/wrapper · mdp 插件",
+      "width": 150
+    },
+    {
+      "id": "universal",
+      "lane": "setup",
+      "col": 3,
+      "type": "backend",
+      "label": "UniversalTokenModule",
+      "sublabel": "trl/modules · 多源编码",
+      "width": 150
+    },
+    {
+      "id": "pv_wrap",
+      "lane": "setup",
+      "col": 4,
+      "type": "backend",
+      "label": "PolicyAndValueWrapper",
+      "sublabel": "Actor+FSQ+Critic 打包",
+      "width": 150
+    },
+    {
+      "id": "rollout_step",
+      "lane": "sample",
+      "col": 3,
+      "type": "cloud",
+      "label": "_rollout_step",
+      "sublabel": "episode 循环",
+      "width": 150
+    },
+    {
+      "id": "policy_step",
+      "lane": "sample",
+      "col": 4,
+      "type": "backend",
+      "label": "policy_step",
+      "sublabel": "Actor 推理+探索噪声",
+      "width": 150
+    },
+    {
+      "id": "env_step",
+      "lane": "sample",
+      "col": 5,
+      "type": "cloud",
+      "label": "env.step",
+      "sublabel": "4096 env · PD→物理",
+      "width": 150
+    },
+    {
+      "id": "proc",
+      "lane": "sample",
+      "col": 0,
+      "type": "database",
+      "label": "_setup_storage",
+      "sublabel": "轨迹缓冲 obs/a/r/done",
+      "width": 150
+    },
+    {
+      "id": "mb",
+      "lane": "learn",
+      "col": 0,
+      "type": "backend",
+      "label": "_get_mb_rollout_data",
+      "sublabel": "minibatch 切片",
+      "width": 150
+    },
+    {
+      "id": "fwd",
+      "lane": "learn",
+      "col": 1,
+      "type": "backend",
+      "label": "_forward_model",
+      "sublabel": "重算 log_prob/entropy/value",
+      "width": 150
+    },
+    {
+      "id": "loss",
+      "lane": "learn",
+      "col": 2,
+      "type": "security",
+      "label": "_compute_loss",
+      "sublabel": "主+辅助分发",
+      "width": 150
+    },
+    {
+      "id": "ppo_loss",
+      "lane": "learn",
+      "col": 3,
+      "type": "backend",
+      "label": "_compute_ppo_loss",
+      "sublabel": "ratio·adv·clip (token_losses)",
+      "width": 150
+    },
+    {
+      "id": "aux",
+      "lane": "learn",
+      "col": 4,
+      "type": "backend",
+      "label": "aux_loss 分支",
+      "sublabel": "g1_recon+latent 对齐族",
+      "width": 150
+    },
+    {
+      "id": "opt",
+      "lane": "learn",
+      "col": 5,
+      "type": "messagebus",
+      "label": "optimizer.step",
+      "sublabel": "accelerate 反传",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "c1",
+      "from": "entry",
+      "to": "hydra",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c2",
+      "from": "hydra",
+      "to": "wrapper",
+      "label": "实例化 env",
+      "variant": "default"
+    },
+    {
+      "id": "c3",
+      "from": "hydra",
+      "to": "universal",
+      "label": "实例化网络",
+      "variant": "default"
+    },
+    {
+      "id": "c4",
+      "from": "wrapper",
+      "to": "rollout_step",
+      "variant": "dashed"
+    },
+    {
+      "id": "c5",
+      "from": "universal",
+      "to": "pv_wrap",
+      "variant": "default"
+    },
+    {
+      "id": "c6",
+      "from": "pv_wrap",
+      "to": "rollout_step",
+      "variant": "default"
+    },
+    {
+      "id": "c7",
+      "from": "rollout_step",
+      "to": "policy_step",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c8",
+      "from": "policy_step",
+      "to": "env_step",
+      "label": "动作",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c9",
+      "from": "env_step",
+      "to": "rollout_step",
+      "label": "obs/reward",
+      "variant": "default"
+    },
+    {
+      "id": "c10",
+      "from": "rollout_step",
+      "to": "proc",
+      "label": "存轨迹",
+      "variant": "default"
+    },
+    {
+      "id": "c11",
+      "from": "proc",
+      "to": "mb",
+      "variant": "default"
+    },
+    {
+      "id": "c12",
+      "from": "mb",
+      "to": "fwd",
+      "variant": "default"
+    },
+    {
+      "id": "c13",
+      "from": "fwd",
+      "to": "loss",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c14",
+      "from": "loss",
+      "to": "ppo_loss",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c15",
+      "from": "loss",
+      "to": "aux",
+      "variant": "dashed"
+    },
+    {
+      "id": "c16",
+      "from": "ppo_loss",
+      "to": "opt",
+      "variant": "emphasis"
+    },
+    {
+      "id": "c17",
+      "from": "aux",
+      "to": "opt",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "组装层",
+      "items": [
+        "Hydra 从 config/ 树组合: actor_critic×algo×aux_losses×manager_env",
+        "UniversalTokenModule: g1/smpl/soma/teleop 编码器 + FSQ 量化",
+        "PolicyAndValueWrapper: Actor+Critic 双头单前向"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "采样与更新",
+      "items": [
+        "_rollout_step: policy_step→env.step 循环, 轨迹入 storage",
+        "_compute_ppo_loss: token_losses.py 的 ratio/adv/clip",
+        "aux 分支: ppo_trainer_aux_loss 加 g1_recon+多源 latent 对齐"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "配置族",
+      "items": [
+        "exp/: sonic_release 主配方 · bones_seed · h2 · v1_1",
+        "callbacks/: im_eval 动作评估 · model_save · wandb",
+        "manager_env/: rewards.py 每项奖励实现+events 域随机化"
+      ]
+    }
+  ]
+}
