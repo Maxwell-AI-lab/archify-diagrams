@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GR00T N1.7 代码架构：gr00t/ 包内部组合关系",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      620
+    ],
+    "output": "groot-code-architecture.html",
+    "views": [
+      {
+        "id": "model-core",
+        "label": "模型核心",
+        "focus": [
+          "gr00t_cls",
+          "backbone",
+          "action_head",
+          "dit",
+          "qwen3"
+        ],
+        "note": "Gr00tN1d7 = backbone + action_head 的组合。"
+      },
+      {
+        "id": "dit-internals",
+        "label": "DiT 内部",
+        "focus": [
+          "dit",
+          "ada",
+          "block",
+          "alt_vl"
+        ],
+        "note": "DiT 动作头的内部结构。"
+      },
+      {
+        "id": "pipeline",
+        "label": "训练与部署管线",
+        "focus": [
+          "pipeline",
+          "processor",
+          "onnx",
+          "trt"
+        ],
+        "note": "BasicPipeline 组装与部署导出。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "gr00t_cls",
+      "type": "backend",
+      "label": "Gr00tN1d7",
+      "sublabel": "PreTrainedModel 前向",
+      "pos": [
+        80,
+        150
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "gr00t_n1d7.py"
+    },
+    {
+      "id": "backbone",
+      "type": "backend",
+      "label": "Qwen3Backbone",
+      "sublabel": "视觉patch+语言",
+      "pos": [
+        350,
+        150
+      ],
+      "size": [
+        165,
+        60
+      ],
+      "tag": "qwen3_backbone.py"
+    },
+    {
+      "id": "action_head",
+      "type": "backend",
+      "label": "Gr00tN1d7ActionHead",
+      "sublabel": "flow matching 策略头",
+      "pos": [
+        350,
+        290
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "gr00t_n1d7.py"
+    },
+    {
+      "id": "dit",
+      "type": "backend",
+      "label": "DiT",
+      "sublabel": "去噪主干",
+      "pos": [
+        620,
+        290
+      ],
+      "size": [
+        140,
+        60
+      ],
+      "tag": "modules/dit.py"
+    },
+    {
+      "id": "ada",
+      "type": "database",
+      "label": "AdaLayerNorm",
+      "sublabel": "时间步条件注入",
+      "pos": [
+        620,
+        440
+      ],
+      "size": [
+        150,
+        58
+      ]
+    },
+    {
+      "id": "block",
+      "type": "database",
+      "label": "BasicTransformerBlock",
+      "sublabel": "self+cross attn",
+      "pos": [
+        850,
+        440
+      ],
+      "size": [
+        175,
+        58
+      ]
+    },
+    {
+      "id": "alt_vl",
+      "type": "backend",
+      "label": "AlternateVLDiT",
+      "sublabel": "每N块attend文本",
+      "pos": [
+        850,
+        290
+      ],
+      "size": [
+        155,
+        60
+      ]
+    },
+    {
+      "id": "qwen3",
+      "type": "cloud",
+      "label": "Qwen3-VL 权重",
+      "sublabel": "backbone 权重",
+      "pos": [
+        600,
+        40
+      ],
+      "size": [
+        160,
+        56
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "backend",
+      "label": "BasicPipeline",
+      "sublabel": "model+dataset 组装",
+      "pos": [
+        80,
+        290
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "model_pipeline.py"
+    },
+    {
+      "id": "processor",
+      "type": "database",
+      "label": "Processor",
+      "sublabel": "输入预处理",
+      "pos": [
+        80,
+        440
+      ],
+      "size": [
+        165,
+        58
+      ]
+    },
+    {
+      "id": "onnx",
+      "type": "cloud",
+      "label": "export_onnx_n1d7",
+      "sublabel": "导出 ONNX",
+      "pos": [
+        1050,
+        150
+      ],
+      "size": [
+        155,
+        58
+      ]
+    },
+    {
+      "id": "trt",
+      "type": "cloud",
+      "label": "TRT pipeline",
+      "sublabel": "build+verify",
+      "pos": [
+        1050,
+        290
+      ],
+      "size": [
+        140,
+        58
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "gr00t/model/gr00t_n1d7/",
+      "wraps": [
+        "gr00t_cls",
+        "backbone",
+        "action_head"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "gr00t/model/modules/",
+      "wraps": [
+        "dit",
+        "ada",
+        "block",
+        "alt_vl"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "from": "gr00t_cls",
+      "to": "backbone",
+      "label": "self.backbone",
+      "variant": "emphasis",
+      "labelAt": [
+        300,
+        172
+      ]
+    },
+    {
+      "from": "gr00t_cls",
+      "to": "action_head",
+      "label": "self.action_head",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelAt": [
+        280,
+        250
+      ]
+    },
+    {
+      "from": "qwen3",
+      "to": "backbone",
+      "label": "加载权重",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        460,
+        100
+      ]
+    },
+    {
+      "from": "backbone",
+      "to": "action_head",
+      "label": "隐状态",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        480,
+        230
+      ]
+    },
+    {
+      "from": "action_head",
+      "to": "dit",
+      "label": "self.model",
+      "variant": "emphasis",
+      "labelAt": [
+        575,
+        312
+      ]
+    },
+    {
+      "from": "dit",
+      "to": "ada",
+      "label": "条件注入",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        655,
+        395
+      ]
+    },
+    {
+      "from": "dit",
+      "to": "block",
+      "label": "堆叠N层",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        905,
+        395
+      ]
+    },
+    {
+      "from": "alt_vl",
+      "to": "dit",
+      "label": "继承",
+      "variant": "dashed"
+    },
+    {
+      "from": "pipeline",
+      "to": "gr00t_cls",
+      "label": "创建",
+      "variant": "default",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        190,
+        255
+      ]
+    },
+    {
+      "from": "pipeline",
+      "to": "processor",
+      "label": "配套",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        205,
+        375
+      ]
+    },
+    {
+      "from": "onnx",
+      "to": "trt",
+      "label": "build",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1175,
+        375
+      ]
+    },
+    {
+      "from": "backbone",
+      "to": "onnx",
+      "label": "导出",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "组合根",
+      "items": [
+        "Gr00tN1d7.forward = backbone.prepare→backbone()→action_head()",
+        "get_action = 同链路 + 动作头采样(去噪步数)",
+        "backbone 可整体冻结只训 action_head(set_trainable)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "DiT 动作头",
+      "items": [
+        "TimestepEncoder→AdaLayerNorm 注入时间步条件",
+        "BasicTransformerBlock 堆叠, cross-attn 吃 backbone 隐状态",
+        "AlternateVLDiT 变体: 每N块 attend 文本(省算力)"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "管线与部署",
+      "items": [
+        "BasicPipeline: model+dataset+collator+processor 四件套",
+        "deploy 脚本链: export_onnx→build_trt→verify",
+        "LoRA/全参微调走 LeRobot groot policy 类型"
+      ]
+    }
+  ]
+}
