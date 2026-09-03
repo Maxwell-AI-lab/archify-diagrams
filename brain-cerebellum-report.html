@@ -700,82 +700,221 @@
 <h3 style="font-family:'Noto Serif SC',serif;font-size:1.25rem;margin:2.8rem 0 0.6rem">SONIC 训练流水线：能复现级的五个步骤</h3>
 <p>把上面"小脑学跟踪"落到可复现的工序。总纲：PPO 拿 142K 段人体动捕当考题，4096 个并行 G1 同时应考，奖励就是"与标准答案差多少"，再叠三个 trick（FSQ 量化、多源对齐、域随机化）逼出泛化与鲁棒。</p>
 
-<figure role="img" aria-label="SONIC 训练五步流水线：造考题、设考场、定考生、评分、出师考核">
-<svg viewBox="0 0 720 430" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<figure role="img" aria-label="SONIC 训练全景：考题库制作、4096考场、考生网络、逐步评分、出师交叉考核的生动呈现">
+<svg viewBox="0 0 720 780" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
-    <marker id="arrK5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+    <marker id="arrK6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="arrT6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0F766E"/>
+    </marker>
+    <marker id="arrB6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C2410C"/>
     </marker>
   </defs>
 
-  <!-- 步骤0 造考题 -->
-  <rect x="20" y="18" width="660" height="64" rx="8" fill="none" stroke="#0F766E" stroke-width="1.5"/>
-  <text x="40" y="42" font-family="IBM Plex Mono" font-size="11" fill="#0F766E" font-weight="600">STEP 0 造考题（训练前一次性）</text>
-  <g font-family="IBM Plex Mono" font-size="9.5" fill="currentColor">
-    <text x="40" y="62">Bones-SEED 142K段·288h动捕(120fps CSV)</text>
-    <text x="330" y="62">→ convert_soma_csv: 重采样30fps + SMPL重定向到G1 29关节</text>
-    <text x="40" y="75" opacity="0"> </text>
+  <!-- ============ STEP 0: 造考题 — 生产线 ============ -->
+  <text x="20" y="24" font-family="IBM Plex Mono" font-size="11.5" fill="#0F766E" font-weight="700">STEP 0 · 造考题 —— 把人类动作翻译成机器人考卷</text>
+
+  <!-- 动捕小人 (火柴人跳舞) -->
+  <g stroke="#C2410C" stroke-width="2" fill="none" stroke-linecap="round">
+    <circle cx="60" cy="46" r="8"/>
+    <path d="M 60 54 L 60 78"/>
+    <path d="M 60 60 L 44 72"/>
+    <path d="M 60 60 L 78 68"/>
+    <path d="M 60 78 L 48 98"/>
+    <path d="M 60 78 L 74 96"/>
   </g>
-  <text x="330" y="75" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor">→ filter_and_copy: 滤越限/不可实现 → Motion Library 考题库</text>
+  <text x="60" y="118" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">人动捕 120fps</text>
 
-  <path d="M 350 82 L 350 102" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+  <!-- 重定向箭头: 人形→机器人形 -->
+  <path d="M 100 70 L 160 70" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK6)"/>
+  <text x="130" y="60" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">SMPL重定向</text>
+  <text x="130" y="86" font-family="IBM Plex Mono" font-size="8" fill="currentColor" text-anchor="middle">120→30fps</text>
 
-  <!-- 步骤1 考场 -->
-  <rect x="20" y="106" width="320" height="96" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
-  <text x="40" y="130" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 1 考场（manager_env 插件）</text>
+  <!-- G1 机器人小人 -->
+  <g stroke="#0F766E" stroke-width="2" fill="none" stroke-linecap="round">
+    <rect x="172" y="38" width="14" height="10" rx="2"/>
+    <path d="M 179 48 L 179 74"/>
+    <path d="M 179 54 L 166 66"/>
+    <path d="M 179 54 L 192 66"/>
+    <path d="M 179 74 L 168 94"/>
+    <path d="M 179 74 L 190 94"/>
+  </g>
+  <text x="179" y="118" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">G1 29关节轨迹</text>
+
+  <!-- 过滤漏斗 -->
+  <path d="M 240 44 L 300 44 L 278 84 L 262 84 Z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <text x="270" y="60" font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle">滤: 超限</text>
+  <text x="270" y="72" font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle">不可实现</text>
+  <!-- 被滤掉的 -->
+  <g stroke="#C2410C" stroke-width="1" opacity="0.45">
+    <line x1="248" y1="38" x2="244" y2="30"/>
+    <line x1="292" y1="38" x2="296" y2="30"/>
+  </g>
+  <path d="M 215 70 L 238 70" stroke="currentColor" stroke-width="1.4" marker-end="url(#arrK6)"/>
+
+  <!-- 考题库(一摞试卷) -->
+  <g>
+    <rect x="330" y="40" width="80" height="52" rx="3" fill="none" stroke="#0F766E" stroke-width="1.4"/>
+    <rect x="336" y="34" width="80" height="52" rx="3" fill="none" stroke="#0F766E" stroke-width="1.2" opacity="0.7"/>
+    <rect x="342" y="28" width="80" height="52" rx="3" fill="none" stroke="#0F766E" stroke-width="1"/>
+  </g>
+  <text x="404" y="50" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" font-weight="700">考题库</text>
+  <text x="404" y="66" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">142,000 段</text>
+  <text x="404" y="80" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">288 小时</text>
+  <path d="M 278 70 L 328 70" stroke="currentColor" stroke-width="1.4" marker-end="url(#arrK6)"/>
+
+  <!-- 考题样例: 一段轨迹曲线 -->
+  <rect x="450" y="28" width="250" height="66" rx="6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="575" y="44" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">每道考题 = θ*(t) 目标轨迹</text>
+  <path d="M 465 78 C 490 72, 500 50, 530 48 C 555 46, 565 66, 595 64 C 625 62, 640 40, 685 38" stroke="#0F766E" stroke-width="2" fill="none"/>
+  <circle cx="465" cy="78" r="3" fill="#0F766E"/>
+  <circle cx="685" cy="38" r="3" fill="#0F766E"/>
+  <text x="475" y="90" font-family="IBM Plex Mono" font-size="7.5" fill="currentColor">2~10秒</text>
+  <path d="M 410 64 L 448 64" stroke="currentColor" stroke-width="1.2" marker-end="url(#arrK6)"/>
+
+  <!-- ============ STEP 1: 考场 — 4096 个小格子 ============ -->
+  <text x="20" y="146" font-family="IBM Plex Mono" font-size="11.5" fill="currentColor" font-weight="700">STEP 1 · 设考场 —— 4096 间教室同时开考，每间都藏着恶作剧</text>
+
+  <!-- 网格考场: 8x4 小格, 每格里一个考生 -->
+  <g>
+    <!-- 用循环手写 32 个小格 -->
+    <g stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.8">
+      <rect x="20"  y="160" width="34" height="26" rx="3"/><rect x="58"  y="160" width="34" height="26" rx="3"/><rect x="96"  y="160" width="34" height="26" rx="3"/><rect x="134" y="160" width="34" height="26" rx="3"/><rect x="172" y="160" width="34" height="26" rx="3"/><rect x="210" y="160" width="34" height="26" rx="3"/><rect x="248" y="160" width="34" height="26" rx="3"/><rect x="286" y="160" width="34" height="26" rx="3"/>
+      <rect x="20"  y="190" width="34" height="26" rx="3"/><rect x="58"  y="190" width="34" height="26" rx="3"/><rect x="96"  y="190" width="34" height="26" rx="3"/><rect x="134" y="190" width="34" height="26" rx="3"/><rect x="172" y="190" width="34" height="26" rx="3"/><rect x="210" y="190" width="34" height="26" rx="3"/><rect x="248" y="190" width="34" height="26" rx="3"/><rect x="286" y="190" width="34" height="26" rx="3"/>
+      <rect x="20"  y="220" width="34" height="26" rx="3"/><rect x="58"  y="220" width="34" height="26" rx="3"/><rect x="96"  y="220" width="34" height="26" rx="3"/><rect x="134" y="220" width="34" height="26" rx="3"/><rect x="172" y="220" width="34" height="26" rx="3"/><rect x="210" y="220" width="34" height="26" rx="3"/><rect x="248" y="220" width="34" height="26" rx="3"/><rect x="286" y="220" width="34" height="26" rx="3"/>
+    </g>
+    <!-- 几个格子里画考生(火柴机器人) -->
+    <g stroke="#0F766E" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <g transform="translate(30,166)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+      <g transform="translate(68,196)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+      <g transform="translate(106,226)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+      <g transform="translate(182,166)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+      <g transform="translate(220,226)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+      <g transform="translate(258,196)"><circle cx="6" cy="3" r="2.4"/><path d="M 6 5 L 6 12"/><path d="M 6 7 L 1 11"/><path d="M 6 7 L 11 11"/><path d="M 6 12 L 2 17"/><path d="M 6 12 L 10 17"/></g>
+    </g>
+  </g>
+  <text x="170" y="262" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">4096 间教室 · 每间一道不同的考题 · 同一张卷子(策略共享)</text>
+
+  <!-- 恶作剧清单: 域随机化 -->
+  <rect x="360" y="158" width="340" height="92" rx="7" fill="none" stroke="#C2410C" stroke-width="1.4"/>
+  <text x="530" y="178" font-family="Noto Sans SC" font-size="10.5" fill="#C2410C" text-anchor="middle" font-weight="700">监考老师的恶作剧（域随机化，每局重抽）</text>
   <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
-    <text x="40" y="150">Isaac Lab · num_envs=4096 个 G1 并行</text>
-    <text x="40" y="166">考题下发: 每 env 随机抽一段 θ*(t)</text>
-    <text x="40" y="182">episode 500 步 × dt=20ms（与部署同频）</text>
-    <text x="40" y="196" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">域随机化: 推力/质量±10%/摩擦/质心/关节零位</text>
+    <text x="378" y="198">👊 随机时刻推一把（push_robot）</text>
+    <text x="378" y="216">⚖️ 体重 ±10%（质量随机）· 背包偏心（质心）</text>
+    <text x="378" y="234">🧊 换地板（摩擦）· 关节被拧歪一点（零位）</text>
   </g>
+  <text x="530" y="252" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.75">目的：没见过真机之前，先把"世界的恶意"都预演一遍</text>
 
-  <!-- 步骤2 考生 -->
-  <rect x="360" y="106" width="320" height="96" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
-  <text x="380" y="130" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 2 考生（网络）</text>
-  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
-    <text x="380" y="150">Encoder: 本体感知 ∥ 未来目标动作</text>
-    <text x="380" y="166">Actor(MLP) → FSQ量化 → 64维latent</text>
-    <text x="380" y="182">Decoder → 29目标角 → PD → 力矩</text>
-    <text x="380" y="196" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">Critic 另吃特权信息(真实质量/摩擦)</text>
+  <!-- 时间轴 -->
+  <line x1="20" y1="290" x2="340" y2="290" stroke="currentColor" stroke-width="1.3"/>
+  <g stroke="#0F766E" stroke-width="1.5">
+    <line x1="30" y1="285" x2="30" y2="295"/><line x1="90" y1="285" x2="90" y2="295"/><line x1="150" y1="285" x2="150" y2="295"/><line x1="210" y1="285" x2="210" y2="295"/><line x1="270" y1="285" x2="270" y2="295"/><line x1="330" y1="285" x2="330" y2="295"/>
   </g>
+  <text x="20" y="308" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">每格 20ms · 一场 500 步 = 10 秒 · 与部署同频 ★</text>
 
-  <!-- 闭环箭头: 考场-考生 -->
-  <path d="M 340 154 L 360 154" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK5)"/>
-  <path d="M 360 170 L 340 170" stroke="#0F766E" stroke-width="1.5" marker-end="url(#arrK5)"/>
-  <text x="350" y="146" font-family="IBM Plex Mono" font-size="8" fill="currentColor" text-anchor="middle">obs</text>
-  <text x="350" y="184" font-family="IBM Plex Mono" font-size="8" fill="#0F766E" text-anchor="middle">τ</text>
+  <!-- ============ STEP 2: 考生 — 数据流 ============ -->
+  <text x="20" y="344" font-family="IBM Plex Mono" font-size="11.5" fill="currentColor" font-weight="700">STEP 2 · 考生的身体 —— 一个前向的过程</text>
 
-  <path d="M 350 202 L 350 222" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+  <!-- 观测 -->
+  <rect x="20" y="360" width="128" height="70" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="84" y="380" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle" font-weight="700">眼睛: 观测</text>
+  <text x="84" y="398" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">关节角+角速度+IMU</text>
+  <text x="84" y="414" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">+未来10帧考题(lookahead)</text>
 
-  <!-- 步骤3 评分 -->
-  <rect x="20" y="226" width="660" height="76" rx="8" fill="none" stroke="#C2410C" stroke-width="1.5"/>
-  <text x="40" y="250" font-family="IBM Plex Mono" font-size="11" fill="#C2410C" font-weight="600">STEP 3 评分（rewards.py · 每步 dense 打分）</text>
-  <text x="40" y="272" font-family="IBM Plex Mono" font-size="11" fill="currentColor">r_t = w₁·跟踪(‖θ−θ*‖²+末端误差)  +  w₂·风格(平滑+能耗+对称)  −  w₃·惩罚(摔倒/超限)</text>
-  <text x="40" y="292" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">与 GRPO 场景的本质差异：PoC 任务是轨迹级稀疏（最后验一次），跟踪任务是每 20ms 都有分——天然 dense，不需要格式分/探针兜底</text>
+  <path d="M 148 395 L 178 395" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK6)"/>
 
-  <path d="M 350 302 L 350 322" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+  <!-- Actor+FSQ -->
+  <rect x="182" y="360" width="180" height="70" rx="7" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+  <text x="272" y="380" font-family="Noto Sans SC" font-size="10" fill="#0F766E" text-anchor="middle" font-weight="700">大脑: Actor → FSQ 量化</text>
+  <text x="272" y="398" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">连续输出压进有限码本</text>
+  <text x="272" y="414" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">→ 64 维 latent 意图</text>
 
-  <!-- 步骤4 训练循环 -->
-  <rect x="20" y="326" width="320" height="76" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
-  <text x="40" y="350" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 4 训练循环（PPO）</text>
-  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
-    <text x="40" y="370">Rollout 4096 env → GAE 算优势 → clip 更新</text>
-    <text x="40" y="386" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">辅助: latent重建 + SMPL/G1/遥操作 多源对齐</text>
+  <path d="M 362 395 L 392 395" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK6)"/>
+
+  <!-- Decoder+PD -->
+  <rect x="396" y="360" width="150" height="70" rx="7" fill="none" stroke="#0F766E" stroke-width="1.3"/>
+  <text x="471" y="380" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle" font-weight="700">小脑: Decoder→PD</text>
+  <text x="471" y="398" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">latent→29目标角</text>
+  <text x="471" y="414" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">→力矩 τ(物理公式)</text>
+
+  <path d="M 546 395 L 576 395" stroke="#0F766E" stroke-width="2" marker-end="url(#arrT6)"/>
+
+  <!-- 肌肉 -->
+  <rect x="580" y="360" width="120" height="70" rx="7" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+  <text x="640" y="382" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle" font-weight="700">肌肉: 物理引擎</text>
+  <text x="640" y="400" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">重力/碰撞/接触</text>
+  <text x="640" y="416" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">→ 新姿势 = 新观测</text>
+
+  <!-- Critic 旁听席 -->
+  <rect x="182" y="442" width="350" height="44" rx="7" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="357" y="460" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="700">👀 陪练 Critic：偷看特权信息（真实质量/摩擦）只帮训练，不上真机</text>
+  <text x="357" y="476" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle">作用：把"这场考试大概能得多少分"估准 → 降低梯度方差</text>
+
+  <!-- 循环箭头: 肌肉回到眼睛 -->
+  <path d="M 640 430 L 640 500 L 84 500 L 84 434" stroke="#0F766E" stroke-width="1.6" fill="none" marker-end="url(#arrT6)" stroke-dasharray="6 3"/>
+  <text x="362" y="494" font-family="IBM Plex Mono" font-size="8.5" fill="#0F766E" text-anchor="middle">20ms 一圈，转 500 圈 = 一场考试</text>
+
+  <!-- ============ STEP 3: 评分 ============ -->
+  <text x="20" y="540" font-family="IBM Plex Mono" font-size="11.5" fill="#C2410C" font-weight="700">STEP 3 · 评分 —— 不是最后打总评，是每 20ms 批注一次</text>
+
+  <!-- 参考轨迹 vs 实际轨迹 叠加图 -->
+  <rect x="20" y="554" width="350" height="96" rx="7" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="195" y="572" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">一条腿的角度随时间</text>
+  <line x1="40" y1="630" x2="350" y2="630" stroke="currentColor" stroke-width="1"/>
+  <!-- 参考轨迹(考题) -->
+  <path d="M 40 620 C 90 615, 110 580, 160 578 C 210 576, 230 610, 280 612 C 310 613, 330 590, 348 586" stroke="#C2410C" stroke-width="2" fill="none" stroke-dasharray="6 3"/>
+  <!-- 实际轨迹(考生) -->
+  <path d="M 40 622 C 92 618, 112 588, 162 584 C 212 580, 232 614, 282 615 C 312 616, 332 594, 348 590" stroke="#0F766E" stroke-width="2" fill="none"/>
+  <text x="330" y="580" font-family="IBM Plex Mono" font-size="8" fill="#C2410C">考题 θ*</text>
+  <text x="330" y="604" font-family="IBM Plex Mono" font-size="8" fill="#0F766E">考生 θ</text>
+  <!-- 误差垂线 -->
+  <g stroke="currentColor" stroke-width="1" opacity="0.6">
+    <line x1="160" y1="578" x2="160" y2="584"/>
+    <line x1="230" y1="610" x2="230" y2="614"/>
+    <line x1="310" y1="594" x2="310" y2="600"/>
   </g>
+  <text x="195" y="646" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.8">每个垂线 = 一步的跟踪误差 = 这一步的扣分依据</text>
 
-  <!-- 步骤5 出师 -->
-  <rect x="360" y="326" width="320" height="76" rx="8" fill="none" stroke="#0F766E" stroke-width="1.5"/>
-  <text x="380" y="350" font-family="IBM Plex Mono" font-size="11" fill="#0F766E" font-weight="600">STEP 5 出师考核</text>
-  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
-    <text x="380" y="370">Sim2Sim 交叉验证: Isaac 训 → MuJoCo 考</text>
-    <text x="380" y="386">过不了 = 过拟合引擎细节 → 回炉；过 → ONNX 上机</text>
+  <!-- 评分公式 -->
+  <rect x="390" y="554" width="310" height="96" rx="7" fill="none" stroke="#C2410C" stroke-width="1.3"/>
+  <text x="545" y="574" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">r_t = w₁·跟踪 − w₂·别扭 − w₃·犯规</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="406" y="596">跟踪：关节角差+手/脚位置差（越像考题越高分）</text>
+    <text x="406" y="614">别扭：抽搐/蛮力/左右不协调（像人才加分）</text>
+    <text x="406" y="632">犯规：摔倒(终止)/关节超限/自碰撞</text>
   </g>
-  <path d="M 340 364 L 360 364" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK5)"/>
+  <text x="545" y="646" font-family="Noto Sans SC" font-size="8.5" fill="#C2410C" text-anchor="middle">dense！每步都有分 → 永远有梯度（GRPO 场景没这待遇）</text>
 
-  <text x="20" y="424" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity="0.75">64+ GPU · accelerate launch · 数小时~1天 ｜ 官方发布 3 个 checkpoint：默认(200ms)/低延迟(80ms 遥操作)/v1.1(航向稳定)</text>
+  <!-- ============ STEP 4: 学习 ============ -->
+  <text x="20" y="686" font-family="IBM Plex Mono" font-size="11.5" fill="currentColor" font-weight="700">STEP 4 · 复盘 —— PPO 从 4096 份答卷里学一版新策略</text>
+
+  <!-- 流程: 卷子→GAE->clip更新->新策略 -->
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="20" y="700" width="130" height="40" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="85" y="716" text-anchor="middle">4096 份答卷</text>
+    <text x="85" y="730" text-anchor="middle" font-family="IBM Plex Mono" font-size="8">(obs,动作,每步分)</text>
+    <rect x="185" y="700" width="140" height="40" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="255" y="716" text-anchor="middle">GAE 复盘</text>
+    <text x="255" y="730" text-anchor="middle" font-family="IBM Plex Mono" font-size="8">哪一步走对了/错了</text>
+    <rect x="360" y="700" width="150" height="40" rx="6" fill="none" stroke="#0F766E" stroke-width="1.4"/>
+    <text x="435" y="716" text-anchor="middle">PPO clip 更新</text>
+    <text x="435" y="730" text-anchor="middle" font-family="IBM Plex Mono" font-size="8">好的加强,差的抑制</text>
+    <rect x="545" y="700" width="155" height="40" rx="6" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+    <text x="622" y="716" text-anchor="middle">→ 新版考生</text>
+    <text x="622" y="730" text-anchor="middle" font-family="IBM Plex Mono" font-size="8">重复, 数小时~1天</text>
+  </g>
+  <path d="M 150 720 L 183 720" stroke="currentColor" stroke-width="1.4" marker-end="url(#arrK6)"/>
+  <path d="M 325 720 L 358 720" stroke="currentColor" stroke-width="1.4" marker-end="url(#arrK6)"/>
+  <path d="M 510 720 L 543 720" stroke="currentColor" stroke-width="1.4" marker-end="url(#arrK6)"/>
+
+  <!-- 辅助损失注 -->
+  <text x="20" y="760" font-family="Noto Sans SC" font-size="9" fill="currentColor" opacity="0.85">附加作业：latent 要能还原出动作（防死记硬背）；SMPL/G1/遥操作三种语言译成同一套 latent（跨形态接口）</text>
+  <text x="20" y="776" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.7">STEP 5 · 出师考核：Isaac 训练的策略丢进 MuJoCo 重考（换个物理引擎还能走 = 真学会了）→ 过 → ONNX 上真机 50Hz</text>
 </svg>
-<figcaption><b>五步流水线。</b>0 造考题：142K 段动捕重定向成 G1 考题库；1 设考场：4096 并行环境 + 每局重抽的域随机化；2 定考生：Encoder→Actor→FSQ 量化（64 维 latent）→Decoder→PD，Critic 另吃特权信息；3 评分：每步 dense 的跟踪误差+风格-惩罚；4 训练：PPO + GAE + 多源对齐辅助损失；5 出师：Sim2Sim 交叉考试后 ONNX 上机。</figcaption>
+<figcaption><b>五步全景。</b>0 造考题：288 小时人体动捕重定向成 142K 道 G1 考卷（滤掉机器人做不到的）；1 设考场：4096 间教室同时开考，监考每局随机推一把、改体重、换地板——把"世界的恶意"提前预演；2 考生的身体：眼睛（观测+考题 lookahead）→ Actor+FSQ（把意图压成 64 维码本，天然平滑）→ Decoder+PD（物理公式转力矩）→ 物理引擎，20ms 一圈转 500 圈，陪练 Critic 偷看特权信息帮忙估分；3 评分：不是最后打总评，是每 20ms 批注一次——考题轨迹与考生轨迹之间的每条垂线都是扣分依据（dense，永远有梯度）；4 复盘：4096 份答卷 → GAE 定位哪步走对/走错 → PPO 好的加强差的抑制 → 新版考生重复数小时；5 出师：换 MuJoCo 引擎重考，防"只会 Isaac 的物理"，过了才 ONNX 上真机。</figcaption>
 </figure>
 
 <div class="duo">
