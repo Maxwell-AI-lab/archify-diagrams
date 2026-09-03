@@ -1,0 +1,526 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SONIC 训练↔仿真环境：代码调用架构",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1290,
+      720
+    ],
+    "output": "sonic-env-interaction-architecture.html",
+    "views": [
+      {
+        "id": "contract",
+        "label": "唯一接口",
+        "focus": [
+          "trainer",
+          "wrapper",
+          "env_step"
+        ],
+        "note": "训练侧与环境侧之间唯一的调用合同。"
+      },
+      {
+        "id": "env-internals",
+        "label": "环境内部插件",
+        "focus": [
+          "obs_plug",
+          "reward_plug",
+          "event_plug",
+          "term_plug",
+          "cmd_plug"
+        ],
+        "note": "ManagerEnv 决定给什么看、怎么打分、何时搞事。"
+      },
+      {
+        "id": "privileged",
+        "label": "观测分叉",
+        "focus": [
+          "obs_plug",
+          "priv_plug",
+          "wrapper",
+          "policy_step"
+        ],
+        "note": "特权信息只流向 Critic，Actor 永远不可见。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "trainer",
+      "type": "backend",
+      "label": "TRLPPOTrainer",
+      "sublabel": "trl/trainer/ppo_trainer.py",
+      "pos": [
+        60,
+        60
+      ],
+      "size": [
+        175,
+        62
+      ],
+      "tag": "训练侧"
+    },
+    {
+      "id": "policy_step",
+      "type": "backend",
+      "label": "policy_step",
+      "sublabel": "冻结权重推理 obs→a",
+      "pos": [
+        280,
+        125
+      ],
+      "size": [
+        160,
+        62
+      ],
+      "tag": "拍①考试"
+    },
+    {
+      "id": "rollout_step",
+      "type": "backend",
+      "label": "_rollout_step",
+      "sublabel": "500 步 episode 循环",
+      "pos": [
+        60,
+        190
+      ],
+      "size": [
+        160,
+        62
+      ],
+      "tag": "循环驱动"
+    },
+    {
+      "id": "wrapper",
+      "type": "security",
+      "label": "ManagerEnvWrapper",
+      "sublabel": "envs/wrapper/ · 唯一的门",
+      "pos": [
+        560,
+        190
+      ],
+      "size": [
+        190,
+        66
+      ],
+      "tag": "翻译官 ★"
+    },
+    {
+      "id": "env_step",
+      "type": "messagebus",
+      "label": "env.step(action批)",
+      "sublabel": "[4096,...] 进 → obs/r/done 出",
+      "pos": [
+        560,
+        60
+      ],
+      "size": [
+        190,
+        58
+      ],
+      "tag": "合同"
+    },
+    {
+      "id": "obs_plug",
+      "type": "database",
+      "label": "observations.py",
+      "sublabel": "挑 obs_dim 维给两边",
+      "pos": [
+        830,
+        40
+      ],
+      "size": [
+        165,
+        58
+      ],
+      "tag": "mdp/"
+    },
+    {
+      "id": "priv_plug",
+      "type": "security",
+      "label": "privileged.yaml",
+      "sublabel": "质量/摩擦→只给Critic",
+      "pos": [
+        1050,
+        40
+      ],
+      "size": [
+        170,
+        58
+      ],
+      "tag": "分叉口"
+    },
+    {
+      "id": "reward_plug",
+      "type": "database",
+      "label": "rewards.py",
+      "sublabel": "每步dense打分",
+      "pos": [
+        830,
+        155
+      ],
+      "size": [
+        165,
+        58
+      ],
+      "tag": "mdp/"
+    },
+    {
+      "id": "event_plug",
+      "type": "cloud",
+      "label": "events.py",
+      "sublabel": "推一把/改质量/换摩擦",
+      "pos": [
+        830,
+        270
+      ],
+      "size": [
+        165,
+        58
+      ],
+      "tag": "域随机化"
+    },
+    {
+      "id": "term_plug",
+      "type": "backend",
+      "label": "terminations.py",
+      "sublabel": "摔倒判定→自动reset",
+      "pos": [
+        830,
+        385
+      ],
+      "size": [
+        175,
+        58
+      ],
+      "tag": "mdp/"
+    },
+    {
+      "id": "cmd_plug",
+      "type": "database",
+      "label": "commands/motion.py",
+      "sublabel": "考题采样+lookahead",
+      "pos": [
+        830,
+        500
+      ],
+      "size": [
+        185,
+        58
+      ],
+      "tag": "mdp/"
+    },
+    {
+      "id": "isaac",
+      "type": "cloud",
+      "label": "Isaac Lab GPU 并行",
+      "sublabel": "PhysX · 4096 世界同时积分",
+      "pos": [
+        1060,
+        270
+      ],
+      "size": [
+        150,
+        62
+      ],
+      "tag": "引擎"
+    },
+    {
+      "id": "storage",
+      "type": "database",
+      "label": "_setup_storage",
+      "sublabel": "四件套存轨迹",
+      "pos": [
+        60,
+        320
+      ],
+      "size": [
+        175,
+        62
+      ],
+      "tag": "答卷存档"
+    },
+    {
+      "id": "gae",
+      "type": "backend",
+      "label": "GAE 批卷",
+      "sublabel": "Critic V(s)→A_t",
+      "pos": [
+        60,
+        470
+      ],
+      "size": [
+        160,
+        62
+      ],
+      "tag": "拍②"
+    },
+    {
+      "id": "update",
+      "type": "security",
+      "label": "PPO clip 更新",
+      "sublabel": "ratio→clip(0.8,1.2)",
+      "pos": [
+        60,
+        600
+      ],
+      "size": [
+        170,
+        62
+      ],
+      "tag": "拍③"
+    },
+    {
+      "id": "cvs",
+      "type": "messagebus",
+      "label": "新权重回 policy_step",
+      "sublabel": "循环数小时",
+      "pos": [
+        300,
+        600
+      ],
+      "size": [
+        180,
+        58
+      ],
+      "tag": "闭环"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "训练侧 · trl/",
+      "wraps": [
+        "trainer",
+        "policy_step",
+        "rollout_step",
+        "storage",
+        "gae",
+        "update",
+        "cvs"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "security-group",
+      "label": "环境侧 · envs/manager_env/mdp 插件",
+      "wraps": [
+        "obs_plug",
+        "reward_plug",
+        "event_plug",
+        "term_plug",
+        "cmd_plug",
+        "priv_plug",
+        "isaac"
+      ],
+      "pad": 14
+    }
+  ],
+  "connections": [
+    {
+      "from": "trainer",
+      "to": "policy_step",
+      "label": "调用",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "trainer",
+      "to": "rollout_step",
+      "label": "启动",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "policy_step",
+      "to": "env_step",
+      "label": "动作批 a",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "wrapper",
+      "to": "policy_step",
+      "label": "观测批 obs",
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "from": "env_step",
+      "to": "wrapper",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "wrapper",
+      "to": "obs_plug",
+      "label": "抽观测",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        790,
+        60
+      ]
+    },
+    {
+      "from": "wrapper",
+      "to": "reward_plug",
+      "label": "算分",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        715,
+        175
+      ]
+    },
+    {
+      "from": "wrapper",
+      "to": "event_plug",
+      "label": "注入扰动",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        715,
+        290
+      ]
+    },
+    {
+      "from": "wrapper",
+      "to": "term_plug",
+      "label": "查终止",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        715,
+        405
+      ]
+    },
+    {
+      "from": "wrapper",
+      "to": "cmd_plug",
+      "label": "下考题",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "priv_plug",
+      "to": "obs_plug",
+      "label": "特权流",
+      "variant": "security"
+    },
+    {
+      "from": "event_plug",
+      "to": "isaac",
+      "label": "改物理",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "term_plug",
+      "to": "isaac",
+      "label": "reset",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelAt": [
+        1060,
+        455
+      ]
+    },
+    {
+      "from": "rollout_step",
+      "to": "storage",
+      "label": "四件套",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "storage",
+      "to": "gae",
+      "label": "4096答卷",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "gae",
+      "to": "update",
+      "label": "A_t",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "update",
+      "to": "cvs",
+      "label": "新权重",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "cvs",
+      "to": "policy_step",
+      "label": "下一轮",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "via": [
+        [
+          390,
+          580
+        ],
+        [
+          360,
+          580
+        ],
+        [
+          360,
+          220
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "唯一合同",
+      "items": [
+        "训练侧只调 env.step(动作批)，环境只回 obs/reward/done 三件批",
+        "ManagerEnvWrapper 是翻译官：PyTorch 张量 ↔ 引擎格式",
+        "done 的 env 在环境内部自动 reset + 换考题，训练循环不用管"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "插件层的活",
+      "items": [
+        "observations：从几千个物理量里挑 obs_dim 维（谁看得见什么）",
+        "privileged.yaml：质量/摩擦只给 Critic——Actor 看了部署就失效",
+        "events：每局重抽推力/质量/摩擦——把世界恶意预演一遍"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "性能账",
+      "items": [
+        "env.step 一次 ≈2-5ms：4096 个世界 GPU 并行积分",
+        "4096 场考试同时进行仍只要 1-2 秒——CPU 串行要 2.3 小时",
+        "GPU 并行是'能不能训'的前提，不是优化"
+      ]
+    }
+  ]
+}
