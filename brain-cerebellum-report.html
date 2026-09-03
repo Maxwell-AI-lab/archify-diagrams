@@ -697,6 +697,100 @@
 
 <p>值得注意的工程后果：SONIC 的辅助损失族（latent 重建 + SMPL/G1/遥操作多源表示对齐）全都在为“任何参考源都能吃”服务——这是接口兼容性的训练保障，而不是泛化的锦上添花。</p>
 
+<h3 style="font-family:'Noto Serif SC',serif;font-size:1.25rem;margin:2.8rem 0 0.6rem">SONIC 训练流水线：能复现级的五个步骤</h3>
+<p>把上面"小脑学跟踪"落到可复现的工序。总纲：PPO 拿 142K 段人体动捕当考题，4096 个并行 G1 同时应考，奖励就是"与标准答案差多少"，再叠三个 trick（FSQ 量化、多源对齐、域随机化）逼出泛化与鲁棒。</p>
+
+<figure role="img" aria-label="SONIC 训练五步流水线：造考题、设考场、定考生、评分、出师考核">
+<svg viewBox="0 0 720 430" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="arrK5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 步骤0 造考题 -->
+  <rect x="20" y="18" width="660" height="64" rx="8" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+  <text x="40" y="42" font-family="IBM Plex Mono" font-size="11" fill="#0F766E" font-weight="600">STEP 0 造考题（训练前一次性）</text>
+  <g font-family="IBM Plex Mono" font-size="9.5" fill="currentColor">
+    <text x="40" y="62">Bones-SEED 142K段·288h动捕(120fps CSV)</text>
+    <text x="330" y="62">→ convert_soma_csv: 重采样30fps + SMPL重定向到G1 29关节</text>
+    <text x="40" y="75" opacity="0"> </text>
+  </g>
+  <text x="330" y="75" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor">→ filter_and_copy: 滤越限/不可实现 → Motion Library 考题库</text>
+
+  <path d="M 350 82 L 350 102" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+
+  <!-- 步骤1 考场 -->
+  <rect x="20" y="106" width="320" height="96" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="40" y="130" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 1 考场（manager_env 插件）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="40" y="150">Isaac Lab · num_envs=4096 个 G1 并行</text>
+    <text x="40" y="166">考题下发: 每 env 随机抽一段 θ*(t)</text>
+    <text x="40" y="182">episode 500 步 × dt=20ms（与部署同频）</text>
+    <text x="40" y="196" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">域随机化: 推力/质量±10%/摩擦/质心/关节零位</text>
+  </g>
+
+  <!-- 步骤2 考生 -->
+  <rect x="360" y="106" width="320" height="96" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="380" y="130" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 2 考生（网络）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="380" y="150">Encoder: 本体感知 ∥ 未来目标动作</text>
+    <text x="380" y="166">Actor(MLP) → FSQ量化 → 64维latent</text>
+    <text x="380" y="182">Decoder → 29目标角 → PD → 力矩</text>
+    <text x="380" y="196" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">Critic 另吃特权信息(真实质量/摩擦)</text>
+  </g>
+
+  <!-- 闭环箭头: 考场-考生 -->
+  <path d="M 340 154 L 360 154" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK5)"/>
+  <path d="M 360 170 L 340 170" stroke="#0F766E" stroke-width="1.5" marker-end="url(#arrK5)"/>
+  <text x="350" y="146" font-family="IBM Plex Mono" font-size="8" fill="currentColor" text-anchor="middle">obs</text>
+  <text x="350" y="184" font-family="IBM Plex Mono" font-size="8" fill="#0F766E" text-anchor="middle">τ</text>
+
+  <path d="M 350 202 L 350 222" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+
+  <!-- 步骤3 评分 -->
+  <rect x="20" y="226" width="660" height="76" rx="8" fill="none" stroke="#C2410C" stroke-width="1.5"/>
+  <text x="40" y="250" font-family="IBM Plex Mono" font-size="11" fill="#C2410C" font-weight="600">STEP 3 评分（rewards.py · 每步 dense 打分）</text>
+  <text x="40" y="272" font-family="IBM Plex Mono" font-size="11" fill="currentColor">r_t = w₁·跟踪(‖θ−θ*‖²+末端误差)  +  w₂·风格(平滑+能耗+对称)  −  w₃·惩罚(摔倒/超限)</text>
+  <text x="40" y="292" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">与 GRPO 场景的本质差异：PoC 任务是轨迹级稀疏（最后验一次），跟踪任务是每 20ms 都有分——天然 dense，不需要格式分/探针兜底</text>
+
+  <path d="M 350 302 L 350 322" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK5)"/>
+
+  <!-- 步骤4 训练循环 -->
+  <rect x="20" y="326" width="320" height="76" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="40" y="350" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">STEP 4 训练循环（PPO）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="40" y="370">Rollout 4096 env → GAE 算优势 → clip 更新</text>
+    <text x="40" y="386" font-family="IBM Plex Mono" font-size="9" fill="#0F766E">辅助: latent重建 + SMPL/G1/遥操作 多源对齐</text>
+  </g>
+
+  <!-- 步骤5 出师 -->
+  <rect x="360" y="326" width="320" height="76" rx="8" fill="none" stroke="#0F766E" stroke-width="1.5"/>
+  <text x="380" y="350" font-family="IBM Plex Mono" font-size="11" fill="#0F766E" font-weight="600">STEP 5 出师考核</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="380" y="370">Sim2Sim 交叉验证: Isaac 训 → MuJoCo 考</text>
+    <text x="380" y="386">过不了 = 过拟合引擎细节 → 回炉；过 → ONNX 上机</text>
+  </g>
+  <path d="M 340 364 L 360 364" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrK5)"/>
+
+  <text x="20" y="424" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity="0.75">64+ GPU · accelerate launch · 数小时~1天 ｜ 官方发布 3 个 checkpoint：默认(200ms)/低延迟(80ms 遥操作)/v1.1(航向稳定)</text>
+</svg>
+<figcaption><b>五步流水线。</b>0 造考题：142K 段动捕重定向成 G1 考题库；1 设考场：4096 并行环境 + 每局重抽的域随机化；2 定考生：Encoder→Actor→FSQ 量化（64 维 latent）→Decoder→PD，Critic 另吃特权信息；3 评分：每步 dense 的跟踪误差+风格-惩罚；4 训练：PPO + GAE + 多源对齐辅助损失；5 出师：Sim2Sim 交叉考试后 ONNX 上机。</figcaption>
+</figure>
+
+<div class="duo">
+  <div class="c">
+    <h3>FSQ 量化 — 为什么输出要压进码本</h3>
+    <p>Actor 输出压成 64 维有限码本 token：部署时低延迟、动作天然平滑不抖；更关键的是抽象掉具体动作细节、只留"运动意图"——这是泛化到没见过动作的第一重保障。</p>
+  </div>
+  <div class="c">
+    <h3>多源对齐 — 接口兼容性的来源</h3>
+    <p>辅助损失把 SMPL 动捕、G1 轨迹、遥操作三种输入的编码对齐到同一 latent 空间——于是大脑 VLM 的输出对 SONIC 来说只是"第四种参考动作源"。这不是锦上添花，是双脑接口的训练保障。</p>
+  </div>
+</div>
+
+<p>最后回到那个容易答错的问题：<b>SONIC 学会了 142K 个动作吗？</b>没有。它学的是"跟踪任意动作"的能力本身——训练时没见过的全新动作，部署时给目标序列就能跟（zero-shot）。三重机制合力保证这一点：FSQ 压掉细节、多源对齐打通形态、海量多样考题让"跟踪器"没有机会过拟合到特定动作。这就是"行为基础模型"一词的真实含义——类比 LLM 学的是"下一词预测"这个能力，而不是背下互联网。</p>
+
 <!-- ============ 4 闭环 ============ -->
 <h2><span class="sec-no">04</span>闭环的不对称</h2>
 <div class="claim">大脑开环：输出动作块后不看结果，靠下一个周期的视觉感知间接收敛。小脑闭环：20ms 一圈的力矩-状态反馈，靠 PD 和本体感知硬扛扰动。</div>
