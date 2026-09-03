@@ -419,6 +419,55 @@
 </table>
 
 <h2>结语：跃迁的规律</h2>
+
+<figure role="img" aria-label="四次跃迁的规律图：每次跃迁发生在上一代知识载体装不下新知识的时刻，数据规模涨一个数量级">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="evArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 载体升级链 -->
+  <g font-family="Noto Sans SC" font-size="9.5">
+    <rect x="20"  y="60" width="140" height="56" rx="7" fill="none" stroke="var(--era1)" stroke-width="1.4"/>
+    <text x="90"  y="82" text-anchor="middle">人工特征</text>
+    <text x="90"  y="100" text-anchor="middle" font-size="8.5" fill="var(--era1)">装不下<b>语义</b> ✗</text>
+
+    <rect x="200" y="60" width="140" height="56" rx="7" fill="none" stroke="var(--era2)" stroke-width="1.4"/>
+    <text x="270" y="82" text-anchor="middle">语言模型权重</text>
+    <text x="270" y="100" text-anchor="middle" font-size="8.5" fill="var(--era2)">装不下<b>毫米级动作</b> ✗</text>
+
+    <rect x="380" y="60" width="140" height="56" rx="7" fill="none" stroke="var(--era3)" stroke-width="1.4"/>
+    <text x="450" y="82" text-anchor="middle">VLM+扩散头</text>
+    <text x="450" y="100" text-anchor="middle" font-size="8.5" fill="var(--era3)">装不下<b>互联网级数据</b> ✗</text>
+
+    <rect x="560" y="60" width="140" height="56" rx="7" fill="none" stroke="var(--era4)" stroke-width="1.4"/>
+    <text x="630" y="82" text-anchor="middle">想象的动力学</text>
+    <text x="630" y="100" text-anchor="middle" font-size="8.5" fill="var(--era4)">装不下<b>?</b>（未决）</text>
+  </g>
+  <path d="M 160 88 L 196 88" stroke="currentColor" stroke-width="1.5" marker-end="url(#evArr)"/>
+  <path d="M 340 88 L 376 88" stroke="currentColor" stroke-width="1.5" marker-end="url(#evArr)"/>
+  <path d="M 520 88 L 556 88" stroke="currentColor" stroke-width="1.5" marker-end="url(#evArr)"/>
+
+  <!-- 数据规模阶梯 -->
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="90" y="150" text-anchor="middle">~万级演示</text>
+    <text x="270" y="150" text-anchor="middle">16万任务</text>
+    <text x="450" y="150" text-anchor="middle">100万+ episodes</text>
+    <text x="630" y="150" text-anchor="middle">互联网视频</text>
+  </g>
+  <path d="M 90 156 L 630 130" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+  <text x="360" y="176" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">载体每换一次 → 数据规模涨一个数量级（燃料与引擎交替推进，同构于 LLM 的 RNN→Transformer→Scaling）</text>
+
+  <!-- 判断式 -->
+  <rect x="20" y="192" width="680" height="40" rx="7" fill="none" stroke="var(--era4)" stroke-width="1.3" stroke-dasharray="5 3"/>
+  <text x="360" y="210" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle" font-weight="700">预测下一波不必预测算法，只需问：还有什么知识，现在的载体装不下？</text>
+  <text x="360" y="226" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">两个最热的候选答案：力觉与触觉（视觉载体装不下）· 长程物理因果（chunk 载体装不下）</text>
+</svg>
+<figcaption><b>跃迁的规律。</b>四次换引擎都发生在"上一代的知识载体无法装下下一代需要的知识"的时刻：人工特征装不下语义→语言模型权重；离散 token 装不下毫米级动作→连续生成头；真机交互装不下互联网级数据量→想象。每次载体更换，数据规模涨一个数量级。要预测下一波，不必预测算法——只需问"还有什么知识，现在的载体装不下"：力觉触觉与长程物理因果是当前最热的两个候选答案。</figcaption>
+</figure>
+
 <p>回看四次换引擎，规律只有一条：<b>每次跃迁都发生在"上一代的知识载体无法装下下一代需要的知识"的时刻</b>。人工特征装不下语义 → 换语言模型权重；离散 token 装不下毫米级动作 → 换连续生成头；真机交互装不下互联网级数据量 → 换想象。载体每次更换，数据规模就涨一个数量级——燃料与引擎的交替推进，和 LLM 从 RNN 到 Transformer 到 Scaling 的历史同构。</p>
 
 <p>对从业者的一个实用推论：判断下一波的方向，不必预测算法，只需问一个问题——<b>还有什么知识，现在的载体装不下？</b>候选答案里最热的两个：力觉与触觉（视觉载体装不下），和长程的物理因果（单帧/chunk 载体装不下）。前者通向触觉传感器与多模态融合的硬件-算法协同，后者正是世界模型路线的赌注。</p>
