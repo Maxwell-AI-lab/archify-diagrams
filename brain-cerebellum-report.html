@@ -917,6 +917,103 @@
 <figcaption><b>五步全景。</b>0 造考题：288 小时人体动捕重定向成 142K 道 G1 考卷（滤掉机器人做不到的）；1 设考场：4096 间教室同时开考，监考每局随机推一把、改体重、换地板——把"世界的恶意"提前预演；2 考生的身体：眼睛（观测+考题 lookahead）→ Actor+FSQ（把意图压成 64 维码本，天然平滑）→ Decoder+PD（物理公式转力矩）→ 物理引擎，20ms 一圈转 500 圈，陪练 Critic 偷看特权信息帮忙估分；3 评分：不是最后打总评，是每 20ms 批注一次——考题轨迹与考生轨迹之间的每条垂线都是扣分依据（dense，永远有梯度）；4 复盘：4096 份答卷 → GAE 定位哪步走对/走错 → PPO 好的加强差的抑制 → 新版考生重复数小时；5 出师：换 MuJoCo 引擎重考，防"只会 Isaac 的物理"，过了才 ONNX 上真机。</figcaption>
 </figure>
 
+<h3 style="font-family:'Noto Serif SC',serif;font-size:1.25rem;margin:2.8rem 0 0.6rem">STEP 4 展开：PPO 到底怎么训——考试、批卷、改脑三拍子</h3>
+<p>五步图里的 STEP 4 只写了一行，这里展开到精确。总纲：<b>考试期间网络权重是冻结的</b>——4096 个机器人用同一份旧策略 π_old 完整考完 500 步并记录四件套（观测、动作、每步得分、当时的把握度），然后<b>闭卷复盘</b>（不再碰环境），用"新脑子做这步的概率"与"考试时做这步的概率"的比值来加权学习，比值被 clip 限制在 [0.8, 1.2] 防止一次改太猛。</p>
+
+<figure role="img" aria-label="PPO 三拍子循环：冻结考试、Critic批卷GAE算优势、clip比值更新网络">
+<svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="arrK7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="arrT7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0F766E"/>
+    </marker>
+  </defs>
+
+  <!-- 拍子1: 考试 -->
+  <rect x="20" y="18" width="200" height="150" rx="8" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+  <text x="120" y="40" font-family="IBM Plex Mono" font-size="10.5" fill="#0F766E" text-anchor="middle" font-weight="700">拍① 考试 (Rollout)</text>
+  <text x="120" y="58" font-family="Noto Sans SC" font-size="9.5" fill="#C2410C" text-anchor="middle" font-weight="700">🔒 权重冻结 = π_old</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="120" y="80" text-anchor="middle">4096 env 各考完 500 步</text>
+    <text x="120" y="96" text-anchor="middle">每步记录四件套:</text>
+  </g>
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">
+    <rect x="40" y="106" width="70" height="20" rx="3" fill="none" stroke="currentColor"/>
+    <text x="75" y="120" text-anchor="middle">观测 o</text>
+    <rect x="116" y="106" width="70" height="20" rx="3" fill="none" stroke="currentColor"/>
+    <text x="151" y="120" text-anchor="middle">动作 a</text>
+    <rect x="40" y="130" width="70" height="20" rx="3" fill="none" stroke="currentColor"/>
+    <text x="75" y="144" text-anchor="middle">得分 r</text>
+    <rect x="116" y="130" width="70" height="20" rx="3" fill="none" stroke="#C2410C"/>
+    <text x="151" y="144" text-anchor="middle" fill="#C2410C">把握度π</text>
+  </g>
+  <text x="120" y="162" font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.7">(存 logπ_old 就为第三拍用)</text>
+
+  <path d="M 220 93 L 252 93" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK7)"/>
+
+  <!-- 拍子2: 批卷 -->
+  <rect x="256" y="18" width="200" height="150" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="356" y="40" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">拍② 批卷 (算优势)</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="356" y="62" text-anchor="middle">Critic 先估"预期成绩":</text>
+    <text x="356" y="78" text-anchor="middle" font-family="IBM Plex Mono" font-size="9">V(s) = 这局面预计得几分</text>
+    <text x="356" y="100" text-anchor="middle">GAE 算每步"超预期量":</text>
+  </g>
+  <rect x="286" y="110" width="140" height="26" rx="4" fill="none" stroke="currentColor"/>
+  <text x="356" y="127" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" text-anchor="middle">A_t = 好多少 / 差多少</text>
+  <text x="356" y="152" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle"><tspan fill="#0F766E" font-weight="700">A&gt;0</tspan> 这步比预期好 → 该加强</text>
+
+  <path d="M 456 93 L 488 93" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrK7)"/>
+
+  <!-- 拍子3: 改脑 -->
+  <rect x="492" y="18" width="208" height="150" rx="8" fill="none" stroke="#0F766E" stroke-width="1.6"/>
+  <text x="596" y="40" font-family="IBM Plex Mono" font-size="10.5" fill="#0F766E" text-anchor="middle" font-weight="700">拍③ 改脑 (闭卷更新)</text>
+  <text x="596" y="62" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">同一批卷子复读 ppo_epochs 遍:</text>
+  <rect x="512" y="70" width="168" height="30" rx="4" fill="none" stroke="#C2410C" stroke-width="1.3"/>
+  <text x="596" y="89" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">ratio = π_new / π_old</text>
+  <rect x="512" y="106" width="168" height="34" rx="4" fill="none" stroke="#C2410C" stroke-width="1.6"/>
+  <text x="596" y="120" font-family="IBM Plex Mono" font-size="8.5" fill="#C2410C" text-anchor="middle" font-weight="700">clip(ratio, 0.8, 1.2)</text>
+  <text x="596" y="132" font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle">单次调整封顶 ±20% — 防重写事故</text>
+  <text x="596" y="156" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">好步(A&gt;0)推高概率 / 差步压低</text>
+
+  <!-- 循环回路 -->
+  <path d="M 596 168 L 596 196 L 120 196 L 120 172" stroke="#0F766E" stroke-width="1.8" fill="none" marker-end="url(#arrT7)"/>
+  <text x="358" y="190" font-family="IBM Plex Mono" font-size="9" fill="#0F766E" text-anchor="middle">解锁新权重 → 重新考试 → 循环数小时</text>
+
+  <!-- clip 四象限 -->
+  <text x="20" y="232" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="700">Clip 的不对称智慧（PPO 灵魂）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="20" y="244" width="170" height="24" fill="none" stroke="currentColor" stroke-width="1"/>
+    <rect x="190" y="244" width="170" height="24" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="105" y="260" text-anchor="middle" font-weight="700">A &gt; 0（好步）</text>
+    <text x="275" y="260" text-anchor="middle" font-weight="700">A &lt; 0（差步）</text>
+    <rect x="20" y="268" width="170" height="26" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    <rect x="190" y="268" width="170" height="26" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    <rect x="20" y="294" width="170" height="26" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    <rect x="190" y="294" width="170" height="26" fill="none" stroke="currentColor" stroke-width="0.8"/>
+    <text x="105" y="285" text-anchor="middle">加分上限 1.2 — 防捧杀</text>
+    <text x="275" y="285" text-anchor="middle">压到 0.8 就停 — 防一棍打死</text>
+    <text x="105" y="311" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5">ratio&gt;1.2 → 梯度饱和</text>
+    <text x="275" y="311" text-anchor="middle">取更悲观的更新</text>
+  </g>
+  <text x="200" y="340" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">宁可学慢，不可学崩——崩一次重启的代价 &gt; 慢 20% 的代价</text>
+
+  <!-- 为什么PPO不用GRPO -->
+  <text x="400" y="232" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="700">为什么 SONIC 用 PPO 而不是 GRPO</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="400" y="244" width="300" height="76" rx="6" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="416" y="264">① 奖励 dense → Critic 便宜又准</text>
+    <text x="416" y="282">② 组采样要 ×8 rollout，物理仿真太贵；</text>
+    <text x="416" y="298">   同预算下 PPO 见的题多 8 倍 = 泛化燃料</text>
+    <text x="416" y="314">③ GAE 逐步归因，跟踪任务需要步级信用</text>
+  </g>
+  <text x="550" y="340" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">反向：奖励稀疏 + rollout 便宜 → GRPO（CyberGym 选对了）</text>
+</svg>
+<figcaption><b>三拍子循环。</b>拍① 考试：权重冻结，4096 个考生用同一份 π_old 考完 500 步，记录观测/动作/得分/当时的把握度四件套；拍② 批卷：Critic 估"这个局面预计得几分"当预期，GAE 算出每步的超预期量 A（比预期好还是差、差多少）；拍③ 改脑：闭卷（不再碰环境）用新旧概率比值加权更新——好步推高、差步压低，但 clip 把单次调整封在 ±20%：加分有上限防捧杀，压差有下限防一棍打死。解锁新权重回到拍①，循环数小时。右侧：不用 GRPO 的三笔账——dense 奖励让 Critic 便宜、组采样的 8 倍 rollout 在物理仿真里太贵（同预算 PPO 见的题多 8 倍）、跟踪需要 GAE 的逐步归因。</figcaption>
+</figure>
+
 <div class="duo">
   <div class="c">
     <h3>FSQ 量化 — 为什么输出要压进码本</h3>
