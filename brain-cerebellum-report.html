@@ -224,6 +224,169 @@
   </div>
 </div>
 
+<!-- ============ 01b 从指令到动作块 ============ -->
+<h2><span class="sec-no">01½</span>从指令到动作块</h2>
+<div class="claim">大脑内部是两种生成方式的接力：VLM 骨干用「逐 token」的方式读懂指令，DiT 头用「整段去噪」的方式画出动作，最后吐出的动作块用「相对量」描述未来。</div>
+
+<p>这三个词——AR、扩散、相对量——各有具体的形象。AR 是看着自己已写的前文一个字一个字往外蹦（GPT 就是这样）；扩散是从一团噪声草稿开始，几步把整段动作同时誊清；相对量说的是动作不描述"关节在几度"，只描述"在当前位置的基础上再转几度"。</p>
+
+<figure role="img" aria-label="大脑内部三段接力：AR 逐 token 理解指令，扩散整段去噪生成动作，输出相对量动作块">
+<svg viewBox="0 0 720 560" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="arrB2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C2410C"/>
+    </marker>
+    <marker id="arrT2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0F766E"/>
+    </marker>
+    <marker id="arrK2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- ============ 第一段: AR 逐 token ============ -->
+  <text x="20" y="24" font-family="IBM Plex Mono" font-size="11" fill="#C2410C" font-weight="600">① VLM 骨干 · AR（逐 token 蹦）</text>
+
+  <!-- 输入: 指令 -->
+  <rect x="20" y="42" width="150" height="58" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="95" y="65" font-family="Noto Sans SC" font-size="11" fill="currentColor" text-anchor="middle">📷 图像</text>
+  <text x="95" y="86" font-family="Noto Sans SC" font-size="11" fill="currentColor" text-anchor="middle">"把杯子放架子上"</text>
+
+  <!-- token 序列逐步生长 -->
+  <g font-family="IBM Plex Mono" font-size="10.5" fill="currentColor">
+    <rect x="220" y="44" width="58" height="22" rx="4" fill="none" stroke="currentColor"/>
+    <text x="249" y="59" text-anchor="middle">杯子</text>
+    <rect x="284" y="44" width="42" height="22" rx="4" fill="none" stroke="currentColor" opacity="0.75"/>
+    <text x="305" y="59" text-anchor="middle">在左</text>
+    <rect x="332" y="44" width="42" height="22" rx="4" fill="none" stroke="currentColor" opacity="0.5"/>
+    <text x="353" y="59" text-anchor="middle">先接</text>
+    <rect x="380" y="44" width="42" height="22" rx="4" fill="none" stroke="currentColor" opacity="0.3"/>
+    <text x="401" y="59" text-anchor="middle">近它</text>
+  </g>
+  <!-- 逐个生长的箭头 -->
+  <path d="M 278 55 L 282 55" stroke="#C2410C" stroke-width="1.5" marker-end="url(#arrB2)"/>
+  <path d="M 326 55 L 330 55" stroke="#C2410C" stroke-width="1.5" marker-end="url(#arrB2)"/>
+  <path d="M 374 55 L 378 55" stroke="#C2410C" stroke-width="1.5" marker-end="url(#arrB2)"/>
+  <text x="440" y="50" font-family="Noto Sans SC" font-size="10" fill="currentColor">每个 token 都看着</text>
+  <text x="440" y="66" font-family="Noto Sans SC" font-size="10" fill="currentColor">前面已生成的部分</text>
+
+  <path d="M 170 71 L 216 71" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+  <text x="193" y="63" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">理解</text>
+
+  <!-- 隐状态输出 -->
+  <rect x="520" y="44" width="170" height="52" rx="7" fill="none" stroke="#C2410C" stroke-width="1.6"/>
+  <text x="605" y="65" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" text-anchor="middle">语义隐状态 h</text>
+  <text x="605" y="84" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">"懂了: 去左边拿杯子"</text>
+  <path d="M 422 55 L 516 55" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+
+  <!-- ============ 第二段: 扩散去噪 ============ -->
+  <text x="20" y="150" font-family="IBM Plex Mono" font-size="11" fill="#C2410C" font-weight="600">② DiT 动作头 · 扩散（整段一起誊清）</text>
+
+  <!-- t=0 噪声 -->
+  <rect x="20" y="168" width="120" height="76" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="80" y="187" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">t=0 纯噪声</text>
+  <!-- 噪声点 -->
+  <g fill="currentColor" opacity="0.45">
+    <circle cx="45" cy="205" r="2.4"/><circle cx="58" cy="215" r="2.4"/><circle cx="70" cy="200" r="2.4"/>
+    <circle cx="84" cy="218" r="2.4"/><circle cx="95" cy="204" r="2.4"/><circle cx="108" cy="212" r="2.4"/>
+    <circle cx="118" cy="200" r="2.4"/><circle cx="50" cy="222" r="2.4"/><circle cx="92" cy="228" r="2.4"/>
+  </g>
+  <text x="80" y="240" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">草稿: 乱七八糟</text>
+
+  <path d="M 140 206 L 176 206" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+  <text x="158" y="198" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">去噪</text>
+
+  <!-- t=中间: 半成形轨迹 -->
+  <rect x="180" y="168" width="120" height="76" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="240" y="187" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">t=中间 轮廓</text>
+  <!-- 半成形曲线 -->
+  <path d="M 195 225 C 215 218, 225 195, 250 195 C 268 195, 272 208, 286 206" stroke="#C2410C" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="4 3"/>
+  <text x="240" y="240" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">隐约是条路</text>
+
+  <path d="M 300 206 L 336 206" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+  <text x="318" y="198" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">去噪</text>
+
+  <!-- t=终: 清晰轨迹 -->
+  <rect x="340" y="168" width="120" height="76" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="400" y="187" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">t=终 定稿</text>
+  <path d="M 355 226 C 375 220, 385 193, 410 193 C 428 193, 432 206, 446 204" stroke="#C2410C" stroke-width="2.4" fill="none"/>
+  <text x="400" y="240" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">一条工整的动作轨迹</text>
+
+  <!-- h 注入 -->
+  <path d="M 605 96 L 605 130 L 400 130 L 400 168" stroke="#C2410C" stroke-width="1.4" stroke-dasharray="4 3" fill="none" marker-end="url(#arrB2)"/>
+  <text x="500" y="124" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">语义 h 注入每一步去噪 (cross-attn)</text>
+
+  <!-- 为什么用扩散 -->
+  <text x="482" y="176" font-family="Noto Sans SC" font-size="10" fill="currentColor">为什么不用回归?同一状态</text>
+  <text x="482" y="192" font-family="Noto Sans SC" font-size="10" fill="currentColor">"左边抓"和"右边抓"都对。</text>
+  <text x="482" y="208" font-family="Noto Sans SC" font-size="10" fill="currentColor">回归会输出两者平均——</text>
+  <text x="482" y="224" font-family="Noto Sans SC" font-size="10" fill="currentColor">中间(两边都够不着)。</text>
+  <text x="482" y="240" font-family="Noto Sans SC" font-size="10" fill="currentColor">扩散能表达多峰分布。</text>
+
+  <!-- ============ 第三段: 相对量 chunk ============ -->
+  <text x="20" y="284" font-family="IBM Plex Mono" font-size="11" fill="#C2410C" font-weight="600">③ action chunk · 相对量（在当前位置基础上，未来这样动）</text>
+
+  <path d="M 400 244 L 400 270" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+
+  <!-- 绝对 vs 相对对比 -->
+  <!-- 绝对量(划掉) -->
+  <rect x="20" y="302" width="300" height="118" rx="7" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="170" y="322" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle" opacity="0.7">绝对量 ✗（依赖零位，换机器人就废）</text>
+  <g font-family="IBM Plex Mono" font-size="10" fill="currentColor" opacity="0.55">
+    <rect x="36" y="334" width="120" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="96" y="350" text-anchor="middle">关节1 → 37°</text>
+    <rect x="36" y="364" width="120" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="96" y="380" text-anchor="middle">关节2 → -12°</text>
+    <rect x="36" y="394" width="120" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="96" y="410" text-anchor="middle">关节3 → 88°</text>
+  </g>
+  <text x="200" y="352" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.6">37° 从哪算起?</text>
+  <text x="200" y="368" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.6">换台机器人零位不同,</text>
+  <text x="200" y="384" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" opacity="0.6">这套数字全作废</text>
+
+  <!-- 相对量(采用) -->
+  <rect x="345" y="302" width="355" height="118" rx="7" fill="none" stroke="#C2410C" stroke-width="1.6"/>
+  <text x="522" y="322" font-family="IBM Plex Mono" font-size="10" fill="#C2410C" text-anchor="middle" font-weight="600">相对量 ✓（只描述变化，跨机器人可迁移）</text>
+  <g font-family="IBM Plex Mono" font-size="10" fill="currentColor">
+    <rect x="361" y="334" width="150" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="436" y="350" text-anchor="middle">关节1 +3°</text>
+    <rect x="361" y="364" width="150" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="436" y="380" text-anchor="middle">关节1 再 +2°</text>
+    <rect x="361" y="394" width="150" height="24" rx="4" fill="none" stroke="currentColor"/>
+    <text x="436" y="410" text-anchor="middle">关节2 -1°</text>
+  </g>
+  <!-- 打包箭头 -->
+  <g font-family="IBM Plex Mono" font-size="10" fill="currentColor">
+    <rect x="545" y="334" width="140" height="84" rx="5" fill="none" stroke="#C2410C" stroke-width="1.4"/>
+    <text x="615" y="352" text-anchor="middle" fill="#C2410C" font-weight="600">chunk</text>
+    <rect x="560" y="362" width="18" height="12" rx="2" fill="#C2410C" opacity="0.85"/>
+    <rect x="582" y="362" width="18" height="12" rx="2" fill="#C2410C" opacity="0.6"/>
+    <rect x="604" y="362" width="18" height="12" rx="2" fill="#C2410C" opacity="0.4"/>
+    <rect x="626" y="362" width="18" height="12" rx="2" fill="#C2410C" opacity="0.25"/>
+    <rect x="648" y="362" width="18" height="12" rx="2" fill="#C2410C" opacity="0.15"/>
+    <text x="615" y="390" text-anchor="middle">一整段未来</text>
+    <text x="615" y="406" text-anchor="middle">打包一次交付</text>
+  </g>
+  <path d="M 511 376 L 545 376" stroke="#C2410C" stroke-width="1.8" marker-end="url(#arrB2)"/>
+  <path d="M 156 346 L 186 346" stroke="currentColor" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- ============ 底部: 交给小脑 ============ -->
+  <path d="M 615 420 L 615 458" stroke="#0F766E" stroke-width="2" marker-end="url(#arrT2)"/>
+  <rect x="440" y="462" width="260" height="52" rx="8" fill="none" stroke="#0F766E" stroke-width="1.8"/>
+  <text x="570" y="484" font-family="Noto Sans SC" font-size="12" fill="currentColor" text-anchor="middle" font-weight="700">小脑 SONIC · 逐帧兑付</text>
+  <text x="570" y="503" font-family="IBM Plex Mono" font-size="10" fill="currentColor" text-anchor="middle">每 20ms 滑动读"未来 10 帧"</text>
+
+  <!-- 导航类比 -->
+  <rect x="20" y="462" width="380" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"/>
+  <text x="210" y="482" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">类比: 导航一次报完</text>
+  <text x="210" y="500" font-family="Noto Sans SC" font-size="10" fill="currentColor" text-anchor="middle">"前方300米: 直行→稍左→右转进辅路"</text>
+  <path d="M 400 488 L 440 488" stroke="#0F766E" stroke-width="1.6" marker-end="url(#arrT2)"/>
+
+  <text x="20" y="546" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" opacity="0.7">大脑内部: AR 逐 token 理解 → 扩散整段去噪 → 相对量打包 → 小脑滑动窗口消费</text>
+</svg>
+<figcaption><b>三段接力。</b>① VLM 骨干是 AR 模型：一个 token 一个 token 往外蹦，每个都看着已生成的前文（GPT 同款机制），产出语义隐状态。② DiT 头是扩散模型：从纯噪声草稿出发，整段并行去噪成一条工整的动作轨迹——用扩散是因为动作是多峰分布（左抓右抓都对），回归只能输出够不着两边的中点。③ 输出的 action chunk 用相对量描述（"关节1 再转 +3°"），不依赖任何机器人的零位，跨实体可迁移；小脑拿到 chunk 后滑动窗口逐帧兑付。</figcaption>
+</figure>
+
 <!-- ============ 2 接口 ============ -->
 <h2><span class="sec-no">02</span>接口处发生了什么</h2>
 <div class="claim">两个模型之间传的不是“指令”，是一段带有未来 200ms lookahead 的动作序列——大脑预付未来，小脑逐帧兑付。</div>
