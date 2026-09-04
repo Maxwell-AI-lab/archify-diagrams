@@ -1,0 +1,596 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "RLinf 架构：分层 Runner/Worker/Scheduler/Engine",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1100,
+      590
+    ],
+    "output": "rlinf-architecture.html",
+    "views": [
+      {
+        "id": "runners",
+        "label": "Runner 层：训练编排",
+        "focus": [
+          "reasoning_runner",
+          "embodied_runner",
+          "async_runner",
+          "agent_runner"
+        ],
+        "note": "每类工作负载一个 Runner，编排下面的 workers。"
+      },
+      {
+        "id": "workers",
+        "label": "Worker 层：执行单元",
+        "focus": [
+          "actor_w",
+          "critic_w",
+          "env_w",
+          "rollout_w",
+          "agent_loop"
+        ],
+        "note": "Ray actor 进程，按角色拆分。"
+      },
+      {
+        "id": "engines",
+        "label": "引擎层：可插拔后端",
+        "focus": [
+          "fsdp",
+          "megatron",
+          "sglang",
+          "vllm",
+          "sim_envs"
+        ],
+        "note": "训练引擎与推理引擎双轨可插拔。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "reasoning_runner",
+      "type": "backend",
+      "label": "ReasoningRunner",
+      "sublabel": "数学/代码推理 RL",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "runners/"
+    },
+    {
+      "id": "embodied_runner",
+      "type": "backend",
+      "label": "EmbodiedRunner",
+      "sublabel": "仿真/真机 VLA",
+      "pos": [
+        440,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "runners/"
+    },
+    {
+      "id": "async_runner",
+      "type": "backend",
+      "label": "AsyncEmbodiedRunner",
+      "sublabel": "异构异步",
+      "pos": [
+        610,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "runners/"
+    },
+    {
+      "id": "agent_runner",
+      "type": "backend",
+      "label": "AgentRunner",
+      "sublabel": "SearchR1/rStar2",
+      "pos": [
+        930,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "runners/"
+    },
+    {
+      "id": "sft_offline",
+      "type": "backend",
+      "label": "SFT/OfflineRunner",
+      "sublabel": "IQL/STEAM/DAgger",
+      "pos": [
+        770,
+        40
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "runners/"
+    },
+    {
+      "id": "actor_w",
+      "type": "backend",
+      "label": "ActorWorker",
+      "sublabel": "PPO/SAC/NFT/IQL/RLT",
+      "pos": [
+        60,
+        150
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "workers/actor/"
+    },
+    {
+      "id": "critic_w",
+      "type": "backend",
+      "label": "CriticWorker",
+      "sublabel": "Megatron critic",
+      "pos": [
+        270,
+        150
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "workers/critic/"
+    },
+    {
+      "id": "env_w",
+      "type": "cloud",
+      "label": "EnvWorker",
+      "sublabel": "异步环境批量",
+      "pos": [
+        470,
+        150
+      ],
+      "size": [
+        170,
+        56
+      ],
+      "tag": "workers/env/"
+    },
+    {
+      "id": "rollout_w",
+      "type": "messagebus",
+      "label": "RolloutWorker",
+      "sublabel": "SGLang/vLLM 推理",
+      "pos": [
+        715,
+        150
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "workers/"
+    },
+    {
+      "id": "agent_loop",
+      "type": "database",
+      "label": "AgentLoop",
+      "sublabel": "工具调用循环",
+      "pos": [
+        900,
+        150
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "workers/agent/"
+    },
+    {
+      "id": "scheduler",
+      "type": "security",
+      "label": "Scheduler",
+      "sublabel": "cluster/channel/collective",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "scheduler/"
+    },
+    {
+      "id": "dynarl",
+      "type": "security",
+      "label": "DynaRL",
+      "sublabel": "算力/显存/通信重分配",
+      "pos": [
+        260,
+        420
+      ],
+      "size": [
+        160,
+        56
+      ],
+      "tag": "OSDI'26"
+    },
+    {
+      "id": "fsdp",
+      "type": "backend",
+      "label": "FSDP Engine",
+      "sublabel": "HF/SGLang/vLLM",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "hybrid_engines/"
+    },
+    {
+      "id": "megatron",
+      "type": "backend",
+      "label": "Megatron Engine",
+      "sublabel": "大规模 MoE",
+      "pos": [
+        60,
+        420
+      ],
+      "size": [
+        140,
+        56
+      ],
+      "tag": "hybrid_engines/"
+    },
+    {
+      "id": "sglang",
+      "type": "cloud",
+      "label": "SGLang",
+      "sublabel": "推理引擎",
+      "pos": [
+        725,
+        300
+      ],
+      "size": [
+        120,
+        56
+      ],
+      "tag": "hybrid_engines/"
+    },
+    {
+      "id": "vllm",
+      "type": "cloud",
+      "label": "vLLM",
+      "sublabel": "推理引擎",
+      "pos": [
+        730,
+        420
+      ],
+      "size": [
+        110,
+        56
+      ],
+      "tag": "hybrid_engines/"
+    },
+    {
+      "id": "fusco",
+      "type": "messagebus",
+      "label": "FUSCO",
+      "sublabel": "MoE All-to-All 加速",
+      "pos": [
+        60,
+        500
+      ],
+      "size": [
+        140,
+        50
+      ],
+      "tag": "NSDI'27"
+    },
+    {
+      "id": "sim_envs",
+      "type": "database",
+      "label": "仿真器矩阵",
+      "sublabel": "IsaacLab/LIBERO/RoboTwin…",
+      "pos": [
+        480,
+        310
+      ],
+      "size": [
+        150,
+        66
+      ],
+      "tag": "envs/"
+    },
+    {
+      "id": "realworld",
+      "type": "external",
+      "label": "真机机器人",
+      "sublabel": "Franka/XSquare/Dexmal…",
+      "pos": [
+        480,
+        420
+      ],
+      "size": [
+        150,
+        56
+      ],
+      "tag": "USER 系统"
+    },
+    {
+      "id": "wam_vla",
+      "type": "database",
+      "label": "模型矩阵",
+      "sublabel": "π₀/GR00T/OpenVLA/Evo-1/WAM",
+      "pos": [
+        885,
+        420
+      ],
+      "size": [
+        170,
+        66
+      ],
+      "tag": "models/"
+    },
+    {
+      "id": "agents",
+      "type": "database",
+      "label": "Agent 生态",
+      "sublabel": "SearchR1/rStar2/WideSeek…",
+      "pos": [
+        885,
+        300
+      ],
+      "size": [
+        170,
+        56
+      ],
+      "tag": "agents/"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Runner 层 · 编排（按工作负载分）",
+      "wraps": [
+        "reasoning_runner",
+        "embodied_runner",
+        "async_runner",
+        "agent_runner",
+        "sft_offline"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "Worker 层 · Ray actor 执行单元",
+      "wraps": [
+        "actor_w",
+        "critic_w",
+        "env_w",
+        "rollout_w",
+        "agent_loop"
+      ],
+      "pad": 24
+    },
+    {
+      "kind": "region",
+      "label": "引擎与资源层",
+      "wraps": [
+        "scheduler",
+        "dynarl",
+        "fsdp",
+        "megatron",
+        "sglang",
+        "vllm",
+        "fusco",
+        "sim_envs",
+        "realworld",
+        "wam_vla"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "from": "reasoning_runner",
+      "to": "actor_w",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "embodied_runner",
+      "to": "env_w",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "async_runner",
+      "to": "env_w",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "agent_runner",
+      "to": "agent_loop",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "sft_offline",
+      "to": "rollout_w",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "actor_w",
+      "to": "fsdp",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "critic_w",
+      "to": "scheduler",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "scheduler",
+      "to": "dynarl",
+      "variant": "default",
+      "label": "重分配",
+      "labelAt": [
+        395,
+        398
+      ]
+    },
+    {
+      "from": "megatron",
+      "to": "fusco",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "MoE通信",
+      "labelAt": [
+        185,
+        488
+      ]
+    },
+    {
+      "from": "env_w",
+      "to": "sim_envs",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "环境",
+      "labelAt": [
+        585,
+        240
+      ]
+    },
+    {
+      "from": "env_w",
+      "to": "realworld",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          555,
+          250
+        ],
+        [
+          445,
+          250
+        ],
+        [
+          445,
+          400
+        ],
+        [
+          555,
+          400
+        ]
+      ]
+    },
+    {
+      "from": "rollout_w",
+      "to": "sglang",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "推理",
+      "labelAt": [
+        830,
+        240
+      ]
+    },
+    {
+      "from": "rollout_w",
+      "to": "vllm",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          785,
+          250
+        ],
+        [
+          675,
+          250
+        ],
+        [
+          675,
+          400
+        ],
+        [
+          785,
+          400
+        ]
+      ]
+    },
+    {
+      "from": "agent_loop",
+      "to": "agents",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "agents",
+      "to": "wam_vla",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "label": "模型池",
+      "labelAt": [
+        1075,
+        495
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "设计哲学",
+      "items": [
+        "Runner 按负载拆（reasoning/embodied/agent/sft）· Worker 按角色拆（actor/critic/env/rollout）",
+        "双后端轨：FSDP+HF 快速原型 / Megatron+SGLang·vLLM 大规模",
+        "覆盖：PPO/GRPO/SAC/DAgger/IQL 等算法 · CUDA/CANN/ROCm/MUSA 四硬件"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "系统论文与性能",
+      "items": [
+        "DynaRL (OSDI'26) 动态重分配算力/显存/通信 · FUSCO (NSDI'27) MoE 通信加速",
+        "混合执行 2.434× 吞吐 · BEHAVIOR 仿真 25×（1028.7→41.2 ms/step）",
+        "RLinf-VLA/USER (RSS'26)：VLA 训练框架 + 真机在线学习系统"
+      ]
+    }
+  ]
+}
