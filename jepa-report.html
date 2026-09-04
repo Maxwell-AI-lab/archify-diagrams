@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不画像素的想象</title>
+<meta name="description" content="LeCun 的 JEPA 世界模型深度分析：三级演进（I-JEPA→V-JEPA→V-JEPA 2）、坍缩问题、能量视角、与生成式的全面对撞、零样本机器人规划的机制。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --jepa: #0F766E; --jepa-soft: #DCEFEA;
+    --gen: #B45309; --gen-soft: #FBEAD5;
+    --warn: #B91C1C; --warn-soft: #FDE2E2;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --jepa: #4FB8AC; --jepa-soft: #172B28;
+      --gen: #E8A33D; --gen-soft: #2E2416;
+      --warn: #F87171; --warn-soft: #331A1A;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --jepa: #4FB8AC; --jepa-soft: #172B28;
+    --gen: #E8A33D; --gen-soft: #2E2416;
+    --warn: #F87171; --warn-soft: #331A1A;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-j { color: var(--jepa); font-weight: 600; }
+  .c-g { color: var(--gen); font-weight: 600; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .duo > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .duo .j { border-top: 4px solid var(--jepa); }
+  .duo .g { border-top: 4px solid var(--gen); border-left: 1px solid var(--line); }
+  .duo h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .duo .j h3 { color: var(--jepa); }
+  .duo .g h3 { color: var(--gen); }
+  .duo p { font-size: 0.92rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } .duo .g { border-left: none; border-top: 1px solid var(--line); } }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--jepa); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">JEPA · LeCun 的世界模型深度分析</div>
+  <h1>不画像素的想象</h1>
+  <p class="lede">JEPA（联合嵌入预测架构）是 Yann LeCun 押上学术声誉的路线：智能不该在像素上预测世界，该在抽象表示上预测。三年三级——I-JEPA 看图、V-JEPA 看视频、V-JEPA 2 开机器人——每一步都在兑现同一个赌注。这份报告拆解它的机制、它的阿喀琉斯之踵（坍缩）、它与生成式路线的全面对撞，以及"零样本控制机械臂"背后的规划机制。</p>
+</header>
+
+<!-- ============ 核心思想 ============ -->
+<h2>核心思想：预测表示，不预测像素</h2>
+<div class="claim">JEPA 的全部设计源于一个判断：<b>像素里大部分信息与"理解世界"无关</b>——云的具体形状、草的每根纹理，预测它们对决策毫无帮助。把算力从像素细节里省出来，才能喂得起世界级的规模。</div>
+
+<p>LeCun 在 2022 年的立场论文《A Path Towards Autonomous Machine Intelligence》里给出完整蓝图：一个自主智能系统 = 感知模块 + 世界模型 + 代价模块 + 演员，其中世界模型是核心，而它应该是 JEPA 形态的——编码器把世界压成抽象表示，预测器在表示空间里推演未来，<b>全程不生成任何像素</b>。这不是一个技巧，是一场与生成式主流的正面对赌：Sora/Genie 们赌"画出世界才能理解世界"，JEPA 赌"理解世界的生物从来不画画"。</p>
+
+<figure role="img" aria-label="生成式与 JEPA 的预测路径对比：像素重建 vs 表示空间预测">
+<svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="jArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="jArrG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--gen)"/>
+    </marker>
+    <marker id="jArrJ" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--jepa)"/>
+    </marker>
+  </defs>
+
+  <!-- 生成式路线 -->
+  <text x="20" y="26" font-family="IBM Plex Mono" font-size="11" fill="var(--gen)" font-weight="600">生成式（MAE / Sora / Genie）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="40" width="110" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="75" y="58" text-anchor="middle">遮挡的图像</text>
+    <text x="75" y="74" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">75% 被遮住</text>
+    <rect x="180" y="40" width="110" height="44" rx="6" fill="none" stroke="var(--gen)" stroke-width="1.4"/>
+    <text x="235" y="58" text-anchor="middle">编码器+解码器</text>
+    <text x="235" y="74" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">重建缺失像素</text>
+    <rect x="340" y="40" width="120" height="44" rx="6" fill="none" stroke="var(--gen)" stroke-width="1.4"/>
+    <text x="400" y="58" text-anchor="middle">补全的完整图</text>
+    <text x="400" y="74" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">每个像素都要画</text>
+  </g>
+  <path d="M 130 62 L 176 62" stroke="var(--gen)" stroke-width="1.5" marker-end="url(#jArrG)"/>
+  <path d="M 290 62 L 336 62" stroke="var(--gen)" stroke-width="1.5" marker-end="url(#jArrG)"/>
+  <!-- 算力账 -->
+  <rect x="500" y="40" width="200" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="600" y="58" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">算力烧在：纹理、噪声、</text>
+  <text x="600" y="74" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">与理解无关的每个像素</text>
+
+  <!-- JEPA 路线 -->
+  <text x="20" y="136" font-family="IBM Plex Mono" font-size="11" fill="var(--jepa)" font-weight="600">JEPA（I-JEPA / V-JEPA / V-JEPA 2）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="150" width="110" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="75" y="168" text-anchor="middle">上下文块</text>
+    <text x="75" y="184" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">可见部分</text>
+    <rect x="180" y="150" width="110" height="44" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.5"/>
+    <text x="235" y="168" text-anchor="middle">编码器</text>
+    <text x="235" y="184" text-anchor="middle" font-size="8.5" fill="var(--jepa)">→ 抽象表示 s</text>
+    <rect x="340" y="150" width="120" height="44" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.5"/>
+    <text x="400" y="168" text-anchor="middle">预测器 P(s, 位置)</text>
+    <text x="400" y="184" text-anchor="middle" font-size="8.5" fill="var(--jepa)">预测目标块的表示 ŝ</text>
+    <rect x="500" y="150" width="200" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="600" y="168" text-anchor="middle">损失 = ‖ŝ − s*‖</text>
+    <text x="600" y="184" text-anchor="middle" font-size="8.5" fill="var(--jepa)">比表示，不比像素 ★</text>
+  </g>
+  <path d="M 130 172 L 176 172" stroke="currentColor" stroke-width="1.5" marker-end="url(#jArr)"/>
+  <path d="M 290 172 L 336 172" stroke="var(--jepa)" stroke-width="1.5" marker-end="url(#jArrJ)"/>
+  <path d="M 460 172 L 496 172" stroke="var(--jepa)" stroke-width="1.5" marker-end="url(#jArrJ)"/>
+  <!-- 目标编码器(EMA) -->
+  <rect x="180" y="216" width="110" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="235" y="232" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">目标编码器(EMA)</text>
+  <text x="235" y="246" font-family="IBM Plex Mono" font-size="8" fill="var(--ink-soft)" text-anchor="middle">产生 s*，不接收梯度</text>
+  <path d="M 235 216 L 235 198" stroke="currentColor" stroke-width="1.2" marker-end="url(#jArr)" stroke-dasharray="3 3"/>
+
+  <text x="20" y="244" font-family="Noto Sans SC" font-size="9" fill="var(--jepa)">省下的算力 → 换规模（I-JEPA: ViT-H 仅 16×A100 · 72h）</text>
+</svg>
+<figcaption><b>两条预测路径。</b>上（生成式）：解码器必须重建每一个像素——算力花在纹理与噪声上。下（JEPA）：编码器把可见部分压成表示 s，预测器只在表示空间预测被遮部分的表示 ŝ，损失只比较表示不比较像素；目标侧由一个不接收梯度的 EMA 编码器提供 s*。省下的算力直接换成规模——I-JEPA 用 ViT-Huge/14 只需 16 张 A100 训 72 小时，远低于同尺寸 MAE 的预算。</figcaption>
+</figure>
+
+<!-- ============ 三级演进 ============ -->
+<h2>三年三级：看图 → 看视频 → 开机器人<span class="chip" style="background:var(--jepa-soft);color:var(--jepa)">2023-2025</span></h2>
+<div class="claim">JEPA 不是一篇论文，是一条逐级兑现赌注的路线图——每一级都在更难的模态上证明"预测表示"依然成立，直到 V-JEPA 2 在物理世界里落地。</div>
+
+<figure role="img" aria-label="JEPA 三级演进：I-JEPA 图像、V-JEPA 视频、V-JEPA 2 机器人，规模与能力逐级放大">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="jArr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--jepa)"/>
+    </marker>
+  </defs>
+
+  <!-- 三级台阶 -->
+  <g font-family="Noto Sans SC">
+    <!-- L1 -->
+    <rect x="20" y="150" width="210" height="80" rx="8" fill="none" stroke="var(--jepa)" stroke-width="1.5"/>
+    <text x="125" y="172" font-size="11" fill="var(--jepa)" text-anchor="middle" font-weight="700">I-JEPA · 2023</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="125" y="192">图像：遮挡块→预测表示</text>
+      <text x="125" y="208" font-family="IBM Plex Mono" font-size="8.5">ImageNet · 语义级特征</text>
+      <text x="125" y="222" font-size="8.5" fill="var(--ink-soft)">无增强、无负样本</text>
+    </g>
+    <!-- L2 -->
+    <rect x="255" y="100" width="210" height="130" rx="8" fill="none" stroke="var(--jepa)" stroke-width="1.6"/>
+    <text x="360" y="122" font-size="11" fill="var(--jepa)" text-anchor="middle" font-weight="700">V-JEPA · 2024</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="360" y="142">视频：遮住片段→预测特征</text>
+      <text x="360" y="158" font-family="IBM Plex Mono" font-size="8.5">200万视频 · 冻结评测</text>
+      <text x="360" y="174" font-family="IBM Plex Mono" font-size="8.5">K400 81.9% · SSv2 72.2%</text>
+      <text x="360" y="190" font-family="IBM Plex Mono" font-size="8.5">ImageNet 77.9% (零适配)</text>
+      <text x="360" y="208" font-size="8.5" fill="var(--ink-soft)">无重建/无文本/无负样本</text>
+      <text x="360" y="222" font-size="8.5" fill="var(--ink-soft)">运动+外观双强</text>
+    </g>
+    <!-- L3 -->
+    <rect x="490" y="50" width="210" height="180" rx="8" fill="none" stroke="var(--jepa)" stroke-width="2"/>
+    <text x="595" y="72" font-size="11" fill="var(--jepa)" text-anchor="middle" font-weight="700">V-JEPA 2 · 2025</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="595" y="92">+ 动作条件世界模型 (-AC)</text>
+      <text x="595" y="108" font-family="IBM Plex Mono" font-size="8.5">100万小时视频预训练</text>
+      <text x="595" y="124" font-family="IBM Plex Mono" font-size="8.5">+62小时 Droid 机器人视频</text>
+      <text x="595" y="142">→ 零样本控制 Franka 抓放</text>
+      <text x="595" y="158" font-size="8.5" fill="var(--jepa)">两个实验室 · 无采集 · 无奖励</text>
+      <text x="595" y="178" font-family="IBM Plex Mono" font-size="8.5">SSv2 77.3% · EpicK 39.7</text>
+      <text x="595" y="194" font-family="IBM Plex Mono" font-size="8.5">PerceptionTest 84.0 (8B级)</text>
+      <text x="595" y="212" font-size="8.5" fill="var(--ink-soft)">一个骨干服务感知/预测/控制</text>
+      <text x="595" y="226" font-size="8.5" fill="var(--ink-soft)">Latent 规划首次物理落地</text>
+    </g>
+  </g>
+  <!-- 台阶箭头 -->
+  <path d="M 230 170 C 245 165, 248 150, 255 148" stroke="var(--jepa)" stroke-width="1.5" fill="none" marker-end="url(#jArr2)"/>
+  <path d="M 465 120 C 480 115, 483 100, 490 98" stroke="var(--jepa)" stroke-width="1.5" fill="none" marker-end="url(#jArr2)"/>
+
+  <text x="20" y="30" font-family="Noto Sans SC" font-size="10" fill="currentColor" font-weight="700">每级的杠杆：表示预测省下的算力，逐级换成更大的数据规模</text>
+  <text x="20" y="46" font-family="IBM Plex Mono" font-size="9" fill="currentColor" opacity="0.75">图像级(单张) → 视频级(200万段) → 世界级(122万小时+物理落地)</text>
+</svg>
+<figcaption><b>三级台阶。</b>I-JEPA（2023，ICCV）：单张图像内预测遮挡块表示——16×A100·72h 训出 ViT-H 的语义特征，证明路线在图像上成立；V-JEPA（2024）：升级到 200 万段视频，冻结骨干在运动与外观任务双双领先（K400 81.9%、SSv2 72.2%、ImageNet 77.9% 零适配）；V-JEPA 2（2025）：122 万小时视频预训练 + 62 小时无标注机器人视频后训练出动作条件世界模型（-AC），零样本控制两个实验室的 Franka 抓放——不采集任何该机器人数据、无任务训练、无奖励。同一骨干同时服务感知、预期和控制。</figcaption>
+</figure>
+
+<!-- ============ 坍缩 ============ -->
+<h2>阿喀琉斯之踵：坍缩<span class="chip" style="background:var(--warn-soft);color:var(--warn)">核心困境</span></h2>
+<div class="claim">JEPA 的损失只要求"预测的表示接近目标的表示"——这个目标有一个致命的平凡解：<b>编码器对所有输入输出同一个常数向量</b>。损失完美归零，信息全部归零。这叫坍缩，是整条路线成立的前提性问题。</div>
+
+<figure role="img" aria-label="坍缩问题与三种防坍缩机制">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="jArr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 坍缩示意 -->
+  <rect x="20" y="20" width="320" height="120" rx="8" fill="none" stroke="var(--warn)" stroke-width="1.5"/>
+  <text x="180" y="42" font-family="Noto Sans SC" font-size="10.5" fill="var(--warn)" text-anchor="middle" font-weight="700">坍缩：损失为零的作弊解</text>
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <text x="40" y="66">输入A → 编码器 → [0.5, 0.5, 0.5, ...]</text>
+    <text x="40" y="84">输入B → 编码器 → [0.5, 0.5, 0.5, ...]</text>
+    <text x="40" y="102">输入C → 编码器 → [0.5, 0.5, 0.5, ...]</text>
+    <text x="40" y="124" fill="var(--warn)">预测=目标=常数 → loss=0 → 什么都没学到 ✗</text>
+  </g>
+
+  <!-- 表示空间可视化: 塌缩 vs 健康 -->
+  <rect x="380" y="20" width="150" height="120" rx="8" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <text x="455" y="42" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">坍缩的表示空间</text>
+  <circle cx="455" cy="90" r="5" fill="var(--warn)"/>
+  <text x="455" y="112" font-family="IBM Plex Mono" font-size="8" fill="currentColor" text-anchor="middle">所有点叠成一团</text>
+  <rect x="550" y="20" width="150" height="120" rx="8" fill="none" stroke="var(--jepa)" stroke-width="1.3"/>
+  <text x="625" y="42" font-family="Noto Sans SC" font-size="9.5" fill="var(--jepa)" text-anchor="middle">健康的表示空间</text>
+  <g fill="var(--jepa)">
+    <circle cx="590" cy="70" r="4"/><circle cx="660" cy="65" r="4"/><circle cx="610" cy="115" r="4"/>
+    <circle cx="680" cy="110" r="4"/><circle cx="575" cy="100" r="4"/><circle cx="645" cy="90" r="4"/>
+  </g>
+  <text x="625" y="136" font-family="IBM Plex Mono" font-size="8" fill="var(--jepa)" text-anchor="middle">点散开=保留区分度</text>
+
+  <!-- 三种防坍缩机制 -->
+  <text x="20" y="172" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="700">三道防坍缩闸门（JEPA 全都用）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="20" y="184" width="220" height="62" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.3"/>
+    <text x="130" y="204" text-anchor="middle" fill="var(--jepa)" font-weight="700">① EMA 目标编码器</text>
+    <text x="130" y="220" text-anchor="middle">目标侧=在线侧的慢速平均</text>
+    <text x="130" y="236" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">目标随动但不同步→无共谋捷径</text>
+    <rect x="260" y="184" width="200" height="62" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.3"/>
+    <text x="360" y="204" text-anchor="middle" fill="var(--jepa)" font-weight="700">② 停止梯度</text>
+    <text x="360" y="220" text-anchor="middle">目标分支不回传梯度</text>
+    <text x="360" y="236" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">两侧无法协同滑向常数</text>
+    <rect x="480" y="184" width="220" height="62" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.3"/>
+    <text x="590" y="204" text-anchor="middle" fill="var(--jepa)" font-weight="700">③ 方差-协方差正则</text>
+    <text x="590" y="220" text-anchor="middle">VICReg式: 强制每维方差>阈值</text>
+    <text x="590" y="236" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">显式禁止"全部叠成一团"</text>
+  </g>
+</svg>
+<figcaption><b>作弊解与三道闸门。</b>JEPA 的损失形式上鼓励作弊：让编码器输出常数，预测器也输出同一常数，损失归零且训练"完美收敛"——但表示空间坍缩成一个点（左中），所有输入不可区分。三道闸门防它：EMA 目标编码器（目标是在线权重的慢速平均，随动但不同步，两侧无法共谋）；停止梯度（目标分支不回传，切断协同滑向常数的通路）；VICReg 式方差正则（显式要求每维方差高于阈值，把"叠成一团"定义为非法）。生成式模型天然免疫此问题——像素重建目标本身携带全部信息——这是两条路线一个少被提及的深层差异。</figcaption>
+</figure>
+
+<!-- ============ 零样本规划机制 ============ -->
+<h2>V-JEPA 2 的机器人规划：想象不用画面<span class="chip" style="background:var(--jepa-soft);color:var(--jepa)">机制解剖</span></h2>
+<div class="claim">零样本控制机械臂的机制出人意料地简单：<b>在表示空间里搜索</b>——给一张目标图，找"哪个动作序列的预测表示最接近目标图的嵌入"，全程不生成一帧画面。</div>
+
+<figure role="img" aria-label="V-JEPA 2-AC 的零样本规划机制：目标图像嵌入驱动 latent 空间的动作搜索">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="jArr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="jArrJ4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--jepa)"/>
+    </marker>
+  </defs>
+
+  <!-- 输入 -->
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="60" width="120" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="80" y="78" text-anchor="middle">📷 当前场景</text>
+    <text x="80" y="94" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">机械臂+散落物体</text>
+    <rect x="20" y="150" width="120" height="44" rx="6" fill="none" stroke="var(--jepa)" stroke-width="1.5"/>
+    <text x="80" y="168" text-anchor="middle">🎯 目标图</text>
+    <text x="80" y="184" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">"物体在碗里"的照片</text>
+  </g>
+
+  <!-- 编码 -->
+  <path d="M 140 82 L 190 82" stroke="currentColor" stroke-width="1.4" marker-end="url(#jArr)"/>
+  <path d="M 140 172 C 170 172, 175 110, 190 95" stroke="var(--jepa)" stroke-width="1.4" fill="none" marker-end="url(#jArrJ4)"/>
+
+  <!-- 世界模型 -->
+  <rect x="194" y="50" width="220" height="100" rx="9" fill="none" stroke="var(--jepa)" stroke-width="1.8"/>
+  <text x="304" y="74" font-family="Noto Sans SC" font-size="11" fill="var(--jepa)" text-anchor="middle" font-weight="700">V-JEPA 2-AC 世界模型</text>
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">
+    <text x="304" y="96" text-anchor="middle">输入: 当前表示 s + 候选动作 a</text>
+    <text x="304" y="112" text-anchor="middle">输出: 预测表示 ŝ' = f(s, a)</text>
+    <text x="304" y="132" text-anchor="middle" fill="var(--jepa)">62h 机器人视频学来 ★</text>
+  </g>
+
+  <!-- 动作搜索 -->
+  <path d="M 414 100 L 460 100" stroke="currentColor" stroke-width="1.4" marker-end="url(#jArr)"/>
+  <rect x="464" y="50" width="236" height="100" rx="9" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <text x="582" y="72" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">动作序列搜索（无画面）</text>
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">
+    <text x="582" y="94" text-anchor="middle">试: a₁ → ŝ₁ ... 距目标嵌入 0.9</text>
+    <text x="582" y="110" text-anchor="middle">试: a₂ → ŝ₂ ... 距目标嵌入 0.4</text>
+    <text x="582" y="126" text-anchor="middle">试: a₃ → ŝ₃ ... 距目标嵌入 0.1 ✓</text>
+    <text x="582" y="144" text-anchor="middle" fill="var(--jepa)">选距离最小的执行 ★</text>
+  </g>
+
+  <!-- 对比: 生成式做法 -->
+  <rect x="20" y="208" width="680" height="36" rx="6" fill="none" stroke="var(--gen)" stroke-width="1.1" stroke-dasharray="5 3"/>
+  <text x="360" y="224" font-family="Noto Sans SC" font-size="9" fill="var(--gen)" text-anchor="middle">生成式的等价做法：把每条候选轨迹整段视频画出来再"看"像不像目标 — 算力贵几个量级</text>
+  <text x="360" y="238" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.7">JEPA: 只比终点嵌入, 不比路径, 不画一帧 — 与世界模型报告"漂移容忍度最高"的判断一致</text>
+
+  <text x="360" y="36" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.75">零样本 = 不采集该机器人数据 · 无任务微调 · 无奖励函数</text>
+</svg>
+<figcaption><b>表示空间的规划。</b>当前场景和目标图分别编码成表示；世界模型 f(s,a) 预测"做动作 a 之后表示变成什么样"；规划=在候选动作序列里搜索"预测表示最接近目标嵌入"的那条——只比终点不比路径，不生成任何画面。生成式的等价做法要把每条候选轨迹画成视频再比较，算力贵几个量级。这正是世界模型报告里"规划搜索对漂移容忍度最高"的结构性原因。62 小时无标注 Droid 视频只教了 f(s,a) 这一个函数——Franka 抓放就是它零样本的直接推论。</figcaption>
+</figure>
+
+<!-- ============ 对撞 ============ -->
+<h2>与生成式的全面对撞</h2>
+<div class="claim">两条路线不是谁对谁错，是在五个维度上交换优劣势——生成式赢在通用与可视，JEPA 赢在效率与规划。</div>
+
+<div class="duo">
+  <div class="j">
+    <h3>JEPA 的牌</h3>
+    <p>· <b>算力效率</b>：不画像素 → 同预算换更大规模（I-JEPA 16×A100 的示范）</p>
+    <p>· <b>规划原生</b>：表示空间搜索动作，无画面开销（V-JEPA 2 零样本的机制基础）</p>
+    <p>· <b>漂移更慢</b>：细节不进入误差累积（抽象掉的部分不漂）</p>
+    <p>· <b>无增强依赖</b>：不需要精心设计的数据增广（对比学习的痛点）</p>
+  </div>
+  <div class="g">
+    <h3>生成式的牌</h3>
+    <p>· <b>通用想象</b>：Genie 2 能长出训练数据里没有的全新 3D 世界</p>
+    <p>· <b>人类可审计</b>：想象能被眼睛看——安全验证的隐性资产</p>
+    <p>· <b>天然防坍缩</b>：像素目标自带全部信息，无平凡解问题</p>
+    <p>· <b>数据合成器</b>：可以直接当训练数据工厂（Cosmos 的定位）</p>
+  </div>
+</div>
+
+<table>
+  <tr><th>维度</th><th class="c-j">JEPA 路线</th><th class="c-g">生成式路线</th></tr>
+  <tr><td>预测对象</td><td>抽象表示（latent）</td><td>像素/token</td></tr>
+  <tr><td>代表</td><td class="c-j">I/V-JEPA · V-JEPA 2 · Dreamer(RSSM)</td><td class="c-g">MAE · Sora · Genie 2 · Cosmos</td></tr>
+  <tr><td>算力去向</td><td class="num-cell">语义相关部分</td><td class="num-cell">全部像素（含无关细节）</td></tr>
+  <tr><td>坍缩风险</td><td class="c-j">有（需 EMA/停梯度/正则三闸门）</td><td>无</td></tr>
+  <tr><td>想象可视性</td><td>✗（不可人眼审计）</td><td>✓（可看可评估）</td></tr>
+  <tr><td>规划机制</td><td class="c-j">嵌入空间搜索（廉价）</td><td>生成 rollout 再评估（昂贵）</td></tr>
+  <tr><td>规模证据</td><td class="num-cell">122万小时视频</td><td class="num-cell">互联网级（Sora/Genie）</td></tr>
+  <tr><td>物理落地</td><td class="c-j">零样本 Franka（2025）</td><td>数据合成侧（GAIA/Cosmos）</td></tr>
+</table>
+
+<h2>结语：赌注的计分板</h2>
+<p>三年过去，LeCun 的赌注赢下了几局：算力效率（I-JEPA 的 16×A100）、视频理解（V-JEPA 冻结评测双强）、以及最关键的一局——<b>物理世界的零样本规划</b>（V-JEPA 2 的 Franka，62 小时数据撬动机器人控制，是"观察即学习"论点的第一个强证据）。但生成式阵营的牌同样在升值：Genie 2 的通用世界生成、Cosmos 的工业级数据合成，都是 JEPA 短期给不出的。</p>
+<p>判断两条路线的走向，沿用世界模型报告的裁决式：<b>给策略训练和规划，JEPA 赢；给人类看和造数据，生成式赢</b>。而 2025 年的实际趋势是合流——生成式模型服务下游策略（Cosmos），JEPA 的输出端对接目标图像（V-JEPA 2）。LeCun 论文里那句最硬的话"预测像素是对算力的浪费"正在被工程现实修正为一个更温和的版本：预测像素是对某些用途的浪费，对另一些用途是必需品。真正被 JEPA 改变的，是"想象"这个词的定义权——想象不再必然是画面。</p>
+
+<footer>
+  史料来源：LeCun "A Path Towards Autonomous Machine Intelligence" (2022)；I-JEPA (arXiv:2301.08243, ICCV 2023)；V-JEPA (arXiv:2404.08471, 2024)；V-JEPA 2 (arXiv:2506.09985, 2025.6, Meta/FAIR)。系列前作：<a href="world-model-report.html">想象的物理学</a>（本报告是其 LeCun 赌注章节的展开）· <a href="brain-cerebellum-report.html">大脑与小脑</a> · <a href="embodied-evolution-report.html">四次范式跃迁</a> · <a href="rsi-recursive-self-improvement-report.html">递归自演进</a> · <a href="autonomous-driving-report.html">端到端的代价</a>。
+</footer>
+
+</div>
+</body>
+</html>
