@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>给机器人上后训练课</title>
+<meta name="description" content="VLA/WAM 后训练流程与技术栈深度分析：三段式主流程（数据工程→SFT→RL）、五种 RL 变体、世界模型当训练场、π₀.₅/OpenVLA-OFT/GR00T 案例、框架生态。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --data: #B45309; --data-soft: #FBEAD5;
+    --sft: #0F766E; --sft-soft: #DCEFEA;
+    --rl: #6D28D9; --rl-soft: #EDE6FB;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --data: #E8A33D; --data-soft: #2E2416;
+      --sft: #4FB8AC; --sft-soft: #172B28;
+      --rl: #A78BFA; --rl-soft: #241E38;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --data: #E8A33D; --data-soft: #2E2416;
+    --sft: #4FB8AC; --sft-soft: #172B28;
+    --rl: #A78BFA; --rl-soft: #241E38;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-d { color: var(--data); font-weight: 600; }
+  .c-s { color: var(--sft); font-weight: 600; }
+  .c-r { color: var(--rl); font-weight: 600; }
+  .tri { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .tri > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .tri .d { border-top: 4px solid var(--data); }
+  .tri .s { border-top: 4px solid var(--sft); border-left: 1px solid var(--line); }
+  .tri .r { border-top: 4px solid var(--rl); border-left: 1px solid var(--line); }
+  .tri h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .tri .d h3 { color: var(--data); } .tri .s h3 { color: var(--sft); } .tri .r h3 { color: var(--rl); }
+  .tri p { font-size: 0.88rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .tri { grid-template-columns: 1fr; } .tri .s, .tri .r { border-left: none; border-top: 1px solid var(--line); } }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--sft); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">VLA / WAM · 后训练流程与技术栈</div>
+  <h1>给机器人上后训练课</h1>
+  <p class="lede">LLM 有 RLHF，机器人有它的对应物——但形状完全不同：奖励来自仿真器执行而非人类偏好，数据瓶颈比语言苛刻一万倍，连续动作让 PPO/GRPO 都得改造。这份报告梳理 2025-26 年 VLA/WAM 后训练的工业化主流程（数据工程→SFT→RL 三段）、五种 RL 变体的分工、世界模型如何当训练场，以及 π₀.₅/OpenVLA-OFT/GR00T 三个标杆案例的真实配方。</p>
+</header>
+
+<!-- ============ 三段式 ============ -->
+<h2>主流程：三段式</h2>
+<div class="claim">无论哪家实验室，2025-26 年的后训练流水线都收敛到同一条骨架：<b>数据工程（喂什么）→ SFT（模仿成型）→ RL（执行优化）</b>——与 LLM 的 pretrain→SFT→RLHF 同构，但每段的内脏完全不同。</div>
+
+<figure role="img" aria-label="VLA/WAM 后训练三段式主流程：数据工程、SFT、RL">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="pArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="pArrD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--data)"/>
+    </marker>
+    <marker id="pArrS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--sft)"/>
+    </marker>
+    <marker id="pArrR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rl)"/>
+    </marker>
+  </defs>
+
+  <!-- 段1: 数据工程 -->
+  <rect x="20" y="20" width="200" height="230" rx="10" fill="none" stroke="var(--data)" stroke-width="1.8"/>
+  <text x="120" y="44" font-family="IBM Plex Mono" font-size="10.5" fill="var(--data)" text-anchor="middle" font-weight="700">① 数据工程</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="36" y="58" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="120" y="75" text-anchor="middle">遥操作演示采集</text>
+    <rect x="36" y="92" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="120" y="109" text-anchor="middle">人类视频/网络数据混入</text>
+    <rect x="36" y="126" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="120" y="143" text-anchor="middle">仿真合成 (Genie/Cosmos)</text>
+    <rect x="36" y="160" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="120" y="177" text-anchor="middle">LeRobot 格式统一</text>
+    <rect x="36" y="194" width="168" height="26" rx="5" fill="none" stroke="var(--data)" stroke-width="1.2"/>
+    <text x="120" y="211" text-anchor="middle" fill="var(--data)">实体标签 embodiment</text>
+    <text x="120" y="240" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">瓶颈段: 占总成本大头</text>
+  </g>
+
+  <!-- 段2: SFT -->
+  <rect x="260" y="20" width="200" height="230" rx="10" fill="none" stroke="var(--sft)" stroke-width="1.8"/>
+  <text x="360" y="44" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sft)" text-anchor="middle" font-weight="700">② SFT 模仿成型</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="276" y="58" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="360" y="75" text-anchor="middle">动作块回归 (L1/diffusion)</text>
+    <rect x="276" y="92" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="360" y="109" text-anchor="middle">多实体共训</text>
+    <rect x="276" y="126" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="360" y="143" text-anchor="middle">LoRA (4-8 GPU) 或全参</text>
+    <rect x="276" y="160" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="360" y="177" text-anchor="middle">骨干可冻结只训动作头</text>
+    <rect x="276" y="194" width="168" height="26" rx="5" fill="none" stroke="var(--sft)" stroke-width="1.2"/>
+    <text x="360" y="211" text-anchor="middle" fill="var(--sft)">OFT式: 并行解码+L1</text>
+    <text x="360" y="240" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">OFT: 26×推理提速, LIBERO 97.1%</text>
+  </g>
+
+  <!-- 段3: RL -->
+  <rect x="500" y="20" width="200" height="230" rx="10" fill="none" stroke="var(--rl)" stroke-width="1.8"/>
+  <text x="600" y="44" font-family="IBM Plex Mono" font-size="10.5" fill="var(--rl)" text-anchor="middle" font-weight="700">③ RL 执行优化</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="516" y="58" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="600" y="75" text-anchor="middle">仿真器提供奖励</text>
+    <rect x="516" y="92" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="600" y="109" text-anchor="middle">GRPO/PPO/SAC 变体</text>
+    <rect x="516" y="126" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="600" y="143" text-anchor="middle">世界模型当训练场 ★</text>
+    <rect x="516" y="160" width="168" height="26" rx="5" fill="none" stroke="currentColor" stroke-width="1"/>
+    <text x="600" y="177" text-anchor="middle">真机在线 (USER类)</text>
+    <rect x="516" y="194" width="168" height="26" rx="5" fill="none" stroke="var(--rl)" stroke-width="1.2"/>
+    <text x="600" y="211" text-anchor="middle" fill="var(--rl)">Sim2Real 域随机化</text>
+    <text x="600" y="240" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">2025-26 竞争最烈的一段</text>
+  </g>
+
+  <!-- 段间箭头 -->
+  <path d="M 220 135 L 256 135" stroke="currentColor" stroke-width="1.8" marker-end="url(#pArr)"/>
+  <path d="M 460 135 L 496 135" stroke="currentColor" stroke-width="1.8" marker-end="url(#pArr)"/>
+
+  <!-- 与LLM对照 -->
+  <rect x="20" y="272" width="680" height="46" rx="7" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="5 3"/>
+  <text x="360" y="290" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">与 LLM 后训练同构，内脏不同：奖励=仿真执行结果（非人类偏好）· 数据瓶颈苛刻一万倍 · 连续动作逼出 PPO/GRPO/SAC 的改造竞赛</text>
+  <text x="360" y="308" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.75">对应关系: pretrain≈VLA预训练(π₀/GR00T出厂) → SFT≈OFT/实体微调 → RLHF≈仿真器RL</text>
+</svg>
+<figcaption><b>三段式主流程。</b>① 数据工程：遥操作演示+人类视频+仿真合成，统一到 LeRobot 格式并打实体标签——这是总成本的大头（数据瓶颈比语言苛刻一万倍）；② SFT：动作块回归训练成型，LoRA 4-8 卡即可（OpenVLA-OFT 用并行解码+L1 替代离散 token，26× 推理提速、LIBERO 97.1%）；③ RL：仿真器提供奖励、世界模型当训练场、真机在线做闭环——2025-26 竞争最激烈的一段。与 LLM 后训练的结构同构（pretrain≈出厂 VLA、SFT≈实体微调、RLHF≈仿真 RL），但每段的实现逻辑完全不同。</figcaption>
+</figure>
+
+<!-- ============ SFT 段细节 ============ -->
+<h2>② 段展开：SFT 的两个流派<span class="chip" style="background:var(--sft-soft);color:var(--sft)">模仿成型</span></h2>
+<div class="claim">SFT 段的核心分歧是<b>动作头的输出方式</b>：离散 token（OpenVLA 原版）还是连续回归（OFT/π₀ 系）——这正好重演了范式跃迁报告里的第二代/第三代分水岭，但发生在微调阶段。</div>
+
+<figure role="img" aria-label="离散 token 微调与连续输出微调的对比：OpenVLA 原版与 OFT 配方">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="pArr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 离散 -->
+  <rect x="20" y="20" width="330" height="180" rx="8" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="185" y="42" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" text-anchor="middle" font-weight="700">OpenVLA 原版 · 离散 token</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="40" y="68">动作 → 256 档 token → 逐 token 自回归解码</text>
+    <text x="40" y="92">✗ 逐 token 慢 (串行解码)</text>
+    <text x="40" y="110">✗ 精度天花板 (量化栅格)</text>
+    <text x="40" y="128">✗ 位置误差累积</text>
+    <text x="40" y="156" fill="var(--ink-soft)" font-size="8.5">适合: 粗粒度任务/低频控制</text>
+    <text x="40" y="178" font-family="IBM Plex Mono" font-size="8.5" fill="var(--ink-soft)">继承 RT-2 的设计 (2023)</text>
+  </g>
+
+  <!-- 连续 -->
+  <rect x="380" y="20" width="320" height="180" rx="8" fill="none" stroke="var(--sft)" stroke-width="1.7"/>
+  <text x="540" y="42" font-family="IBM Plex Mono" font-size="10.5" fill="var(--sft)" text-anchor="middle" font-weight="700">OFT 配方 · 连续并行</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="400" y="68">动作块并行解码 + L1 回归损失</text>
+    <text x="400" y="92" fill="var(--sft)">✓ 26× 推理提速 · 3× 低延迟</text>
+    <text x="400" y="110" fill="var(--sft)">✓ 毫米级精度 (无栅格)</text>
+    <text x="400" y="128" fill="var(--sft)">✓ LIBERO 97.1% (SOTA)</text>
+    <text x="400" y="156" fill="var(--ink-soft)" font-size="8.5">OFT+ 加 FiLM 强化语言接地</text>
+    <text x="400" y="178" font-family="IBM Plex Mono" font-size="8.5" fill="var(--ink-soft)">L1 的弱表达力=正则: 过滤噪声演示 ★</text>
+  </g>
+
+  <!-- 中间箭头 -->
+  <path d="M 350 110 L 376 110" stroke="currentColor" stroke-width="1.6" marker-end="url(#pArr2)"/>
+  <text x="360" y="100" font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle">改造</text>
+
+  <text x="20" y="222" font-family="Noto Sans SC" font-size="9.5" fill="currentColor">有趣的洞察（OFT 作者主张）: L1 回归的"弱表达力"反而是优点——过滤掉次优演示的噪声；diffusion 头会忠实复刻坏习惯（如 π₀ 把勺子插太深）</text>
+</svg>
+<figcaption><b>微调段的范式分水岭。</b>左（OpenVLA 原版）：动作离散成 256 档 token 逐个自回归解码——串行慢、精度有栅格天花板；右（OFT 配方）：动作块并行解码+L1 回归——26× 提速、LIBERO 97.1%。OFT 作者给出了反直觉洞察：L1 的弱表达力是正则——过滤次优演示的噪声，而 diffusion 头会忠实复刻坏习惯。这是"范式跃迁"报告第二代→第三代之争在微调段的重演。</figcaption>
+</figure>
+
+<!-- ============ RL 段细节 ============ -->
+<h2>③ 段展开：RL 的五种变体<span class="chip" style="background:var(--rl-soft);color:var(--rl)">执行优化</span></h2>
+<div class="claim">VLA 的 RL 不是一种算法，是按"在哪训练、怎么表示策略"划分的五种变体——它们解决的问题不同，正在被不同的框架同时工业化。</div>
+
+<table>
+  <tr><th>变体</th><th>机制</th><th>代表</th><th>适用场景</th></tr>
+  <tr><td class="c-r">在线 RL（仿真）</td><td>仿真器给奖励，策略实时更新</td><td>RLinf GRPO on GR00T/Evo-1</td><td>有可靠仿真器的任务</td></tr>
+  <tr><td class="c-r">世界模型 RL</td><td>学到的世界模型替代仿真器</td><td>WoVR / Wan / OpenSora 训练场</td><td>仿真器造不出的复杂视觉</td></tr>
+  <tr><td class="c-r">真机在线 RL</td><td>机器人即资源，真机 rollout</td><td>RLinf-USER / Dexbotic</td><td>Sim2Real 缺口大的任务</td></tr>
+  <tr><td class="c-r">潜空间引导 RL</td><td>冻结扩散策略，RL 只训噪声空间的小代理</td><td>DSRL (SAC in latent noise)</td><td>大 VLA 不能整体 RL 时</td></tr>
+  <tr><td class="c-r">流策略 SAC</td><td>flow matching 策略的速度重参数化</td><td>SAC-Flow</td><td>连续策略的样本效率 RL</td></tr>
+</table>
+
+<figure role="img" aria-label="RL 段的核心工程问题：VLA 太大不能整体进 RL 循环，三种解法">
+<svg viewBox="0 0 720 270" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="pArr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 问题 -->
+  <rect x="20" y="20" width="680" height="40" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="360" y="45" font-family="Noto Sans SC" font-size="11" fill="currentColor" text-anchor="middle" font-weight="700">核心工程矛盾：VLA 是 3B 大模型，RL 循环要求高频更新它——怎么塞进去？</text>
+
+  <!-- 解法1: 整体上 -->
+  <g font-family="Noto Sans SC">
+    <rect x="20" y="80" width="220" height="160" rx="8" fill="none" stroke="var(--rl)" stroke-width="1.4"/>
+    <text x="130" y="102" font-size="10" fill="var(--rl)" text-anchor="middle" font-weight="700">解法A 整体进循环</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="130" y="126">FSDP/Megatron 训推混合引擎</text>
+      <text x="130" y="146">权重同步: 训练rank→推理引擎</text>
+      <text x="130" y="166">混合执行 2.4× (DynaRL)</text>
+      <text x="130" y="192" font-family="IBM Plex Mono" font-size="8.5" fill="var(--rl)">RLinf: 混合引擎+权重同步</text>
+      <text x="130" y="212" font-size="8.5" fill="var(--ink-soft)">代价: 显存/通信工程重</text>
+      <text x="130" y="230" font-size="8.5" fill="var(--ink-soft)">= 你 verl 笔记那套东西</text>
+    </g>
+  </g>
+
+  <!-- 解法2: 小代理 -->
+  <g font-family="Noto Sans SC">
+    <rect x="260" y="80" width="220" height="160" rx="8" fill="none" stroke="var(--rl)" stroke-width="1.4"/>
+    <text x="370" y="102" font-size="10" fill="var(--rl)" text-anchor="middle" font-weight="700">解法B 冻结大模型+小代理</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="370" y="126">VLA 整体冻结</text>
+      <text x="370" y="146">RL 只训潜空间里的小策略</text>
+      <text x="370" y="166">DSRL: SAC 在噪声空间引导</text>
+      <text x="370" y="192" font-family="IBM Plex Mono" font-size="8.5" fill="var(--rl)">DSRL for π₀</text>
+      <text x="370" y="212" font-size="8.5" fill="var(--ink-soft)">优点: 便宜, 稳</text>
+      <text x="370" y="230" font-size="8.5" fill="var(--ink-soft)">类比: 只训 LoRA 不动主干</text>
+    </g>
+  </g>
+
+  <!-- 解法3: 换训练场 -->
+  <g font-family="Noto Sans SC">
+    <rect x="500" y="80" width="200" height="160" rx="8" fill="none" stroke="var(--rl)" stroke-width="1.4"/>
+    <text x="600" y="102" font-size="10" fill="var(--rl)" text-anchor="middle" font-weight="700">解法C 换训练场</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="600" y="126">仿真器造不出的视觉场景</text>
+      <text x="600" y="146">→ 用世界模型当仿真器</text>
+      <text x="600" y="166">WoVR: 视频WM出奖励</text>
+      <text x="600" y="192" font-family="IBM Plex Mono" font-size="8.5" fill="var(--rl)">WoVR / Wan / OpenSora</text>
+      <text x="600" y="212" font-size="8.5" fill="var(--ink-soft)">= 世界模型报告的</text>
+      <text x="600" y="230" font-size="8.5" fill="var(--ink-soft)">"训练场"路线落地 ★</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>三条塞法。</b>A（整体进循环）：训推混合引擎+权重同步——RLinf 的路线，代价是显存与通信工程（正是你 verl/权重同步笔记里那套东西的具身版）；B（冻结+小代理）：DSRL 冻结 π₀，只在潜噪声空间训轻量 SAC——便宜稳定，类比"只训 LoRA 不动主干"；C（换训练场）：WoVR 用学到的世界模型替代仿真器出奖励——世界模型报告里"训练场"消费路线的落地。三条路线并行发展中，B 最省、A 上限最高、C 补仿真器覆盖不了的场景。</figcaption>
+</figure>
+
+<!-- ============ 案例 ============ -->
+<h2>三个标杆案例的真实配方</h2>
+<div class="claim">π₀.₅ 管"泛化"、OpenVLA-OFT 管"微调性价比"、GR00T 管"开源全家桶"——三个案例合起来就是当前后训练的完整光谱。</div>
+
+<div class="tri">
+  <div class="d">
+    <h3>π₀.₅ · 泛化配方</h3>
+    <p>异构任务共训：多机器人+网络数据+语义子任务预测混在一起喂</p>
+    <p>混合多模态样本：图像+指令+物体检测+子任务+底层动作五件套</p>
+    <p>结果：端到端系统首次在<b>全新住宅</b>里完成清洁厨房/卧室的长程灵巧任务</p>
+    <p>定位：后训练的目标从"任务成功率"升级到"野外泛化"</p>
+  </div>
+  <div class="s">
+    <h3>OpenVLA-OFT · 性价比配方</h3>
+    <p>并行解码+L1 回归替换离散 token，LoRA 微调只需 4-8 GPU</p>
+    <p>LIBERO 97.1% SOTA；真机双臂 ALOHA 上超过 π₀/RDT 和从零训练的 ACT/Diffusion Policy</p>
+    <p>OFT+ 用 FiLM 条件强化语言接地，语言跟随能力最佳</p>
+    <p>定位：开源社区微调的标准起点</p>
+  </div>
+  <div class="r">
+    <h3>GR00T N1.x · 开源全家桶</h3>
+    <p>数据：LeRobot 格式+实体标签体系， blueprint 数据配方公开</p>
+    <p>微调：骨干可冻结只训动作头；RLinf 提供 RL 精调通道（GRPO）</p>
+    <p>双系统架构（VLM System2+DiT System1）端到端联合训练</p>
+    <p>定位：NVIDIA 生态的具身入口，周边工具链最全</p>
+  </div>
+</div>
+
+<!-- ============ 技术栈地图 ============ -->
+<h2>技术栈地图：谁在做什么</h2>
+<figure role="img" aria-label="VLA/WAM 后训练技术栈四层地图：模型层、算法层、框架层、环境层">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <!-- 模型层 -->
+    <rect x="20" y="20" width="680" height="52" rx="8" fill="none" stroke="var(--data)" stroke-width="1.5"/>
+    <text x="50" y="42" font-size="10.5" fill="var(--data)" font-weight="700">模型层（被训的对象）</text>
+    <text x="50" y="60" font-size="9" fill="currentColor">π₀/π₀.₅ · GR00T N1.5-1.7 · OpenVLA(-OFT) · SmolVLA · Evo-1 · LingBot · WAM(DreamZero/DM0)</text>
+
+    <!-- 算法层 -->
+    <rect x="20" y="84" width="680" height="52" rx="8" fill="none" stroke="var(--sft)" stroke-width="1.5"/>
+    <text x="50" y="106" font-size="10.5" fill="var(--sft)" font-weight="700">算法层（怎么训）</text>
+    <text x="50" y="124" font-size="9" fill="currentColor">SFT: L1回归/diffusion头/DAgger · RL: GRPO/PPO/SAC-Flow/CrossQ/RLPD/DSRL/RLT/OPD/RECAP/STEAM/IQL</text>
+
+    <!-- 框架层 -->
+    <rect x="20" y="148" width="680" height="52" rx="8" fill="none" stroke="var(--rl)" stroke-width="1.5"/>
+    <text x="50" y="170" font-size="10.5" fill="var(--rl)" font-weight="700">框架层（在哪跑）</text>
+    <text x="50" y="188" font-size="9" fill="currentColor">RLinf(全负载·四硬件) · verl(LLM侧) · LeRobot(HF生态·数据+训练) · RLinf-USER(真机在线) · OpenPI</text>
+
+    <!-- 环境层 -->
+    <rect x="20" y="212" width="680" height="52" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="50" y="234" font-size="10.5" fill="currentColor" font-weight="700">环境层（谁给奖励）</text>
+    <text x="50" y="252" font-size="9" fill="currentColor">物理仿真: IsaacLab/LIBERO/RoboCasa/RoboTwin/Genesis/Polaris/BEHAVIOR · 世界模型: WoVR/Wan/OpenSora · 真机: Franka/XSquare/Dexmal</text>
+
+    <!-- 硬件注 -->
+    <rect x="20" y="274" width="680" height="20" rx="5" fill="none" stroke="currentColor" stroke-width="0.8" stroke-dasharray="4 3"/>
+    <text x="360" y="288" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.8">硬件: CUDA / CANN(昇腾) / ROCm(AMD) / MUSA(摩尔) — RLinf 四平台支持, 你的 910B 集群在覆盖范围内</text>
+  </g>
+</svg>
+<figcaption><b>四层技术栈。</b>模型层（π₀.₅/GR00T/OpenVLA/WAM 等被训对象）、算法层（SFT 流派 + 十余种 RL 变体）、框架层（RLinf 全负载四硬件 / verl LLM 侧 / LeRobot 数据生态）、环境层（物理仿真器矩阵 + 世界模型训练场 + 真机）。注意硬件行：RLinf 已支持昇腾 CANN——910B 集群在这个技术栈的覆盖范围内。</figcaption>
+</figure>
+
+<h2>结语：三段式之外的第四段正在出现</h2>
+<p>把这份报告放进系列坐标系：数据工程段对应「范式跃迁」的数据飞轮论述，SFT 段的离散/连续之争是第二代/第三代分水岭的微调重演，RL 段的解法 C 正是「世界模型」报告"训练场"消费路线的落地，而真机在线（USER）呼应「VLA 局限」里"只能物理交互获得"的判断。</p>
+<p>值得盯住的动向是<b>第四段：持续在线学习</b>。RLinf-USER 把机器人当一等公民资源、Dexbotic 的 Lego 式 SFT-RL 集成、真机闭环的数据回流——这些拼起来正是「递归自演进」报告里 L2 闭环的具身版：机器人部署产生数据、数据回流训练、模型再部署。VLA 的后训练正在从"出厂一次成型"走向"终身微调"——分段执行 → 段间闭环 → 段段相递，这和你研究的 RSI 结构完全同构，只是这一版的飞轮转速受物理世界限制，慢得多，也稳得多。</p>
+
+<footer>
+  史料来源：π₀.₅ (arXiv:2504.16054, Physical Intelligence, 2025.4)；OpenVLA-OFT 项目页（Stanford, 2025, LIBERO 97.1%/26×数据）；GR00T N1 (arXiv:2503.14734) 及 Isaac-GR00T 仓库（见《大脑与小脑》报告）；RLinf 仓库 README 及文档（DSRL/WoVR/SAC-Flow/RLT/OPD/USER 等）。系列前作：<a href="brain-cerebellum-report.html">大脑与小脑</a> · <a href="embodied-evolution-report.html">四次范式跃迁</a> · <a href="world-model-report.html">想象的物理学</a> · <a href="rsi-recursive-self-improvement-report.html">递归自演进</a> · <a href="jepa-report.html">不画像素的想象</a>。
+</footer>
+
+</div>
+</body>
+</html>
