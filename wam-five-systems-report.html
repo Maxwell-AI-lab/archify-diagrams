@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>想象的三种频率</title>
+<meta name="description" content="WAM 五篇新作深度洞察：DreamZero 联合建模、Fast-WAM 去想象推理、Cosmos Policy 三合一规划、Motus2 自演进闭环、GlanceWAM 异步稀疏想象。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --train: #B45309; --train-soft: #FBEAD5;
+    --slow: #0F766E; --slow-soft: #DCEFEA;
+    --none: #6D28D9; --none-soft: #EDE6FB;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --train: #E8A33D; --train-soft: #2E2416;
+      --slow: #4FB8AC; --slow-soft: #172B28;
+      --none: #A78BFA; --none-soft: #241E38;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --train: #E8A33D; --train-soft: #2E2416;
+    --slow: #4FB8AC; --slow-soft: #172B28;
+    --none: #A78BFA; --none-soft: #241E38;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-t { color: var(--train); font-weight: 600; }
+  .c-s { color: var(--slow); font-weight: 600; }
+  .c-n { color: var(--none); font-weight: 600; }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--slow); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">WAM 五篇新作 · 深度洞察</div>
+  <h1>想象的三种频率</h1>
+  <p class="lede">2026 年的 WAM 研究在回答同一个问题：机器人需要多频繁地"想象未来"？五个答案画出了完整光谱——DreamZero 每步都想象（7Hz）、Cosmos Policy 想象后做规划（best-of-N）、GlanceWAM 低频异步瞥一眼（3 秒一帧）、Fast-WAM 干脆不想象（训练时想象就够了）、Motus2 让想象进入自演进闭环。这份报告拆解五个系统的机制，并把它们放进统一的三频框架。</p>
+</header>
+
+<!-- ============ DreamZero ============ -->
+<h2>基线：DreamZero<span class="chip" style="background:var(--train-soft);color:var(--train)">联合建模</span></h2>
+<div class="claim">DreamZero 的主张最激进：<b>视频-动作联合建模本身就是策略</b>——不需要演示模仿，预测世界怎么演化 + 该做什么动作，zero-shot 就能控制。这是所有后续工作的共同基线。</div>
+
+<p>NVIDIA GEAR Lab 的 DreamZero（arXiv:2602.15922）建立在预训练视频扩散骨干上，通过联合预测未来世界状态和动作来学习物理动力学。三个数字值得记住：新任务/新环境的泛化比 SOTA VLA <b>高 2 倍以上</b>（"语义泛化好但物理动作失败"是 VLA 的通病，联合建模直接打这里）；14B 自回归视频扩散模型跑到 <b>7Hz 闭环</b>（靠 DiT 缓存：GB200 约 0.6s、H100 约 3s）；跨本体迁移只需 <b>10-30 分钟</b>数据——其他机器人或人类的纯视频演示带来 42%+ 的相对提升，新本体 30 分钟玩耍数据即可适配。它在 MolmoSpaces 和 RoboArena 两个榜单登顶第一，且 DROID 版完全从零训练、无大规模机器人数据预训练——证明视频骨干本身就是足够强的先验。</p>
+
+<figure role="img" aria-label="DreamZero 的联合视频-动作建模：一个扩散骨干同时预测未来帧和动作">
+<svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="fArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <!-- 视频帧序列+动作交织 -->
+  <g font-family="IBM Plex Mono" font-size="9" fill="currentColor">
+    <rect x="20" y="60" width="80" height="50" rx="6" fill="none" stroke="var(--train)" stroke-width="1.6"/>
+    <text x="60" y="82" text-anchor="middle">帧 t</text>
+    <text x="60" y="98" text-anchor="middle" font-size="8" fill="var(--ink-soft)">观测</text>
+    <rect x="20" y="130" width="80" height="36" rx="6" fill="none" stroke="var(--slow)" stroke-width="1.4"/>
+    <text x="60" y="153" text-anchor="middle">动作 a_t</text>
+
+    <rect x="140" y="60" width="80" height="50" rx="6" fill="none" stroke="var(--train)" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text x="180" y="82" text-anchor="middle">帧 t+1</text>
+    <text x="180" y="98" text-anchor="middle" font-size="8" fill="var(--train)">联合预测 ★</text>
+    <rect x="140" y="130" width="80" height="36" rx="6" fill="none" stroke="var(--slow)" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text x="180" y="153" text-anchor="middle">动作 a_t+1</text>
+
+    <rect x="260" y="60" width="80" height="50" rx="6" fill="none" stroke="var(--train)" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>
+    <text x="300" y="82" text-anchor="middle">帧 t+2</text>
+    <rect x="260" y="130" width="80" height="36" rx="6" fill="none" stroke="var(--slow)" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/>
+    <text x="300" y="153" text-anchor="middle">a_t+2</text>
+  </g>
+  <path d="M 100 85 L 136 85" stroke="currentColor" stroke-width="1.4" marker-end="url(#fArr)"/>
+  <path d="M 220 85 L 256 85" stroke="currentColor" stroke-width="1.2" marker-end="url(#fArr)" opacity="0.6"/>
+
+  <!-- 骨干 -->
+  <rect x="390" y="50" width="160" height="130" rx="10" fill="none" stroke="var(--train)" stroke-width="1.8"/>
+  <text x="470" y="76" font-family="Noto Sans SC" font-size="11" fill="var(--train)" text-anchor="middle" font-weight="700">视频扩散骨干</text>
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">
+    <text x="470" y="100" text-anchor="middle">14B 自回归 DiT</text>
+    <text x="470" y="118" text-anchor="middle">视频帧与动作 token</text>
+    <text x="470" y="136" text-anchor="middle">在同一序列里交织</text>
+    <text x="470" y="160" text-anchor="middle" fill="var(--train)">DiT缓存→7Hz 闭环 ★</text>
+  </g>
+  <path d="M 340 100 L 386 100" stroke="currentColor" stroke-width="1.6" marker-end="url(#fArr)"/>
+
+  <!-- 结果 -->
+  <rect x="580" y="50" width="120" height="130" rx="8" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="640" y="74" text-anchor="middle" font-weight="700">战绩</text>
+    <text x="640" y="96" text-anchor="middle">泛化 &gt; VLA 2×</text>
+    <text x="640" y="114" text-anchor="middle">跨本体 42%↑</text>
+    <text x="640" y="132" text-anchor="middle">(10-20min 纯视频)</text>
+    <text x="640" y="154" text-anchor="middle">MolmoSpaces #1</text>
+    <text x="640" y="172" text-anchor="middle">RoboArena #1</text>
+  </g>
+</svg>
+<figcaption><b>联合建模即策略。</b>视频帧和动作作为 token 在同一个自回归 DiT 序列里交织预测——预测"世界怎么演化"和"该做什么"是一件事的两个侧面。这直接打击 VLA 的软肋（语义泛化好、物理动作失败）：视频骨干带来的物理先验补上了缺的那半。7Hz 靠 DiT 缓存优化；跨本体只需 10-20 分钟纯视频演示（无需动作标签）——因为动作本身就是模型在预测的东西。</figcaption>
+</figure>
+
+<!-- ============ 核心问题 ============ -->
+<h2>核心分歧：想象要在关键路径上吗<span class="chip" style="background:var(--none-soft);color:var(--none)">三频框架</span></h2>
+<div class="claim">DreamZero 之后的所有工作都在拆解同一个矛盾：<b>视频生成很贵，控制很急</b>。按"想象在不在动作的关键路径上、以什么频率跑"，五个系统恰好排成三级频率——这是理解 2026 年 WAM 演进的钥匙。</div>
+
+<figure role="img" aria-label="想象频率光谱：每步想象、规划时想象、低频异步瞥、不想象">
+<svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- 频率轴 -->
+  <line x1="40" y1="280" x2="690" y2="280" stroke="currentColor" stroke-width="1.5"/>
+  <g font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" text-anchor="middle">
+    <text x="120" y="302">每步都想象</text>
+    <text x="360" y="302">规划时想象 / 低频瞥</text>
+    <text x="600" y="302">推理时不想象</text>
+  </g>
+  <text x="365" y="326" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" opacity="0.75">← 想象的频率与成本递减 · 想象的必要性争议递增 →</text>
+
+  <!-- DreamZero: 每7Hz -->
+  <g font-family="Noto Sans SC">
+    <rect x="40" y="40" width="160" height="220" rx="9" fill="none" stroke="var(--train)" stroke-width="1.6"/>
+    <text x="120" y="64" font-size="10.5" fill="var(--train)" text-anchor="middle" font-weight="700">DreamZero</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="120" y="88">想象频率: 7Hz</text>
+      <text x="120" y="106">= 控制频率</text>
+      <text x="120" y="132" font-family="IBM Plex Mono" font-size="8.5">每步生成未来帧</text>
+      <text x="120" y="148" font-family="IBM Plex Mono" font-size="8.5">+ 动作</text>
+      <text x="120" y="176" fill="var(--train)">✓ 物理先验最强</text>
+      <text x="120" y="196">✗ 生成开销进关键路径</text>
+      <text x="120" y="216">靠缓存硬扛到 7Hz</text>
+      <text x="120" y="244" font-size="8.5" fill="var(--ink-soft)">定位: 基线/能力上限</text>
+    </g>
+  </g>
+
+  <!-- Cosmos Policy: 规划时 -->
+  <g font-family="Noto Sans SC">
+    <rect x="220" y="40" width="140" height="220" rx="9" fill="none" stroke="var(--slow)" stroke-width="1.6"/>
+    <text x="290" y="64" font-size="10.5" fill="var(--slow)" text-anchor="middle" font-weight="700">Cosmos Policy</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="290" y="88">想象频率: 按需</text>
+      <text x="290" y="106">(best-of-N 规划)</text>
+      <text x="290" y="132" font-family="IBM Plex Mono" font-size="8.5">候选动作→预测后果</text>
+      <text x="290" y="148" font-family="IBM Plex Mono" font-size="8.5">→价值打分→选优</text>
+      <text x="290" y="176" fill="var(--slow)">✓ 难任务显著增益</text>
+      <text x="290" y="196">✓ 三合一: policy+</text>
+      <text x="290" y="212">  world+value</text>
+      <text x="290" y="244" font-size="8.5" fill="var(--ink-soft)">定位: 想象当搜索器</text>
+    </g>
+  </g>
+
+  <!-- GlanceWAM: 低频异步 -->
+  <g font-family="Noto Sans Sans" >
+    <rect x="380" y="40" width="140" height="220" rx="9" fill="none" stroke="var(--slow)" stroke-width="1.8"/>
+    <text x="450" y="64" font-family="Noto Sans SC" font-size="10.5" fill="var(--slow)" text-anchor="middle" font-weight="700">GlanceWAM</text>
+    <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="450" y="88">想象: 异步慢时钟</text>
+      <text x="450" y="106">~3s 瞿一眼一帧</text>
+      <text x="450" y="132" font-family="IBM Plex Mono" font-size="8.5">动作: 48ms/chunk</text>
+      <text x="450" y="148" font-family="IBM Plex Mono" font-size="8.5">想象不在关键路径 ★</text>
+      <text x="450" y="176" fill="var(--slow)">✓ 24× 快于同步式</text>
+      <text x="450" y="196">✓ 72.2% &gt; 同步 67.1%</text>
+      <text x="450" y="216">  &gt; 无想象 64.4%</text>
+      <text x="450" y="244" font-size="8.5" fill="var(--ink-soft)">定位: 频率折中的甜点</text>
+    </g>
+  </g>
+
+  <!-- Fast-WAM: 不想象 -->
+  <g font-family="Noto Sans SC">
+    <rect x="540" y="40" width="150" height="220" rx="9" fill="none" stroke="var(--none)" stroke-width="1.6"/>
+    <text x="615" y="64" font-size="10.5" fill="var(--none)" text-anchor="middle" font-weight="700">Fast-WAM</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="615" y="88">推理: 不想象</text>
+      <text x="615" y="106">训练: 保留视频共训 ★</text>
+      <text x="615" y="132" font-family="IBM Plex Mono" font-size="8.5">190ms 延迟, 4× 快</text>
+      <text x="615" y="148" font-family="IBM Plex Mono" font-size="8.5">性能不掉</text>
+      <text x="615" y="176" fill="var(--none)">洞察: 视频预测的价值</text>
+      <text x="615" y="196">在训练时的表示塑造,</text>
+      <text x="615" y="212">不在测试时的画面生成</text>
+      <text x="615" y="244" font-size="8.5" fill="var(--ink-soft)">定位: 消融给出的真相</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>想象频率光谱。</b>DreamZero（7Hz 每步想象，物理先验最强但生成开销进关键路径）；Cosmos Policy（想象当搜索器——best-of-N 候选动作预测后果、价值打分选优，只在难任务时启用）；GlanceWAM（异步慢时钟 ~3 秒瞥一帧未来，动作头 48ms 一块、想象不在关键路径——RoboCasa 72.2% 同时打败同步式 67.1% 和无想象 64.4%，证明"低频异步"是甜点）；Fast-WAM（推理完全不想象，190ms、4× 快、性能不掉——它的消融揭示了真相：视频预测的价值在训练时的表示塑造，不在测试时的画面生成）。</figcaption>
+</figure>
+
+<!-- ============ Fast-WAM 消融 ============ -->
+<h2>Fast-WAM 的消融：价值在哪一端<span class="chip" style="background:var(--none-soft);color:var(--none)">关键证据</span></h2>
+<div class="claim">Fast-WAM 的贡献不是更快，是<b>把一个流行假设证伪了</b>："imagine-then-execute"的想象部分在推理时几乎不贡献性能——视频建模的收益发生在训练时。</div>
+
+<p>它做了一组控制变量的对比（arXiv:2603.16666）：保留视频共训但去掉推理时的未来生成（action-only inference），性能与 imagine-then-execute 持平；反过来，把训练时的视频建模拿掉，性能掉得远比去掉推理想象更狠。结论：<b>视频预测的价值主要是"训练时改善世界表示"，而不是"测试时生成未来观测"</b>。系统层面 190ms 实时（比想象式 WAM 快 4 倍以上），后续工程版再提到 110-210ms（4090/H20，含编译加速），且新开源版支持"一个模型两种思考模式"（带/不带想象可切换）——这正好把光谱右端也补上了开关。LIBERO/RoboTwin/真机全部有竞争力，且无任何具身预训练。</p>
+
+<div class="claim" style="margin-top:2rem">但要防止过度解读：GlanceWAM 的三方对比（异步 72.2% &gt; 同步 67.1% &gt; 无想象 64.4%）说明想象<b>不是完全没用</b>——Fast-WAM 的"无想象"出现在共训充分的场景，GlanceWAM 显示长程任务里低频的"瞥"仍有 8 个点的增益。两条证据合起来的正确读法：<b>高频率想象是浪费，零频率有损失，低频异步是甜点</b>。</div>
+
+<!-- ============ Cosmos Policy ============ -->
+<h2>Cosmos Policy：想象当搜索器<span class="chip" style="background:var(--slow-soft);color:var(--slow)">三合一规划</span></h2>
+<div class="claim">Cosmos Policy（NVIDIA，arXiv:2601.16163）给出的答案是第三种用法：<b>想象不在每步的关键路径上，而是当测试时规划的搜索器</b>——一个模型同时是 policy、world model、value model。</div>
+
+<p>配方极简（这正是它成为"后训练 recipe 范本"的原因）：拿预训练视频模型 Cosmos-Predict2，单阶段后训练到机器人演示数据上，<b>零架构改动</b>。诀窍是把三样东西都编码成视频 latent 帧塞进同一个扩散过程——动作、未来状态图像、价值（期望累积奖励）。测试时做 best-of-N：生成 N 个候选动作轨迹 → 预测各自的未来状态 → 价值打分 → 选期望最高的执行。经验数据还能回流精调 world model 和 value function，让规划越来越好（一个闭环的小型 RSI）。战绩：LIBERO 98.5%、RoboCasa 67.1%（当时 SOTA）、真机双臂最高平均分。工程数字同样务实：纯策略推理单卡 6.8-10GB 显存；训练规模按数据量分档（8-64×H100×48h）；且发现"梯度累积凑大 batch 比小 batch 多步"收敛更快。</p>
+
+<!-- ============ Motus2 ============ -->
+<h2>Motus2：想象进自演进闭环<span class="chip" style="background:var(--train-soft);color:var(--train)">最新方向</span></h2>
+<div class="claim">Motus2（arXiv:2608.30237）把 WAM 从"推理时用想象"推进到"<b>用想象自我改进</b>"——单模型共享权重暴露三个接口：policy（提议）、simulator（预测后果）、evaluator（评分），耦合成闭环的决策-学习循环。</div>
+
+<figure role="img" aria-label="Motus2 的三接口自演进闭环与数据分工">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="mArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" marker-height="6" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 三接口环 -->
+  <g font-family="Noto Sans SC">
+    <rect x="60" y="40" width="150" height="60" rx="9" fill="none" stroke="var(--train)" stroke-width="1.6"/>
+    <text x="135" y="64" font-size="10.5" fill="var(--train)" text-anchor="middle" font-weight="700">Policy 提议</text>
+    <text x="135" y="84" font-size="9" fill="currentColor" text-anchor="middle">world-action model</text>
+
+    <rect x="300" y="40" width="150" height="60" rx="9" fill="none" stroke="var(--slow)" stroke-width="1.6"/>
+    <text x="375" y="64" font-size="10.5" fill="var(--slow)" text-anchor="middle" font-weight="700">Simulator 预测</text>
+    <text x="375" y="84" font-size="9" fill="currentColor" text-anchor="middle">动作条件世界模型</text>
+
+    <rect x="540" y="40" width="150" height="60" rx="9" fill="none" stroke="var(--none)" stroke-width="1.6"/>
+    <text x="615" y="64" font-size="10.5" fill="var(--none)" text-anchor="middle" font-weight="700">Evaluator 评分</text>
+    <text x="615" y="84" font-size="9" fill="currentColor" text-anchor="middle">value model</text>
+  </g>
+  <path d="M 210 70 L 296 70" stroke="currentColor" stroke-width="1.6" marker-end="url(#mArr)"/>
+  <path d="M 450 70 L 536 70" stroke="currentColor" stroke-width="1.6" marker-end="url(#mArr)"/>
+  <path d="M 615 100 C 615 150, 135 150, 135 104" stroke="currentColor" stroke-width="1.6" fill="none" marker-end="url(#mArr)"/>
+  <text x="375" y="140" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">选最优执行 → 交互结果回流 ★ 自演进闭环</text>
+
+  <!-- 数据分工 -->
+  <text x="60" y="186" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="700">数据的训练分工（Motus2 最独特的设计）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="60" y="198" width="200" height="56" rx="7" fill="none" stroke="var(--train)" stroke-width="1.2"/>
+    <text x="160" y="218" text-anchor="middle" fill="var(--train)" font-weight="700">成功/专家演示</text>
+    <text x="160" y="240" text-anchor="middle">→ 训 policy（动作学习）</text>
+    <rect x="280" y="198" width="200" height="56" rx="7" fill="none" stroke="var(--slow)" stroke-width="1.2"/>
+    <text x="380" y="218" text-anchor="middle" fill="var(--slow)" font-weight="700">失败/次优交互</text>
+    <text x="380" y="240" text-anchor="middle">→ 训 dynamics+value ★</text>
+    <rect x="500" y="198" width="200" height="56" rx="7" fill="none" stroke="var(--none)" stroke-width="1.2"/>
+    <text x="600" y="218" text-anchor="middle" fill="var(--none)" font-weight="700">数据规模路径</text>
+    <text x="600" y="240" text-anchor="middle">单目→双目→机器人域适配</text>
+  </g>
+</svg>
+<figcaption><b>三接口闭环与数据分工。</b>policy 提议候选动作块，simulator 预测视觉后果，evaluator 评估预测结果——三者耦合形成"决策即搜索、执行即学习"的闭环。最独特的是数据分工：精选专家演示只喂 policy（学动作），而<b>失败和次优交互不是垃圾，是 dynamics 和 value 的养料</b>（世界模型正需要知道"什么会失败、失败的代价是多少"）。这与你 CyberGym 的三层兜底是同一个思想的两个面：那边用失败数据保住学习信号，这边把失败数据变成两个模型的训练资产。数据规模路径从大规模单目第一人称 → 同步双目 → 机器人域适配 + 人机对齐数据；模型侧还研究滑动窗上下文的全球自回归/混合记忆扩展，并加了触觉反馈做接触感知控制。</figcaption>
+</figure>
+
+<!-- ============ 总表 ============ -->
+<h2>五系统同屏</h2>
+<table>
+  <tr><th>维度</th><th class="c-t">DreamZero</th><th class="c-s">Cosmos Policy</th><th class="c-s">GlanceWAM</th><th class="c-n">Fast-WAM</th><th class="c-t">Motus2</th></tr>
+  <tr><td>想象频率</td><td class="num-cell">7Hz 每步</td><td class="num-cell">按需(best-of-N)</td><td class="num-cell">~3s 异步一帧</td><td class="num-cell">推理时零</td><td class="num-cell">闭环自演进</td></tr>
+  <tr><td>动作延迟</td><td class="num-cell">~143ms (7Hz)</td><td class="num-cell">规划时更慢</td><td class="num-cell">48ms/chunk</td><td class="num-cell">110-190ms</td><td class="num-cell">—</td></tr>
+  <tr><td>训练配方</td><td>联合视频-动作</td><td>视频模型单阶段后训</td><td>演示+异步瞥训练</td><td>视频共训(无推理想象)</td><td>三接口+数据分工</td></tr>
+  <tr><td>基准亮点</td><td>MolmoSpaces #1<br>RoboArena #1</td><td>LIBERO 98.5%<br>RoboCasa 67.1%</td><td>RoboCasa 72.2%<br>LIBERO 98.9%</td><td>4× 快 性能持平</td><td>灵巧手自演进</td></tr>
+  <tr><td>跨本体</td><td class="c-t">10-30min 纯视频</td><td>目标平台后训</td><td>—</td><td>—</td><td>人→机器人对齐数据</td></tr>
+  <tr><td>一句话</td><td>联合建模即策略</td><td>想象当搜索器</td><td>低频异步瞥</td><td>训练时才有价值</td><td>想象进学习闭环</td></tr>
+</table>
+
+<h2>结语：给三频框架定位</h2>
+<p>把五个系统放回你的知识坐标系：DreamZero 是「想象的物理学」报告里"生成式像素想象"路线在控制侧的顶点；Fast-WAM 的消融是"LeCun 赌注"的意外盟友——视频预测的价值在<b>训练时的表示塑造</b>（正是 JEPA 的核心主张），而不在测试时的画面生成；GlanceWAM 的异步解耦在结构上就是「大脑与小脑」的频率分层在单模型内部的复刻（慢时钟瞥未来=大脑，48ms 动作块=小脑）；Motus2 的失败数据利用直接对应你 CyberGym 三层兜底和「RSI 报告」L2 闭环的具身化——它的"决策-学习循环"就是一个慢转速、不漂移的自演进飞轮。</p>
+<p>对你的选型建议一句话：<b>以 DreamZero 为能力基线（联合建模的泛化上限），以 Fast-WAM 的 action-only 路径为默认推理形态，难任务上开 GlanceWAM 式的异步瞥或 Cosmos Policy 式的 best-of-N，长期方向看 Motus2 的闭环</b>——这个组合正好把你 910B 上已有的 verl/RLinf 工程栈和 WAM 研究线接在一起。</p>
+
+<footer>
+  史料来源：DreamZero (arXiv:2602.15922, NVIDIA GEAR Lab, dreamzero0.github.io)；Fast-WAM (arXiv:2603.16666, yuantianyuan01/FastWAM 仓库)；Cosmos Policy (arXiv:2601.16163, NVlabs/cosmos-policy 仓库)；Motus2 (arXiv:2608.30237)；GlanceWAM (arXiv:2608.23927, linhanwang/GlanceWAM 仓库)。系列前作：<a href="world-model-report.html">想象的物理学</a> · <a href="jepa-report.html">不画像素的想象</a> · <a href="vla-wam-posttraining-report.html">给机器人上后训练课</a> · <a href="brain-cerebellum-report.html">大脑与小脑</a> · <a href="rsi-recursive-self-improvement-report.html">递归自演进</a>。
+</footer>
+
+</div>
+</body>
+</html>
