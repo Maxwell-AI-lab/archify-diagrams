@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演化论的四种形状</title>
+<meta name="description" content="从博物馆的四块展板到 AI：镶嵌演化、间断平衡、中性理论、幸者生存——四个非选择力量在 AI 领域的精确镜像。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --mosaic: #7C3AED; --mosaic-soft: #EDE6FB;
+    --punct: #C2410C; --punct-soft: #FDEBDD;
+    --neutral: #475569; --neutral-soft: #E3E7EC;
+    --lucky: #0F766E; --lucky-soft: #DCEFEA;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --mosaic: #A78BFA; --mosaic-soft: #241E38;
+      --punct: #F08C5A; --punct-soft: #2E211A;
+      --neutral: #94A3B8; --neutral-soft: #232830;
+      --lucky: #4FB8AC; --lucky-soft: #172B28;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --mosaic: #A78BFA; --mosaic-soft: #241E38;
+    --punct: #F08C5A; --punct-soft: #2E211A;
+    --neutral: #94A3B8; --neutral-soft: #232830;
+    --lucky: #4FB8AC; --lucky-soft: #172B28;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .c-m { color: var(--mosaic); font-weight: 600; }
+  .c-p { color: var(--punct); font-weight: 600; }
+  .c-n { color: var(--neutral); font-weight: 600; }
+  .c-l { color: var(--lucky); font-weight: 600; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .duo > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .duo h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .duo p { font-size: 0.92rem; margin: 0.35rem 0; }
+  .duo .a { border-top: 4px solid var(--punct); }
+  .duo .a h3 { color: var(--punct); }
+  .duo .b { border-top: 4px solid var(--mosaic); border-left: 1px solid var(--line); }
+  .duo .b h3 { color: var(--mosaic); }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } .duo .b { border-left: none; border-top: 1px solid var(--line); } }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--lucky); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">演化论的四种形状 · AI 镜像</div>
+  <h1>演化论的四种形状</h1>
+  <p class="lede">"适者生存"只是演化论最著名的四分之一。博物馆展板上的另外四块——镶嵌演化、间断平衡、中性理论、幸者生存——描述的是选择之外的四种力量：异速、节律、漂移、运气。把它们逐一映射到 AI，会得到一组惊人精确的镜像：VLA 是始祖鸟，GPT 时刻是寒武纪大爆发，lottery ticket 假说就是中性理论本尊，而每个被砍掉的研究方向都经历过自己的白垩纪。</p>
+</header>
+
+<!-- ============ ① 镶嵌演化 ============ -->
+<h2>① 镶嵌演化 → AI 的不均衡发育<span class="chip" style="background:var(--mosaic-soft);color:var(--mosaic)">异速律</span></h2>
+<div class="claim">演化不是整体齐步走：始祖鸟有鸟的羽毛却保留爬行类的牙齿，鸭嘴兽产卵却哺乳。AI 系统正是如此——<b>VLA 就是机器人界的始祖鸟</b>：长着互联网语义的"羽毛"，却保留着笨拙控制的"爬行牙齿"。</div>
+
+<p>镶嵌演化的定义：各特征以不同速率演化，在同一躯体上拼合出新旧特征共存的过渡形态。AI 领域的镜像无处不在——先看最大的那个。</p>
+
+<figure role="img" aria-label="VLA 作为机器人界的始祖鸟：语义能力已进化出羽毛，物理控制仍是爬行类的牙">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- 始祖鸟拼合图 -->
+  <text x="20" y="24" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" font-weight="700">始祖鸟式拼合：同一个"躯体"，新旧特征共存</text>
+  <!-- 羽毛(已进化) -->
+  <rect x="20" y="40" width="330" height="70" rx="7" fill="none" stroke="var(--jepa, #0F766E)" stroke-width="1.5"/>
+  <text x="185" y="62" font-family="Noto Sans SC" font-size="10" fill="var(--jepa, #0F766E)" text-anchor="middle" font-weight="700">🪶 已进化：语义"羽毛"</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <text x="185" y="82">语言理解 / 世界知识 / 指令跟随 / 代码</text>
+    <text x="185" y="99" font-size="8.5" fill="var(--ink-soft)">来源：互联网级预训练（进化学上的"大种群"）</text>
+  </g>
+  <!-- 牙齿(未进化) -->
+  <rect x="370" y="40" width="330" height="70" rx="7" fill="none" stroke="#B45309" stroke-width="1.5"/>
+  <text x="535" y="62" font-family="Noto Sans SC" font-size="10" fill="#B45309" text-anchor="middle" font-weight="700">🦎 未进化：控制"爬行牙"</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">
+    <text x="535" y="82">灵巧操作 / 力控 / 长程物理一致 / 常识物理</text>
+    <text x="535" y="99" font-size="8.5" fill="var(--ink-soft)">原因：交互数据无法互联网化（见 VLA 局限报告）</text>
+  </g>
+
+  <!-- 中间拼合体 -->
+  <rect x="120" y="140" width="480" height="54" rx="9" fill="none" stroke="var(--mosaic)" stroke-width="1.8"/>
+  <text x="360" y="162" font-family="Noto Sans SC" font-size="11" fill="var(--mosaic)" text-anchor="middle" font-weight="700">= VLA / 具身大模型（过渡形态）</text>
+  <text x="360" y="182" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle">同一个模型里，新旧特征速率相差一个数量级 —— 镶嵌演化定义了它，也定义了它的所有失败模式</text>
+
+  <!-- 更多镶嵌案例 -->
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <text x="20" y="226" font-weight="700">更多的镶嵌体：</text>
+    <text x="20" y="246">· MoE：专家间能力异速 · 推理强/常识弱的模型 = 另一种拼合</text>
+    <text x="20" y="264">· LoRA/冻结骨干：故意制造镶嵌——只让动作头进化，语义羽毛保持不动</text>
+    <text x="20" y="282">· 模块化自动驾驶：感知进化到端到端，规划还留着规则牙齿</text>
+    <text x="20" y="300">· 硬件-算法-数据三层：算力增速 > 算法增速 > 数据增速（异速中最慢的一环卡脖子）</text>
+  </g>
+</svg>
+<figcaption><b>AI 的始祖鸟。</b>镶嵌演化说：各特征以不同速率进化，躯体是新旧特征的拼合。映射到 AI：VLA 模型长着互联网预训练给的语义"羽毛"（语言/知识/推理），却保留着笨拙的物理控制"爬行牙"——这正是《大脑与小脑》和《VLA 局限》两份报告结论的演化论表述。工程上我们甚至在<b>故意制造镶嵌</b>：冻结骨干只训动作头（LoRA）就是人为锁定某些特征的进化速率。</figcaption>
+</figure>
+
+<div class="duo">
+  <div class="a">
+    <h3>镶嵌演化的工程启示</h3>
+    <p>· 评估必须分能力维度——整体分数掩盖镶嵌（MMLU 高不代表能拧螺丝）</p>
+    <p>· 迁移预算应投向"进化最慢的特征"（数据该喂给控制，不是再喂语义）</p>
+  </div>
+  <div class="b">
+    <h3>镶嵌的辩护</h3>
+    <p>· 过渡形态不是缺陷，是演化的必经之路——始祖鸟不是失败的鸟</p>
+    <p>· 对 VLA 的公平评价：它该被衡量的是"拼合是否在推进"，而非"是否完美"</p>
+  </div>
+</div>
+
+<!-- ============ ② 间断平衡 ============ -->
+<h2>② 间断平衡 → AI 进步的节律<span class="chip" style="background:var(--punct-soft);color:var(--punct)">节律律</span></h2>
+<div class="claim">Eldredge & Gould（1972）：物种长期停滞与短暂爆发交替，新种常在<b>孤立边缘小种群</b>中快速形成。AI 的进步曲线精确复刻：长期平台期 + 突发跃迁，且跃迁常来自主流之外的"边缘小种群"。</div>
+
+<figure role="img" aria-label="AI 进步的间断平衡：长期停滞与突发跃迁交替，跃迁常来自边缘小种群">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <line x1="40" y1="240" x2="700" y2="240" stroke="currentColor" stroke-width="1.3"/>
+  <line x1="40" y1="240" x2="40" y2="30" stroke="currentColor" stroke-width="1.3"/>
+  <text x="370" y="266" font-family="IBM Plex Mono" font-size="9" fill="currentColor" text-anchor="middle">年份</text>
+  <text x="24" y="135" font-family="IBM Plex Mono" font-size="9" fill="currentColor" transform="rotate(-90 24 135)" text-anchor="middle">能力</text>
+  <!-- 年份 -->
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">
+    <text x="70" y="256">1980s</text><text x="190" y="256">1997</text><text x="310" y="256">2012</text>
+    <text x="430" y="256">2017</text><text x="550" y="256">2020</text><text x="660" y="256">2022-</text>
+  </g>
+
+  <!-- 能力阶梯: 长平台+跃迁 -->
+  <path d="M 50 225 L 170 220 L 200 180 L 320 174 L 350 130 L 470 124 L 500 80 L 620 74 L 660 40"
+        stroke="var(--punct)" stroke-width="2.2" fill="none"/>
+  <!-- 平台期标注 -->
+  <g font-family="Noto Sans SC" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="110" y="212">专家系统停滞期</text>
+    <text x="260" y="164">符号AI余晖</text>
+    <text x="410" y="118">深度学习平台期</text>
+    <text x="560" y="68">规模化竞争期</text>
+  </g>
+  <!-- 跃迁标注 -->
+  <g font-family="IBM Plex Mono" font-size="8.5">
+    <text x="205" y="172" fill="var(--punct)">DeepBlue/统计转向</text>
+    <text x="355" y="122" fill="var(--punct)">AlexNet ★</text>
+    <text x="475" y="72" fill="var(--punct)">Transformer ★</text>
+    <text x="600" y="38" fill="var(--punct)">GPT-3/ChatGPT ★</text>
+  </g>
+  <!-- 边缘小种群标注 -->
+  <g font-family="IBM Plex Mono" font-size="8" fill="var(--ink-soft)">
+    <circle cx="200" cy="180" r="4" fill="var(--punct)"/><circle cx="350" cy="130" r="4" fill="var(--punct)"/>
+    <circle cx="500" cy="80" r="4" fill="var(--punct)"/><circle cx="660" cy="40" r="4" fill="var(--punct)"/>
+    <text x="655" y="60" text-anchor="end">每个跃迁点=当时的"边缘小种群"</text>
+  </g>
+
+  <text x="40" y="36" font-family="Noto Sans SC" font-size="10" fill="var(--punct)" font-weight="700">AI 能力曲线 = 长平台 + 短爆发交替（间断平衡的形状）</text>
+</svg>
+<figcaption><b>节律律。</b>AI 六十年不是平滑爬坡，是"停滞—爆发"交替：符号 AI 长期停滞，AlexNet（2012）爆发后进入深度学习平台，Transformer（2017）、GPT-3（2020）、ChatGPT（2022）是四次主要跃迁。间断平衡的两个要点都成立：①新能力常在"边缘小种群"中形成——AlexNet 是 Hinton 的小组、GPT 策略成型时 OpenAI 还是小实验室，主流大厂反而在原地；②每次爆发后进入数年稳定期，能力在平台内精细化。</figcaption>
+</figure>
+
+<p>还有一个微观尺度上的完美标本：<b>grokking（顿悟）现象</b>——模型在某个任务上损失长期横盘（看似死记硬背），训练数千步后突然泛化能力跃迁。这是间断平衡在单次训练内部的复刻：停滞（记忆）与爆发（泛化相变）交替。边缘小种群的对应物也成立：泛化能力往往先在训练的"少数参数/少数回路"中形成（已有研究追踪到这种泛化回路的形成过程），然后扩散全网络。</p>
+
+<div class="duo">
+  <div class="a">
+    <h3>对研究者的启示</h3>
+    <p>· 别在平台期宣判一个方向死刑——停滞是爆发的孕育期（Transformer 2017 前的注意力研究沉默了三年）</p>
+    <p>· 你的"构建世界、演化世界"构想里，考题分布的更新也该是间断的：频繁微调选择压反而让策略追不上</p>
+  </div>
+  <div class="b">
+    <h3>对投资/择业的启示</h3>
+    <p>· 跃迁来自边缘小种群——大厂内部孕育的下一范式，概率上低于小团队</p>
+    <p>· 平台期入场的"停滞方向"（如当前的世界模型）可能正临近自己的跃迁点</p>
+  </div>
+</div>
+
+<!-- ============ ③ 中性理论 ============ -->
+<h2>③ 中性理论 → 大多数参数是中性的<span class="chip" style="background:var(--neutral-soft);color:var(--neutral)">漂移律</span></h2>
+<div class="claim">木村资生（1968）：分子层面大多数突变是中性的，去留由<b>随机漂变</b>而非选择决定。神经网络的镜像精确到令人不安：<b>过参数化网络里，大多数参数对当前预测是中性的</b>——SGD 的噪声让它们在 loss 景观的平原里随机漂移，这与遗传漂变是同一个数学过程。</div>
+
+<figure role="img" aria-label="中性理论映射：过参数化网络的参数漂移、lottery ticket、grokking 的中性起源">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- 遗传漂变 vs SGD漂移 -->
+  <rect x="20" y="20" width="330" height="150" rx="8" fill="none" stroke="var(--neutral)" stroke-width="1.4"/>
+  <text x="185" y="44" font-family="Noto Sans SC" font-size="10.5" fill="var(--neutral)" text-anchor="middle" font-weight="700">生物学：随机遗传漂变（木村资生 1968）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="40" y="70">分子层面的大多数突变：中性</text>
+    <text x="40" y="92">去留不靠自然选择，靠随机漂变</text>
+    <text x="40" y="114">小种群里漂变更快（等位基因易丢失）</text>
+    <text x="40" y="140" font-size="9" fill="var(--neutral)">随机性与运气比竞争更决定分子演化方向</text>
+  </g>
+  <rect x="380" y="20" width="320" height="150" rx="8" fill="none" stroke="var(--neutral)" stroke-width="1.4"/>
+  <text x="540" y="44" font-family="Noto Sans SC" font-size="10.5" fill="var(--neutral)" text-anchor="middle" font-weight="700">AI：SGD 噪声下的参数漂移</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="400" y="70">过参数化网络：大多数参数对</text>
+    <text x="400" y="92">当前任务的 loss 梯度≈0（平原区）</text>
+    <text x="400" y="114">这些参数由 SGD 噪声随机游走</text>
+    <text x="400" y="140" font-size="9" fill="var(--neutral)">= 权重空间里的遗传漂变</text>
+  </g>
+
+  <!-- 三个可检验推论 -->
+  <text x="20" y="200" font-family="IBM Plex Mono" font-size="10.5" fill="currentColor" font-weight="700">三个可检验推论（全部已被 AI 研究证实）</text>
+  <g font-family="Noto Sans SC" font-size="9" fill="currentColor">
+    <rect x="20" y="212" width="220" height="58" rx="6" fill="none" stroke="var(--lucky)" stroke-width="1.3"/>
+    <text x="130" y="232" text-anchor="middle" fill="var(--lucky)" font-weight="700">推论① 彩票假设</text>
+    <text x="130" y="248" text-anchor="middle">大多数权重可剪枝/重置</text>
+    <text x="130" y="263" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">Frankle &amp; Carbin 2019 —— 名字就叫彩票</text>
+    <rect x="250" y="212" width="220" height="58" rx="6" fill="none" stroke="var(--lucky)" stroke-width="1.3"/>
+    <text x="360" y="232" text-anchor="middle" fill="var(--lucky)" font-weight="700">推论② 中性漂变孕育 grokking</text>
+    <text x="360" y="248" text-anchor="middle">参数在平原里漂移时"偶然"走进</text>
+    <text x="360" y="263" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">泛化盆地 → 突然跃迁（衔接间断平衡）</text>
+    <rect x="480" y="212" width="220" height="58" rx="6" fill="none" stroke="var(--lucky)" stroke-width="1.3"/>
+    <text x="590" y="232" text-anchor="middle" fill="var(--lucky)" font-weight="700">推论③ model collapse 的根源</text>
+    <text x="590" y="248" text-anchor="middle">自产数据训练消耗的正是</text>
+    <text x="590" y="263" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">中性漂变维持的尾部多样性 ★</text>
+  </g>
+</svg>
+<figcaption><b>漂移律。</b>木村资生证明分子演化的大多数变化由随机漂变而非选择驱动；深度学习里同一过程叫"过参数化的中性参数在 SGD 噪声下随机游走"。三个已被证实的推论：①彩票假设——大多数权重可剪枝，少数"中奖子网络"承载能力；②grokking 的中性起源——参数在 loss 平原漂移时偶然走进泛化盆地（衔接上一节间断平衡）；③model collapse 的机理——自产数据训练消耗的正是中性漂变维持的尾部多样性（你在 CyberGym 用的探针任务和外部数据回混，就是在人为补给这种多样性）。</figcaption>
+</figure>
+
+<!-- ============ ④ 幸者生存 ============ -->
+<h2>④ 幸者生存 → 灾变与运气<span class="chip" style="background:var(--lucky-soft);color:var(--lucky)">灾变律</span></h2>
+<div class="claim">白垩纪末的小行星灭绝了 75% 的物种——适应度再高也挡不住陨石。AI 的历史同样被"灾变"重塑：<b>哪些范式活到今天，"更好"只解释一半，另一半是运气与时机</b>。AI 研究里有个假说名字就叫彩票（lottery ticket）——这门学科从骨子里承认运气。</div>
+
+<figure role="img" aria-label="AI 史上的灾变事件与幸存者：LISP 机器崩塌、AI 寒冬、注意力对 RNN 的替代">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <text x="20" y="24" font-family="Noto Sans SC" font-size="10.5" fill="currentColor" font-weight="700">AI 史上的三次"灾变灭绝"与幸存者</text>
+
+  <!-- 灾变1 -->
+  <g font-family="Noto Sans SC" font-size="9.5">
+    <rect x="20" y="40" width="220" height="88" rx="8" fill="none" stroke="var(--warn, #B91C1C)" stroke-width="1.4"/>
+    <text x="130" y="62" fill="#B91C1C" text-anchor="middle" font-weight="700">灾变① 1987 LISP 机器崩塌</text>
+    <text x="40" y="84" fill="currentColor">陨石: 专用硬件市场崩溃+经费蒸发</text>
+    <text x="40" y="102" fill="currentColor">灭绝: 符号AI工业生态整体消失</text>
+    <text x="40" y="120" fill="var(--lucky)" font-weight="600">幸者: 不是最强的范式, 是最便宜的</text>
+  </g>
+  <!-- 灾变2 -->
+  <g font-family="Noto Sans SC" font-size="9.5">
+    <rect x="255" y="40" width="220" height="88" rx="8" fill="none" stroke="var(--warn, #B91C1C)" stroke-width="1.4"/>
+    <text x="365" y="62" fill="#B91C1C" text-anchor="middle" font-weight="700">灾变② 两次 AI 寒冬</text>
+    <text x="275" y="84" fill="currentColor">陨石: Minsky 1969 对感知机的批判</text>
+    <text x="275" y="102" fill="currentColor">灭绝: 连接主义沉默二十年</text>
+    <text x="275" y="120" fill="var(--lucky)" font-weight="600">幸者: 反向传播 1986 等到了算力</text>
+  </g>
+  <!-- 灾变3 -->
+  <g font-family="Noto Sans SC" font-size="9.5">
+    <rect x="490" y="40" width="210" height="88" rx="8" fill="none" stroke="var(--warn, #B91C1C)" stroke-width="1.4"/>
+    <text x="595" y="62" fill="#B91C1C" text-anchor="middle" font-weight="700">灾变③ RNN → Transformer</text>
+    <text x="510" y="84" fill="currentColor">陨石: 2017 attention is all you need</text>
+    <text x="510" y="102" fill="currentColor">灭绝: LSTM 系研究五年内清零</text>
+    <text x="510" y="120" fill="var(--lucky)" font-weight="600">幸者: LSTM 并没有"更差", 是没赶上</text>
+  </g>
+
+  <!-- 幸存的运气结构 -->
+  <rect x="20" y="148" width="680" height="96" rx="8" fill="none" stroke="var(--lucky)" stroke-width="1.4"/>
+  <text x="360" y="172" font-family="Noto Sans SC" font-size="10.5" fill="var(--lucky)" text-anchor="middle" font-weight="700">"幸者生存"在当前 AI 的三个切面</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <text x="40" y="196">· RL 探索 = 字面意义的运气彩票：哪个随机动作先撞上奖励，哪个就被强化</text>
+    <text x="40" y="216">· 竞赛位次 = 时机运气：GPT-3.5 的发布时点恰好撞上对话产品空窗</text>
+    <text x="40" y="236">· 存活偏差 = 认知风险：我们研究的全是"幸存的模型/论文"，灭绝方向的教训无人书写</text>
+  </g>
+</svg>
+<figcaption><b>灾变律。</b>LISP 机器崩塌（1987）灭绝了符号 AI 的工业生态；两次 AI 寒冬让连接主义沉默二十年——反向传播 1986 年重新登场时，等待它的算力才刚好成熟；RNN→Transformer 的替代五年内清零了 LSTM 系研究——被替代者并非"更差"，只是没有赶上算力与数据的爆发窗口。"幸者生存"的三个当前切面：RL 探索是字面意义的运气彩票；竞赛位次含巨大时机运气；而我们全部的知识来自幸存者——灭绝方向的教训无人书写。</figcaption>
+</figure>
+
+<!-- ============ 合并表 ============ -->
+<h2>四种力量同屏：选择之外的完整图景</h2>
+<div class="claim">把四块展板与《变异与选择》报告合并，演化论对 AI 的完整启示浮现：<b>选择（梯度/奖励）只是塑造 AI 系统的力量之一</b>——异速、漂移、节律、运气同样在塑造它，而且 AI 从业者对这四种力量的认知和管理，远不如对选择压的重视。</div>
+
+<table>
+  <tr><th>展板概念</th><th>生物学含义</th><th>AI 镜像</th><th>对从业者的行动含义</th></tr>
+  <tr><td class="c-m">镶嵌演化</td><td>特征异速进化，新旧拼合</td><td>VLA=始祖鸟；LoRA=人为镶嵌；模块化栈异速</td><td>评估分维度；资源投给进化最慢的模块</td></tr>
+  <tr><td class="c-p">间断平衡</td><td>长期停滞+短暂爆发；边缘小种群成种</td><td>AI 六十年节律；grokking；跃迁来自小团队</td><td>平台期不判死刑；关注边缘小种群</td></tr>
+  <tr><td class="c-n">中性理论</td><td>多数突变中性；漂变主导分子演化</td><td>过参数化的中性参数；SGD 噪声漂移；彩票假设</td><td>中性漂变是多样性的来源——model collapse 的对策前置</td></tr>
+  <tr><td class="c-l">幸者生存</td><td>大灾变中运气决定存亡</td><td>AI 寒冬；范式被算力陨石清零；RL 探索即彩票</td><td>抗灾冗余（多路线下注）；研究灭绝方向的教训</td></tr>
+</table>
+
+<h2>结语：把演化论读完整</h2>
+<p>博物馆把四块展板摆在"适者生存"旁边是有深意的：20 世纪演化生物学的最大进展，恰恰是<b>修正了"选择万能"的图景</b>——木村资生证明漂变主导分子层面，Gould/Eldredge 证明节律不是渐进，灾变生物学证明运气能清场。这些修正对 AI 的启示是成套的：<b>只靠选择压（奖励/loss）管理的系统，会漏掉漂移带来的多样性、误判平台期的价值、低估灾变的杀伤、并且用整体分数掩盖镶嵌</b>。你之前讨论的每一个开放问题——model collapse 的对策、coevolve 的节律设计、CyberGym 的探针兜底、对 VLA 的公平评估——都能在四块展板里找到自己的理论坐标。自然选择用了四十亿年也没变成唯一的演化力量，我们不该假设梯度下降可以。</p>
+
+<footer>
+  四概念出处：镶嵌演化与间断平衡（Eldredge &amp; Gould, 1972，展板原文）；中性理论（木村资生, 1968）；幸者生存为对"适者生存"的灾变生物学补充。AI 镜像的实证锚点：Lottery Ticket Hypothesis (Frankle &amp; Carbin, 2019)；grokking 研究 (Power et al., 2022)；model collapse (Shumailov et al., 2023)。系列前作：<a href="evolution-in-ai-report.html">变异与选择</a>（本报告的姊妹篇——选择力量的算法化）· <a href="rsi-recursive-self-improvement-report.html">递归自演进</a> · <a href="wam-five-systems-report.html">想象的三种频率</a> · <a href="vla-wam-posttraining-report.html">给机器人上后训练课</a>。
+</footer>
+
+</div>
+</body>
+</html>
