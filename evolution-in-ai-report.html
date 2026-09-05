@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>变异与选择</title>
+<meta name="description" content="演化论在 AI 领域的深度洞察：算法家族全景、达尔文与拉马克之争在深度学习中的重演、LLM 作为智能变异算子的复兴、共演化与开放性。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F7F4; --ink: #1A2332; --ink-soft: #4A5568;
+    --darwin: #0F766E; --darwin-soft: #DCEFEA;
+    --lamarck: #B45309; --lamarck-soft: #FBEAD5;
+    --llm: #6D28D9; --llm-soft: #EDE6FB;
+    --line: #D8D8D0; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+      --darwin: #4FB8AC; --darwin-soft: #172B28;
+      --lamarck: #E8A33D; --lamarck-soft: #2E2416;
+      --llm: #A78BFA; --llm-soft: #241E38;
+      --line: #2E3238; --card: #1E2127;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16181D; --ink: #E2E4E9; --ink-soft: #9AA1AD;
+    --darwin: #4FB8AC; --darwin-soft: #172B28;
+    --lamarck: #E8A33D; --lamarck-soft: #2E2416;
+    --llm: #A78BFA; --llm-soft: #241E38;
+    --line: #2E3238; --card: #1E2127;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .c-d { color: var(--darwin); font-weight: 600; }
+  .c-l { color: var(--lamarck); font-weight: 600; }
+  .c-m { color: var(--llm); font-weight: 600; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 1.6rem 0; }
+  .duo > div { padding: 1.1rem 1.2rem; background: var(--card); }
+  .duo .d { border-top: 4px solid var(--darwin); }
+  .duo .l { border-top: 4px solid var(--lamarck); border-left: 1px solid var(--line); }
+  .duo h3 { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .duo .d h3 { color: var(--darwin); }
+  .duo .l h3 { color: var(--lamarck); }
+  .duo p { font-size: 0.92rem; margin: 0.35rem 0; }
+  @media (max-width: 620px) { .duo { grid-template-columns: 1fr; } .duo .l { border-left: none; border-top: 1px solid var(--line); } }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--darwin); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">演化论 × AI · 深度洞察</div>
+  <h1>变异与选择</h1>
+  <p class="lede">演化是已知唯一从零造出通用智能的过程——没用梯度下降，只用了三件事：变异、选择、遗传。AI 领域六十年来一直在向它偷师：早期借走了算法（遗传算法/神经演化），深度学习时代被梯度压制边缘化，而 LLM 的出现正引发一场复兴——当变异算子从随机变成智能，演化算法突然能解开放数学问题了。这份报告梳理两个层面的应用：作为算法家族，和作为思维框架。</p>
+</header>
+
+<!-- ============ 两个层面 ============ -->
+<h2>先分清两个层面</h2>
+<div class="claim">"演化论在 AI 的应用"是一句话两层意思：<b>作为算法</b>（遗传算法、演化策略、种群训练——直接把生物机制当优化器用）和<b>作为框架</b>（适应度景观、选择压、多样性——用演化概念理解和设计 AI 系统）。混着谈是常见的错误。</div>
+
+<table>
+  <tr><th>生物学概念</th><th>作为算法的对应</th><th>作为框架的解释力</th></tr>
+  <tr><td>变异</td><td>GA 的 mutation / ES 的噪声扰动</td><td>探索的来源（对应 RL 的 exploration）</td></tr>
+  <tr><td>选择</td><td>按 fitness 排序保留精英</td><td>GRPO 的 group 内选择压！</td></tr>
+  <tr><td>遗传/重组</td><td> crossover 交叉父代基因</td><td>—</td></tr>
+  <tr><td>适应度景观</td><td>要优化的目标函数曲面</td><td>loss landscape 的原始隐喻</td></tr>
+  <tr><td>种群多样性</td><td>物种形成 / niching</td><td>对抗 model collapse 的多样性保持</td></tr>
+  <tr><td>共演化</td><td>竞争协同演化算法</td><td>GAN 的军备竞赛 / 环境与策略共同进化</td></tr>
+  <tr><td> Baldwin 效应</td><td>学习引导演化（Lamarckian 便捷门）</td><td>训练中学习如何加速搜索</td></tr>
+</table>
+
+<!-- ============ 达尔文 vs 拉马克 ============ -->
+<h2>一个被忽视的深刻对应：梯度下降是拉马克式<span class="chip" style="background:var(--lamarck-soft);color:var(--lamarck)">路线之争</span></h2>
+<div class="claim">整个深度学习时代其实站在演化论的"错误一边"：<b>梯度下降是拉马克式的</b>——个体后天习得的改进（权重更新）直接遗传给下一代（下一次前向）。而演化策略是达尔文式的——只有选择，没有后天习得的遗传。这场 19 世纪生物学之争在 21 世纪的算力上重演了。</div>
+
+<div class="duo">
+  <div class="l">
+    <h3>拉马克式 · 梯度下降（主流）</h3>
+    <p>· 个体在一生中习得的改进<b>直接写回基因</b>（loss 反传更新权重）</p>
+    <p>· 优点：样本效率极高——每个样本都在改进</p>
+    <p>· 代价：需要可微、需要信用分配（BP 就是代价）</p>
+    <p>· 对应物：全部监督学习/RL 的 policy gradient</p>
+  </div>
+  <div class="d">
+    <h3>达尔文式 · 演化策略（边缘但未死）</h3>
+    <p>· 个体不改进自己，只<b>繁殖和被选择</b>——好基因多留后代</p>
+    <p>· 优点：免梯度、免 BP、天然并行、黑盒可用</p>
+    <p>· 代价：样本效率低（大量试错被浪费）</p>
+    <p>· 对应物：OpenAI ES(2017)、CMA-ES、PBT</p>
+  </div>
+</div>
+
+<figure role="img" aria-label="梯度下降与演化策略在优化循环上的差异对比">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="evArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="evArrL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--lamarck)"/>
+    </marker>
+    <marker id="evArrD" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--darwin)"/>
+    </marker>
+  </defs>
+
+  <!-- 梯度下降循环 -->
+  <text x="20" y="26" font-family="IBM Plex Mono" font-size="11" fill="var(--lamarck)" font-weight="600">梯度下降（拉马克式）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="40" width="130" height="44" rx="6" fill="none" stroke="var(--lamarck)" stroke-width="1.5"/>
+    <text x="85" y="58" text-anchor="middle">权重 θ</text>
+    <text x="85" y="74" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">= 个体的"基因"</text>
+    <rect x="200" y="40" width="130" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="265" y="58" text-anchor="middle">算 loss</text>
+    <text x="265" y="74" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">= 个体在环境中试</text>
+    <rect x="380" y="40" width="150" height="44" rx="6" fill="none" stroke="var(--lamarck)" stroke-width="1.5"/>
+    <text x="455" y="58" text-anchor="middle">梯度反传更新 θ ★</text>
+    <text x="455" y="74" text-anchor="middle" font-size="8.5" fill="var(--lamarck)">后天改进直接写回基因</text>
+  </g>
+  <path d="M 150 62 L 196 62" stroke="currentColor" stroke-width="1.4" marker-end="url(#evArr)"/>
+  <path d="M 330 62 L 376 62" stroke="currentColor" stroke-width="1.4" marker-end="url(#evArr)"/>
+  <path d="M 455 84 C 455 120, 85 120, 85 88" stroke="var(--lamarck)" stroke-width="1.5" fill="none" marker-end="url(#evArrL)"/>
+  <text x="270" y="114" font-family="Noto Sans SC" font-size="8.5" fill="var(--lamarck)" text-anchor="middle">同一个体继续变好——习得性遗传</text>
+  <text x="560" y="58" font-family="Noto Sans SC" font-size="9" fill="currentColor">✓ 样本效率高</text>
+  <text x="560" y="76" font-family="Noto Sans SC" font-size="9" fill="currentColor">✗ 必须可微+BP</text>
+
+  <!-- 分隔 -->
+  <line x1="20" y1="140" x2="700" y2="140" stroke="currentColor" stroke-width="1" opacity="0.3" stroke-dasharray="2 4"/>
+
+  <!-- ES 循环 -->
+  <text x="20" y="166" font-family="IBM Plex Mono" font-size="11" fill="var(--darwin)" font-weight="600">演化策略（达尔文式）</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="180" width="130" height="44" rx="6" fill="none" stroke="var(--darwin)" stroke-width="1.5"/>
+    <text x="85" y="198" text-anchor="middle">种群 θ+ε₁...θ+εₙ</text>
+    <text x="85" y="214" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">= N 个变异个体</text>
+    <rect x="200" y="180" width="130" height="44" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="265" y="198" text-anchor="middle">各自评估 fitness</text>
+    <text x="265" y="214" text-anchor="middle" font-size="8.5" fill="var(--ink-soft)">= 谁活得更好</text>
+    <rect x="380" y="180" width="150" height="44" rx="6" fill="none" stroke="var(--darwin)" stroke-width="1.5"/>
+    <text x="455" y="198" text-anchor="middle">好个体加权回传 θ ★</text>
+    <text x="455" y="214" text-anchor="middle" font-size="8.5" fill="var(--darwin)">只搬"谁的基因好",不搬改进</text>
+  </g>
+  <path d="M 150 202 L 196 202" stroke="currentColor" stroke-width="1.4" marker-end="url(#evArr)"/>
+  <path d="M 330 202 L 376 202" stroke="currentColor" stroke-width="1.4" marker-end="url(#evArr)"/>
+  <path d="M 455 224 C 455 252, 85 252, 85 228" stroke="var(--darwin)" stroke-width="1.5" fill="none" marker-end="url(#evArrD)"/>
+  <text x="560" y="198" font-family="Noto Sans SC" font-size="9" fill="currentColor">✓ 免梯度/天然并行</text>
+  <text x="560" y="216" font-family="Noto Sans SC" font-size="9" fill="currentColor">✗ 样本浪费大</text>
+</svg>
+<figcaption><b>习得性遗传之争的算力重演。</b>上（梯度下降/拉马克）：个体试出 loss 后，梯度把改进直接写回权重——后天习得遗传给"下一次前向"，样本效率极高但必须可微。下（演化策略/达尔文）：撒 N 个带噪声扰动的"变异个体"，只评估谁好、把好的方向加权回传——从不修改个体本身，只改变种群的基因池。OpenAI 2017 年证明 ES 在 Atari/MuJoCo 上能与 PG 打平且天然适合数千 CPU 并行——它至今活在"不可微的目标"场景（RLHF 的早期探索、AutoML、架构搜索）里。</figcaption>
+</figure>
+
+<!-- ============ 算法家族 ============ -->
+<h2>作为算法：家族全景<span class="chip" style="background:var(--darwin-soft);color:var(--darwin)">经典篇</span></h2>
+<div class="claim">六十年演化算法的历史可以按"演化的对象"来整理——演化解向量、演神经网络、演超参数、演行为策略，每次转移都对应一次 AI 范式变化。</div>
+
+<table>
+  <tr><th>算法</th><th>演化什么</th><th>年代</th><th>现状与应用</th></tr>
+  <tr><td class="c-d">遗传算法 GA</td><td>解向量（编码成基因）</td><td class="c-d">1975-</td><td>组合优化/调度/芯片布局</td></tr>
+  <tr><td class="c-d">CMA-ES</td><td>解分布的协方差</td><td class="c-d">1996-</td><td>黑盒优化的最强基线之一</td></tr>
+  <tr><td class="c-d">NEAT</td><td>网络拓扑+权重</td><td class="c-d">2002</td><td>小规模神经演化经典（物种形成保多样）</td></tr>
+  <tr><td class="c-d">OpenAI ES</td><td>策略参数（噪声扰动）</td><td class="c-d">2017</td><td>免梯度 RL，与 PG 打平的标志性工作</td></tr>
+  <tr><td class="c-d">PBT 种群训练</td><td>超参数+权重（混合式）</td><td class="c-d">2017</td><td>DeepMind 出品；AlphaStar 用它调 RL 超参 ★</td></tr>
+  <tr><td class="c-d">QD 质量多样性</td><td>行为空间的存档（MAP-Elites）</td><td class="c-d">2015-</td><td>不找"最好"找"各种各样好"——Go-Explore 的根基</td></tr>
+</table>
+
+<p>两个值得展开的细节：<b>PBT（种群训练）</b>是演化与深度学习最成功的联姻——一群 worker 各自训练、周期性把权重和超参数"交叉/选择"（好的worker的权重+超参直接复制给差的），AlphaStar 用它解决了"RL 超参在训练过程中应该变化"的难题——这本质上是拉马克与达尔文的混合体：训练内是梯度（拉马克），训练间是选择（达尔文）。<b>QD（质量多样性）</b>反转了优化的目标——不是找唯一的最高峰，而是在行为空间里铺满"每种行为各找一个好解"，这个思想后来成为 Go-Explore（先记住怎么到达，再从那继续探索）和诸多开放性研究的根基。</p>
+
+<!-- ============ LLM 复兴 ============ -->
+<h2>LLM 时代的复兴：变异算子智能化<span class="chip" style="background:var(--llm-soft);color:var(--llm)">2023-</span></h2>
+<div class="claim">演化算法六十年的最大短板是变异盲目——随机扰动在高维空间几乎总是变坏。LLM 的出现补上了这块：<b>变异算子从随机变成智能</b>——"该怎么变"本身由一个见过海量模式的模型来提议。这是 FunSearch→AlphaEvolve 一脉的本质。</div>
+
+<figure role="img" aria-label="经典演化循环与 LLM 增强演化循环的对比：随机变异被 LLM 智能变异取代">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="evArr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="evArrM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--llm)"/>
+    </marker>
+  </defs>
+
+  <!-- 经典 -->
+  <text x="20" y="24" font-family="IBM Plex Mono" font-size="11" fill="currentColor" font-weight="600">经典演化（1960s-）：随机变异</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="36" width="140" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="90" y="58" text-anchor="middle">种群（候选解）</text>
+    <rect x="200" y="36" width="150" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="275" y="58" text-anchor="middle">✨ 随机变异/交叉</text>
+    <rect x="390" y="36" width="130" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="455" y="58" text-anchor="middle">适应度评估</text>
+    <rect x="560" y="36" width="140" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="630" y="58" text-anchor="middle">选择保留精英</text>
+  </g>
+  <path d="M 160 54 L 196 54" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 350 54 L 386 54" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 520 54 L 556 54" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 630 72 C 630 100, 90 100, 90 76" stroke="currentColor" stroke-width="1.3" fill="none" marker-end="url(#evArr2)"/>
+  <text x="360" y="94" font-family="Noto Sans SC" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">瓶颈: 高维空间里随机变异几乎总是变坏 — 依赖海量代数硬堆</text>
+
+  <!-- 分隔 -->
+  <line x1="20" y1="116" x2="700" y2="116" stroke="currentColor" stroke-width="1" opacity="0.3" stroke-dasharray="2 4"/>
+
+  <!-- LLM增强 -->
+  <text x="20" y="140" font-family="IBM Plex Mono" font-size="11" fill="var(--llm)" font-weight="600">LLM 增强演化（2023-）：智能变异 ★</text>
+  <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor">
+    <rect x="20" y="152" width="140" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="90" y="174" text-anchor="middle">程序数据库</text>
+    <rect x="200" y="152" width="150" height="36" rx="6" fill="none" stroke="var(--llm)" stroke-width="1.7"/>
+    <text x="275" y="168" text-anchor="middle" fill="var(--llm)" font-weight="700">LLM 提议变异</text>
+    <text x="275" y="182" text-anchor="middle" font-size="8.5">Gemini 改写代码</text>
+    <rect x="390" y="152" width="130" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="455" y="174" text-anchor="middle">自动评估器</text>
+    <rect x="560" y="152" width="140" height="36" rx="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <text x="630" y="174" text-anchor="middle">进化保留+重组</text>
+  </g>
+  <path d="M 160 170 L 196 170" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 350 170 L 386 170" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 520 170 L 556 170" stroke="currentColor" stroke-width="1.3" marker-end="url(#evArr2)"/>
+  <path d="M 630 188 C 630 216, 90 216, 90 192" stroke="var(--llm)" stroke-width="1.6" fill="none" marker-end="url(#evArrM)"/>
+  <text x="360" y="210" font-family="Noto Sans SC" font-size="8.5" fill="var(--llm)" text-anchor="middle">变异不再是随机的 — LLM 读过海量人类代码, "知道往哪变" ★</text>
+
+  <!-- AlphaEvolve 战绩 -->
+  <rect x="20" y="230" width="680" height="56" rx="7" fill="none" stroke="var(--llm)" stroke-width="1.3"/>
+  <text x="360" y="250" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="700">AlphaEvolve 战绩（DeepMind 2025）</text>
+  <g font-family="IBM Plex Mono" font-size="8.5" fill="currentColor">
+    <text x="360" y="268" text-anchor="middle">4×4复矩阵乘法 48次标量乘 &lt; Strassen 1969 ★ ｜ Borg调度挽回全球0.7%算力 ｜ Gemini内核+23%</text>
+    <text x="360" y="282" text-anchor="middle">50+开放数学问题: 75%追平SOTA, 20%超越(11维kissing number新下界593)</text>
+  </g>
+</svg>
+<figcaption><b>变异算子的智能革命。</b>上（经典）：随机变异+适应度选择——高维空间里随机扰动几乎总是变坏，只能靠海量代数硬堆。下（FunSearch 2023 → AlphaEvolve 2025）：LLM 读过海量人类代码后来提议"该怎么变"，自动评估器验证打分，程序数据库做进化的保留与重组——变异从盲目变成有指导的搜索。AlphaEvolve 的战绩证明这不是玩具：4×4 复矩阵乘法用 48 次标量乘打败了 Strassen 保持 56 年的纪录；调度启发式已在 Google 生产环境挽回 0.7% 全球算力；50+ 开放数学问题中 20% 超越已知最优。适用判据清晰：解可编码为程序 + 成功可自动验证。</figcaption>
+</figure>
+
+<!-- ============ 共演化 ============ -->
+<h2>共演化：把对手变成训练场<span class="chip" style="background:var(--darwin-soft);color:var(--darwin)">机制篇</span></h2>
+<div class="claim">生物演化最强大的引擎不是环境筛选，是<b>军备竞赛</b>——猎豹和羚羊互相逼着对方变快。AI 里最重要的三个共演化系统：GAN、AlphaStar 的联赛、以及你讨论过的"构建世界、演化世界"。</div>
+
+<div class="duo">
+  <div class="d">
+    <h3>已发生的共演化</h3>
+    <p>· <b>GAN</b>：生成器与判别器互为选择压——1912 年军备竞赛理论的最成功工程化</p>
+    <p>· <b>AlphaStar 联赛</b>：三个种族 AI 互为对手，涌现出人类没见过的战术（人口压制流）</p>
+    <p>· <b>语言演化博弈</b>：多智能体交流实验里符号从无到有涌现</p>
+  </div>
+  <div class="l">
+    <h3>正在设计的共演化</h3>
+    <p>· <b>你的 coevolve 构想</b>：模型变强→环境（考题）变难→模型再变强——E2E 场景的军备竞赛化</p>
+    <p>· <b>Motus2</b>：policy/simulator/evaluator 三接口闭环（见《想象的三种频率》）</p>
+    <p>· <b>POET</b>：环境与策略共同开放演化，难环境由简单环境变异而来</p>
+  </div>
+</div>
+
+<p>共演化在你的 CyberGym 场景有一个精确的对应：vul/fix 双容器验证就是"选择压"，arvo:3938 探针任务是"保底的猎物"——而 coevolve 构想是把"生成新猎物"（新漏洞变体）也自动化。演化生态学的捕食者-猎物模型预测这类系统会陷入周期性震荡而非单调进步——这是 coevolve 设计要防的坑（选择压不能让猎物灭绝，也不能让猎物静止）。</p>
+
+<!-- ============ 开放性 ============ -->
+<h2>最深的一层：开放性<span class="chip" style="background:var(--llm-soft);color:var(--llm)">前沿</span></h2>
+<div class="claim">演化论给 AI 的终极启示不是任何具体算法，是一个事实：<b>产生通用智能的过程是开放的</b>——没有终点、没有全局目标函数、复杂性持续自我超越。深度学习所有的目标函数都是"设定好的"，而演化没有人为设定的 fitness——这被称为开放性问题（open-endedness）。</div>
+
+<p>开放性研究的核心追问：什么条件让系统能无止境地产生新东西？当前的答案清单——新颖性搜索（奖励"去做没做过的事"而非"做好"）、QD 存档、环境共演化（POET）、以及"选择压永不饱和"。它与你的知识库有两个直接接口：RSI 报告里"L3 递归自演进"的本质就是开放性在单个系统上的实现；而所有已知的 L2 系统都是"目标函数锁死的演化"——收敛到一个峰就停了（S 曲线），因为它们的 fitness（验证器）不会自己进化。开放性 = 演化 + 会进化的选择压。</p>
+
+<h2>结语：一张应用地图</h2>
+<table>
+  <tr><th>应用层</th><th>代表</th><th>对你的可用性</th></tr>
+  <tr><td>黑盒优化</td><td class="c-d">CMA-ES / GA</td><td>不可微目标（内核参数/网络结构搜索）</td></tr>
+  <tr><td>RL 替代/辅助</td><td class="c-d">OpenAI ES / PBT</td><td>PBT 调 RL 超参（AlphaStar 验证过的路）</td></tr>
+  <tr><td>多样性保持</td><td class="c-d">QD / Go-Explore</td><td>对抗 model collapse / 稀疏奖励探索</td></tr>
+  <tr><td>算法发现</td><td class="c-m">FunSearch / AlphaEvolve</td><td>可验证的程序类问题（数学/调度/内核）</td></tr>
+  <tr><td>对抗训练</td><td class="c-d">GAN / 联赛训练</td><td>成熟工具箱</td></tr>
+  <tr><td>环境共演化</td><td class="c-m">POET / coevolve 构想</td><td>你的方向——需防猎物灭绝/静止</td></tr>
+  <tr><td>开放性</td><td class="c-m">novelty search 一脉</td><td>L3 的理论根基：会进化的选择压</td></tr>
+</table>
+
+<p>一句话收束整个系列八份报告的暗线：从 RSI 到 coevolve 到 Motus2，你们反复触碰的其实都是同一个东西——<b>把选择压变成活的</b>。固定 reward 的训练是驯化（把物种往一个方向拉），会进化的选择压才是演化（让系统自己找到没人预设的方向）。LLM 让变异智能了，下一个待解的问题是让选择压也智能起来——这就是开放性研究的前沿，也是你那个"构建世界、演化世界"构想真正的学术坐标。</p>
+
+<footer>
+  史料来源：AlphaEvolve (DeepMind 官方博客, 2025.5)；FunSearch (Nature, 2023)；OpenAI ES (arXiv:1703.03864, 2017)；PBT (DeepMind, 2017)；NEAT (Stanley & Miikkulainen, 2002)；QD/MAP-Elites (Mouret & Clune, 2015)；POET (Wang et al., 2019)。系列前作：<a href="rsi-recursive-self-improvement-report.html">递归自演进</a> · <a href="wam-five-systems-report.html">想象的三种频率</a> · <a href="vla-wam-posttraining-report.html">给机器人上后训练课</a> · <a href="embodied-evolution-report.html">四次范式跃迁</a>。
+</footer>
+
+</div>
+</body>
+</html>
