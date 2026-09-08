@@ -1,0 +1,502 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "WAM 后训练统一架构流程（基于 Cosmos Policy 源码 + 五论文综合）",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1240,
+      580
+    ],
+    "output": "wam-posttraining-architecture.html",
+    "views": [
+      {
+        "id": "encode",
+        "label": "编码层",
+        "focus": [
+          "data",
+          "vae",
+          "act_emb"
+        ],
+        "note": "一切进视频 latent 空间——动作经 AdaLN 注入。"
+      },
+      {
+        "id": "backbone",
+        "label": "共享骨干",
+        "focus": [
+          "dit",
+          "train_loss"
+        ],
+        "note": "视频 DiT 骨干 + 三损失共训。"
+      },
+      {
+        "id": "three-products",
+        "label": "三产品与推理",
+        "focus": [
+          "head_action",
+          "head_world",
+          "head_value",
+          "infer_a",
+          "infer_n",
+          "infer_g"
+        ],
+        "note": "三头按需取用，三种推理档位。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "data",
+      "type": "database",
+      "label": "数据层",
+      "sublabel": "专家演示/失败轨迹/异构机器人",
+      "pos": [
+        60,
+        40
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "Motus2 分流"
+    },
+    {
+      "id": "vae",
+      "type": "backend",
+      "label": "VAE 编码器",
+      "sublabel": "视频帧→16ch latent",
+      "pos": [
+        340,
+        30
+      ],
+      "size": [
+        170,
+        56
+      ],
+      "tag": "cosmos-predict2"
+    },
+    {
+      "id": "act_emb",
+      "type": "backend",
+      "label": "动作嵌入器 ★",
+      "sublabel": "chunk展平→双MLP→AdaLN",
+      "pos": [
+        340,
+        120
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "源码实证"
+    },
+    {
+      "id": "dit",
+      "type": "cloud",
+      "label": "共享视频 DiT 骨干",
+      "sublabel": "28块 · RoPE-3D · AdaLN-LoRA",
+      "pos": [
+        620,
+        60
+      ],
+      "size": [
+        220,
+        70
+      ],
+      "tag": "2B/7B"
+    },
+    {
+      "id": "head_action",
+      "type": "backend",
+      "label": "产品① 动作头",
+      "sublabel": "action chunk (rectify flow)",
+      "pos": [
+        920,
+        44
+      ],
+      "size": [
+        180,
+        56
+      ],
+      "tag": "policy"
+    },
+    {
+      "id": "head_world",
+      "type": "database",
+      "label": "产品② 预测头",
+      "sublabel": "未来帧 latent",
+      "pos": [
+        920,
+        110
+      ],
+      "size": [
+        170,
+        56
+      ],
+      "tag": "world model"
+    },
+    {
+      "id": "head_value",
+      "type": "security",
+      "label": "产品③ 价值头",
+      "sublabel": "标量·期望回报",
+      "pos": [
+        920,
+        200
+      ],
+      "size": [
+        170,
+        56
+      ],
+      "tag": "value ★杠杆"
+    },
+    {
+      "id": "train_loss",
+      "type": "messagebus",
+      "label": "共训损失",
+      "sublabel": "L = α·动作 + β·视频 + γ·价值",
+      "pos": [
+        620,
+        180
+      ],
+      "size": [
+        220,
+        56
+      ],
+      "tag": "β是训练燃料"
+    },
+    {
+      "id": "infer_a",
+      "type": "backend",
+      "label": "推理档A · 纯动作",
+      "sublabel": "Fast-WAM: 190ms·零想象",
+      "pos": [
+        60,
+        260
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "默认档"
+    },
+    {
+      "id": "infer_n",
+      "type": "security",
+      "label": "推理档B · best-of-N",
+      "sublabel": "Cosmos: N候选→预测→打分",
+      "pos": [
+        340,
+        260
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "tag": "难任务"
+    },
+    {
+      "id": "infer_g",
+      "type": "database",
+      "label": "推理档C · 异步瞥",
+      "sublabel": "GlanceWAM: 48ms动作+3s瞥",
+      "pos": [
+        640,
+        260
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "tag": "甜点档"
+    },
+    {
+      "id": "phase1",
+      "type": "backend",
+      "label": "Phase 1 · 跑通配方",
+      "sublabel": "视频共训+action-only @昇腾",
+      "pos": [
+        60,
+        380
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "tag": "RLinf CANN"
+    },
+    {
+      "id": "phase2",
+      "type": "backend",
+      "label": "Phase 2 · 加价值头",
+      "sublabel": "解锁 best-of-N",
+      "pos": [
+        340,
+        380
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "tag": "第一个增量"
+    },
+    {
+      "id": "phase3",
+      "type": "backend",
+      "label": "Phase 3 · 数据分流",
+      "sublabel": "失败轨迹喂 dynamics+value",
+      "pos": [
+        580,
+        380
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "tag": "Motus2式"
+    },
+    {
+      "id": "ablation",
+      "type": "messagebus",
+      "label": "贯穿 · 频率消融",
+      "sublabel": "7Hz/慢时钟/零 三档横轴",
+      "pos": [
+        850,
+        380
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "研究主线"
+    },
+    {
+      "id": "infra",
+      "type": "cloud",
+      "label": "你们的底座",
+      "sublabel": "12×910B · RLinf(CANN) · 权重同步工程",
+      "pos": [
+        340,
+        490
+      ],
+      "size": [
+        300,
+        60
+      ],
+      "tag": "已有资产"
+    },
+    {
+      "id": "upgrade",
+      "type": "security",
+      "label": "终局形态",
+      "sublabel": "三接口独立升级: policy勤训/value随reward/world缓积",
+      "pos": [
+        700,
+        490
+      ],
+      "size": [
+        330,
+        60
+      ],
+      "tag": "一个骨干三产品"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "编码层 · 一切进 latent 空间",
+      "wraps": [
+        "data",
+        "vae",
+        "act_emb"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "共享骨干 + 三产品（训练）",
+      "wraps": [
+        "dit",
+        "head_action",
+        "head_world",
+        "head_value",
+        "train_loss"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "推理三档（同一模型切换）",
+      "wraps": [
+        "infer_a",
+        "infer_n",
+        "infer_g"
+      ],
+      "pad": 16
+    },
+    {
+      "kind": "region",
+      "label": "你们的三段路线 + 贯穿消融",
+      "wraps": [
+        "phase1",
+        "phase2",
+        "phase3",
+        "ablation"
+      ],
+      "pad": 16
+    }
+  ],
+  "connections": [
+    {
+      "from": "data",
+      "to": "vae",
+      "label": "视频帧",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        270,
+        30
+      ]
+    },
+    {
+      "from": "data",
+      "to": "act_emb",
+      "label": "动作序列",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        280,
+        130
+      ]
+    },
+    {
+      "from": "vae",
+      "to": "dit",
+      "label": "16ch latent",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "act_emb",
+      "to": "dit",
+      "label": "AdaLN注入 ★",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        560,
+        150
+      ]
+    },
+    {
+      "from": "dit",
+      "to": "head_action",
+      "label": "去噪",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "dit",
+      "to": "head_world",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "dit",
+      "to": "head_value",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "phase1",
+      "to": "phase2",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "phase2",
+      "to": "phase3",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "from": "infra",
+      "to": "phase1",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "labelAt": [
+        100,
+        590
+      ]
+    },
+    {
+      "from": "phase3",
+      "to": "upgrade",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        690,
+        580
+      ]
+    },
+    {
+      "from": "dit",
+      "to": "train_loss",
+      "label": "三路损失回流",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        730,
+        160
+      ]
+    },
+    {
+      "from": "train_loss",
+      "to": "infer_n",
+      "label": "训后三档部署",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "源码实证（NVlabs/cosmos-policy）",
+      "items": [
+        "骨干 ActionConditionedMinimalV1LVGDiT：28块 DiT · 16ch VAE latent · RoPE-3D",
+        "动作注入：chunk(12×80)展平→双MLP→timestep emb+AdaLN-LoRA ★ · 损失=rectify flow",
+        "训练分档：2000演示=64×H100×48h；梯度累积凑大batch优于小batch多步"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "三产品经济学 × 推理映射",
+      "items": [
+        "动作=一次前向(便宜) · 预测=多步去噪(贵) · 价值=标量(需配预测)",
+        "推理档映射：A纯动作→只取① · B best-of-N→①+②+③ · C异步瞥→①+低频②",
+        "价值头=便宜钥匙开贵门：best-of-N = 机器人的 test-time scaling"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "三段路线（infra 已备）",
+      "items": [
+        "P1 跑通：FastWAM仓库+RLinf CANN · 1-3B · LIBERO 对标",
+        "P2 增量：加价值头解锁 best-of-N · P3 分流：失败轨迹喂 dynamics+value",
+        "贯穿频率消融攒成频率经济学研究 — Infra 主场的空白"
+      ]
+    }
+  ]
+}
