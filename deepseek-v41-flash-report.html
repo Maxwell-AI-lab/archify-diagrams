@@ -788,6 +788,279 @@
 <figcaption><b>协议设计里全是工程细节。</b>spawn 两种模式（fresh 干净上下文 / fork 带一次性快照）对应「独立视角」与「继承上下文」两种委派；消息在<b>下一步边界</b>送达（不打断执行中的轮次）；任务板带修订检查防写冲突；只有 lead 有中断权保证最终责任收敛。训练奖励的巧处在派生延迟：把执行事件和协作依赖建成 DAG，节点成本 = token 数 × 固定 prefill/decode 速率 + 实测工具执行时间，取<b>关键路径长度</b>——鼓励有用的并行、惩罚无谓的串行与同步，且对服务端 batching/排队延迟不敏感（用固定速率而非实测延迟计价）。</figcaption>
 </figure>
 
+<p><b>◆ 奖励机制拆解。</b>整场 episode 只打<b>一个标量分</b>：R = 任务绩效 + 协作奖励 − 派生延迟。三个分量各锁一种失败模式，缺一个训练就歪：只有绩效，RL 会塌缩回单干（spawn 有风险有开销，永远学不出团队）；加了协作奖励，模型又发现「多委派多通信」白拿分，刷消息、为小事 spawn；派生延迟负责把这类「协作表演」原形毕露。三张图依次拆开：先看互锁结构，再算派生延迟，最后走完整条打分流水线。</p>
+
+<figure role="img" aria-label="奖励三分量互锁：任务绩效防做错、协作奖励防塌缩回单干、派生延迟防协作表演，训练目标是评测指标的内化">
+<svg viewBox="0 0 720 262" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="r1Arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="28" width="200" height="152" rx="9" fill="none" stroke="var(--eco)" stroke-width="1.5"/>
+    <text x="130" y="52" font-size="10" fill="var(--eco)" text-anchor="middle" font-weight="700">任务绩效——防「做错」</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="130" y="76">任务三元组自带验证系统</text>
+      <text x="130" y="96">跑测试：fail-to-pass 全过</text>
+      <text x="130" y="116">＋ pass-to-pass 不破坏</text>
+      <text x="130" y="144" fill="var(--eco)" font-weight="600">★失败 = 一票否决，组内垫底</text>
+    </g>
+
+    <rect x="260" y="28" width="200" height="152" rx="9" fill="none" stroke="var(--data)" stroke-width="1.5"/>
+    <text x="360" y="52" font-size="10" fill="var(--data)" text-anchor="middle" font-weight="700">协作奖励——防「不敢用团队」</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="360" y="76">事件日志机械计数（无裁判）</text>
+      <text x="360" y="96">spawn_teammate ＋ / send_message ＋</text>
+      <text x="360" y="116">没有它 → RL 塌缩回单干</text>
+      <text x="360" y="144" fill="var(--data)" font-weight="600">★但它打开作弊口：表演协作</text>
+    </g>
+
+    <rect x="490" y="28" width="200" height="152" rx="9" fill="none" stroke="var(--kv)" stroke-width="1.5"/>
+    <text x="590" y="52" font-size="10" fill="var(--kv)" text-anchor="middle" font-weight="700">派生延迟——防「协作表演」</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="590" y="76">DAG 关键路径 × λ 计扣</text>
+      <text x="590" y="96">固定速率模拟，不实测墙钟</text>
+      <text x="590" y="116">→ 奖励与集群负载解耦</text>
+      <text x="590" y="144" fill="var(--kv)" font-weight="600">★真并行白赚，假并行现形</text>
+    </g>
+  </g>
+  <line x1="230" y1="104" x2="256" y2="104" stroke="currentColor" stroke-width="1.4" marker-end="url(#r1Arr)"/>
+  <text x="243" y="94" font-family="Noto Sans SC" font-size="7.5" fill="var(--ink-soft)" text-anchor="middle">定方向</text>
+  <line x1="460" y1="104" x2="486" y2="104" stroke="currentColor" stroke-width="1.4" marker-end="url(#r1Arr)"/>
+  <text x="473" y="94" font-family="Noto Sans SC" font-size="7.5" fill="var(--ink-soft)" text-anchor="middle">堵口</text>
+
+  <rect x="30" y="200" width="660" height="46" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+  <text x="360" y="220" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" font-weight="700">训练目标 = 评测指标的内化：时限内的正确率 —— 绩效管「正确率」，关键路径管「时限内」</text>
+  <text x="360" y="238" font-family="IBM Plex Mono" font-size="8" fill="var(--ink-soft)" text-anchor="middle">均衡条件：多发一条无价值消息的协作收益 &lt; λ × 它造成的关键路径延长</text>
+</svg>
+<figcaption><b>双 shaping 互锁。</b>协作奖励是 dense shaping——先把「用团队」这个稀疏行为诱导出来；派生延迟是反 shaping——堵住第一条 shaping 打开的作弊口。这与多级奖励塑造 + 防 hacking 约束是同一门手艺，只是被惩罚的 hacking 形态变成了「协作表演」。最关键的等式在底栏：训练目标与评测口径（墙钟 deadline 下的 Almost@1）完全同构，不存在 train-test 错位。</figcaption>
+</figure>
+
+<figure role="img" aria-label="派生延迟三步计算：事件日志折算成本、连依赖边成 DAG、取关键路径，并行分支被覆盖不计费">
+<svg viewBox="0 0 720 310" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="r2Kv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kv)"/>
+    </marker>
+    <marker id="r2Arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- 左：事件日志 -->
+  <rect x="26" y="26" width="192" height="256" rx="9" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+  <text x="122" y="48" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="700">① 事件日志（成本已折算）</text>
+  <g font-family="IBM Plex Mono" font-size="7.5" fill="currentColor">
+    <text x="40" y="74">t0  lead 指令      16s</text>
+    <text x="40" y="94">t1  spawn×2        4s</text>
+    <text x="40" y="114">t3a A 生成 patch   20s</text>
+    <text x="40" y="134">t4a A 跑测试      90s ←实测</text>
+    <text x="40" y="154">t3b B 生成测试    16s</text>
+    <text x="40" y="174">t4b B 跑 lint     30s ←实测</text>
+    <text x="40" y="194">t6  lead 汇总     10s</text>
+  </g>
+  <text x="40" y="228" font-family="Noto Sans SC" font-size="7.5" fill="var(--ink-soft)">成本 = token 数 × 固定 prefill/</text>
+  <text x="40" y="242" font-family="Noto Sans SC" font-size="7.5" fill="var(--ink-soft)">decode 速率 ＋ 实测工具时间</text>
+  <text x="40" y="268" font-family="Noto Sans SC" font-size="8" fill="currentColor" font-weight="600">② 只有「必须等谁」才连边</text>
+
+  <!-- 右：DAG -->
+  <rect x="244" y="26" width="450" height="256" rx="9" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+  <text x="469" y="48" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="700">③ DAG → 关键路径</text>
+
+  <g font-family="IBM Plex Mono" font-size="7.5" text-anchor="middle">
+    <rect x="392" y="58" width="76" height="22" rx="4" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.6"/>
+    <text x="430" y="73" fill="var(--kv)" font-weight="600">t0 16s</text>
+
+    <rect x="312" y="98" width="76" height="22" rx="4" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.6"/>
+    <text x="350" y="113" fill="var(--kv)" font-weight="600">t1 spawn 4s</text>
+    <rect x="472" y="98" width="76" height="22" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1" opacity="0.55" stroke-dasharray="4 2"/>
+    <text x="510" y="113" fill="currentColor" opacity="0.75">t2 spawn 4s</text>
+
+    <rect x="312" y="138" width="76" height="22" rx="4" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.6"/>
+    <text x="350" y="153" fill="var(--kv)" font-weight="600">t3a 20s</text>
+    <rect x="472" y="138" width="76" height="22" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1" opacity="0.55" stroke-dasharray="4 2"/>
+    <text x="510" y="153" fill="currentColor" opacity="0.75">t3b 16s</text>
+
+    <rect x="312" y="178" width="76" height="22" rx="4" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.6"/>
+    <text x="350" y="193" fill="var(--kv)" font-weight="600">t4a 90s</text>
+    <rect x="472" y="178" width="76" height="22" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1" opacity="0.55" stroke-dasharray="4 2"/>
+    <text x="510" y="193" fill="currentColor" opacity="0.75">t4b 30s</text>
+
+    <text x="430" y="226" fill="var(--kv)" font-weight="600" font-family="Noto Sans SC" font-size="8">t5 汇合（必须两人都到）</text>
+
+    <rect x="392" y="240" width="76" height="22" rx="4" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.6"/>
+    <text x="430" y="255" fill="var(--kv)" font-weight="600">t6 10s</text>
+  </g>
+
+  <g stroke="var(--kv)" stroke-width="1.5" marker-end="url(#r2Kv)">
+    <line x1="410" y1="80" x2="362" y2="94"/>
+    <line x1="350" y1="120" x2="350" y2="134"/>
+    <line x1="350" y1="160" x2="350" y2="174"/>
+    <line x1="350" y1="200" x2="400" y2="228"/>
+    <line x1="430" y1="262" x2="430" y2="236" stroke-width="0.01"/>
+  </g>
+  <line x1="430" y1="240" x2="430" y2="234" stroke="var(--kv)" stroke-width="0.01"/>
+  <g stroke="currentColor" stroke-width="1" opacity="0.45" marker-end="url(#r2Arr)">
+    <line x1="450" y1="80" x2="500" y2="94"/>
+    <line x1="510" y1="120" x2="510" y2="134"/>
+    <line x1="510" y1="160" x2="510" y2="174"/>
+    <line x1="510" y1="200" x2="462" y2="226"/>
+  </g>
+
+  <g font-family="IBM Plex Mono" font-size="8">
+    <text x="688" y="150" fill="var(--kv)" text-anchor="end" font-weight="600">左链 16+4+20+90+10 = 140s ★关键路径</text>
+    <text x="688" y="168" fill="var(--ink-soft)" text-anchor="end">右链 16+4+16+30+10 = 76s</text>
+    <text x="688" y="184" fill="var(--ink-soft)" text-anchor="end">被左链覆盖 · 并行白赚</text>
+  </g>
+</svg>
+<figcaption><b>派生延迟 = 理论耗时，不是实测耗时。</b>三步：把事件日志里每个事件按「token 数 × 固定速率 + 实测工具时间」折算成本；只给真实依赖（谁必须等谁）连边——A 写 patch 不需要等 B 的 lint，所以两列之间没有箭头；取起点到终点最长的链。B 分支比 A 快 64 秒，这 64 秒被关键路径「覆盖」，不计费——这正是奖励并行的机制：交房日期只由最慢的工序链决定，水电和泥瓦同时干不涨价。用固定速率而非实测延迟是去噪关键：同一条轨迹在忙集群和闲集群得分相同，奖励可复现、不可挑时段刷分。</figcaption>
+</figure>
+
+<figure role="img" aria-label="三条对照轨迹：单干 182 秒全串行、真并行 140 秒两条分支重叠、刷消息 250 秒被消息串行化">
+<svg viewBox="0 0 720 262" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g stroke="var(--line)" stroke-width="1" opacity="0.7">
+    <line x1="215" y1="30" x2="215" y2="196"/><line x1="330" y1="30" x2="330" y2="196"/>
+    <line x1="445" y1="30" x2="445" y2="196"/><line x1="560" y1="30" x2="560" y2="196"/><line x1="675" y1="30" x2="675" y2="196"/>
+  </g>
+  <g font-family="IBM Plex Mono" font-size="8" fill="var(--ink-soft)" text-anchor="middle">
+    <text x="215" y="214">50s</text><text x="330" y="214">100s</text><text x="445" y="214">150s</text><text x="560" y="214">200s</text><text x="675" y="214">250s</text>
+  </g>
+
+  <!-- r1 单干 -->
+  <text x="92" y="61" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="end">r1 单干</text>
+  <rect x="100" y="44" width="419" height="26" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <text x="310" y="61" font-family="Noto Sans SC" font-size="7.5" fill="currentColor" text-anchor="middle">全串行 16+20+90+16+30+10 = 182s</text>
+  <text x="560" y="61" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">协作+0 · R=0.27</text>
+
+  <!-- r2 真并行 -->
+  <text x="92" y="121" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="end">r2 真并行</text>
+  <rect x="100" y="100" width="46" height="26" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <text x="123" y="117" font-family="IBM Plex Mono" font-size="7" fill="currentColor" text-anchor="middle">16+4</text>
+  <rect x="146" y="99" width="253" height="13" rx="3" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.3"/>
+  <text x="272" y="109" font-family="IBM Plex Mono" font-size="7" fill="var(--kv)" text-anchor="middle">队友A: patch 20 ＋ 跑测试 90</text>
+  <rect x="146" y="114" width="106" height="13" rx="3" fill="var(--card)" stroke="currentColor" stroke-width="1" opacity="0.7"/>
+  <text x="199" y="124" font-family="IBM Plex Mono" font-size="7" fill="currentColor" text-anchor="middle">B: 16+30</text>
+  <rect x="399" y="100" width="23" height="26" rx="4" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <text x="410" y="117" font-family="IBM Plex Mono" font-size="7" fill="currentColor" text-anchor="middle">10</text>
+  <text x="560" y="117" font-family="IBM Plex Mono" font-size="8.5" fill="var(--kv)" text-anchor="middle" font-weight="600">协作+0.3 · R=0.74 ★</text>
+
+  <!-- r3 刷消息 -->
+  <text x="92" y="181" font-family="Noto Sans SC" font-size="8.5" fill="currentColor" text-anchor="end">r3 刷消息</text>
+  <rect x="100" y="164" width="46" height="26" rx="0" fill="var(--card)" stroke="none"/>
+  <rect x="100" y="164" width="46" height="26" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <rect x="146" y="164" width="9" height="26" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <rect x="155" y="164" width="184" height="26" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <rect x="339" y="164" width="23" height="26" fill="var(--eco-soft)" stroke="var(--eco)" stroke-width="1.2"/>
+  <rect x="362" y="164" width="138" height="26" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <rect x="500" y="164" width="161" height="26" fill="var(--eco-soft)" stroke="var(--eco)" stroke-width="1.2"/>
+  <rect x="661" y="164" width="14" height="26" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <text x="245" y="181" font-family="IBM Plex Mono" font-size="7" fill="currentColor" text-anchor="middle">A 干活 84</text>
+  <text x="580" y="181" font-family="Noto Sans SC" font-size="7.5" fill="var(--eco)" text-anchor="middle">消息 ping-pong 70 ←串行化</text>
+  <text x="560" y="155" font-family="IBM Plex Mono" font-size="8.5" fill="currentColor" text-anchor="middle">协作+0.7 · R=0.70</text>
+  <text x="390" y="181" font-family="Noto Sans SC" font-size="7" fill="var(--eco)" text-anchor="middle">转发</text>
+  <text x="430" y="181" font-family="IBM Plex Mono" font-size="7" fill="currentColor" text-anchor="middle">B 60</text>
+
+  <rect x="100" y="228" width="14" height="11" rx="2" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.2"/>
+  <text x="122" y="238" font-family="Noto Sans SC" font-size="8" fill="currentColor">并行分支A</text>
+  <rect x="185" y="228" width="14" height="11" rx="2" fill="var(--eco-soft)" stroke="var(--eco)" stroke-width="1.2"/>
+  <text x="207" y="238" font-family="Noto Sans SC" font-size="8" fill="currentColor">消息造成的串行等待</text>
+  <rect x="340" y="228" width="14" height="11" rx="2" fill="var(--card)" stroke="currentColor" stroke-width="1.1"/>
+  <text x="362" y="238" font-family="Noto Sans SC" font-size="8" fill="currentColor">串行工作（灰）</text>
+  <text x="688" y="238" font-family="Noto Sans SC" font-size="8" fill="var(--ink-soft)" text-anchor="end">权重示意：spawn +0.1 · 消息 +0.05 · λ=0.004/s</text>
+  <text x="360" y="258" font-family="Noto Sans SC" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">r3 的教训：消息最多（协作分最高）却没赢——λ × 关键路径把「把可并行的活儿用消息串起来」的行为拉了下来</text>
+</svg>
+<figcaption><b>一杆秤称出三种策略。</b>同样的任务、同样做对（绩效同为 1.0）：r1 单干最慢且无协作分；r2 真并行最快——两条分支在时间轴上重叠，B 的 46 秒完全被 A 覆盖；r3 消息最多、协作分最高，但每条「让队友干等」的消息都在延长关键路径，250 秒的路径让 λ 项把优势吃光。模型在训练中要摸出的正是这套盈亏平衡：任务拆得开吗、协调开销多大、值不值。</figcaption>
+</figure>
+
+<figure role="img" aria-label="打分流水线：三个自动打分器合成标量 R，GRPO 组内对比得优势，乘到全轨迹 token 上更新同一份权重">
+<svg viewBox="0 0 720 348" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <marker id="r4Arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+    <marker id="r4Eco" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--eco)"/>
+    </marker>
+    <marker id="r4Data" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--data)"/>
+    </marker>
+    <marker id="r4Kv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kv)"/>
+    </marker>
+  </defs>
+
+  <rect x="250" y="24" width="220" height="28" rx="7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <text x="360" y="43" font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="700">一条团队轨迹结束（episode）</text>
+
+  <line x1="300" y1="52" x2="160" y2="72" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+  <line x1="360" y1="52" x2="360" y2="72" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+  <line x1="420" y1="52" x2="570" y2="72" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+
+  <g font-family="Noto Sans SC">
+    <rect x="40" y="76" width="210" height="62" rx="8" fill="none" stroke="var(--eco)" stroke-width="1.4"/>
+    <text x="145" y="98" font-size="9" fill="var(--eco)" text-anchor="middle" font-weight="700">① 验证系统（自动跑）</text>
+    <g font-size="7.5" fill="currentColor" text-anchor="middle">
+      <text x="145" y="116">测试通过判定；崩溃 = 失败轨迹</text>
+      <text x="145" y="130">＋ repercussion 负信号</text>
+    </g>
+
+    <rect x="265" y="76" width="190" height="62" rx="8" fill="none" stroke="var(--data)" stroke-width="1.4"/>
+    <text x="360" y="98" font-size="9" fill="var(--data)" text-anchor="middle" font-weight="700">② 事件计数（机械）</text>
+    <g font-size="7.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="116">spawn 次数 + 消息条数</text>
+      <text x="360" y="130">无 LLM 裁判 · 无人工</text>
+    </g>
+
+    <rect x="470" y="76" width="210" height="62" rx="8" fill="none" stroke="var(--kv)" stroke-width="1.4"/>
+    <text x="575" y="98" font-size="9" fill="var(--kv)" text-anchor="middle" font-weight="700">③ DAG 公式（确定性）</text>
+    <g font-size="7.5" fill="currentColor" text-anchor="middle">
+      <text x="575" y="116">关键路径 × λ</text>
+      <text x="575" y="130">固定速率 · 与集群负载解耦</text>
+    </g>
+  </g>
+
+  <line x1="145" y1="138" x2="280" y2="160" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+  <line x1="360" y1="138" x2="360" y2="160" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+  <line x1="575" y1="138" x2="440" y2="160" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+
+  <rect x="190" y="164" width="340" height="28" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.4"/>
+  <text x="360" y="183" font-family="IBM Plex Mono" font-size="9.5" fill="currentColor" text-anchor="middle" font-weight="600">R = ① + ② − ③ （一条轨迹一个标量）</text>
+
+  <line x1="360" y1="192" x2="360" y2="208" stroke="currentColor" stroke-width="1.2" marker-end="url(#r4Arr)"/>
+
+  <rect x="60" y="212" width="600" height="66" rx="9" fill="none" stroke="var(--line)" stroke-width="1.3"/>
+  <text x="360" y="232" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" font-weight="700">同一任务并行采 4 条 → 组内对比　优势 A = R − 组均值(0.35)</text>
+  <g font-family="IBM Plex Mono" font-size="8" text-anchor="middle">
+    <rect x="84" y="240" width="120" height="26" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1"/>
+    <text x="144" y="257" fill="currentColor">r1 0.27 → −0.08</text>
+    <rect x="224" y="240" width="120" height="26" rx="5" fill="var(--kv-soft)" stroke="var(--kv)" stroke-width="1.5"/>
+    <text x="284" y="257" fill="var(--kv)" font-weight="700">r2 0.74 → +0.39 ★</text>
+    <rect x="364" y="240" width="120" height="26" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1"/>
+    <text x="424" y="257" fill="currentColor">r3 0.70 → +0.35</text>
+    <rect x="504" y="240" width="132" height="26" rx="5" fill="var(--card)" stroke="var(--eco)" stroke-width="1.2" stroke-dasharray="4 2"/>
+    <text x="570" y="257" fill="var(--eco)">r4 失败 → −0.65</text>
+  </g>
+
+  <g font-family="Noto Sans SC" font-size="8" fill="currentColor" text-anchor="middle">
+    <rect x="100" y="296" width="110" height="24" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1"/>
+    <text x="155" y="312">lead 的 token</text>
+    <rect x="230" y="296" width="110" height="24" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1"/>
+    <text x="285" y="312">队友A 的 token</text>
+    <rect x="360" y="296" width="110" height="24" rx="5" fill="var(--card)" stroke="currentColor" stroke-width="1"/>
+    <text x="415" y="312">队友B 的 token</text>
+  </g>
+  <line x1="470" y1="308" x2="520" y2="308" stroke="currentColor" stroke-width="1.3" marker-end="url(#r4Arr)"/>
+  <rect x="524" y="292" width="140" height="32" rx="6" fill="var(--data-soft)" stroke="var(--data)" stroke-width="1.4"/>
+  <text x="594" y="312" font-family="Noto Sans SC" font-size="8.5" fill="var(--data)" text-anchor="middle" font-weight="700">同一份权重一起更新</text>
+  <text x="360" y="342" font-family="Noto Sans SC" font-size="8" fill="var(--ink-soft)" text-anchor="middle">打分全自动（百万级 rollout 打得起）· 粗粒度轨迹分靠组内对比 + 采样多样性定位 · 异步下过期 token 被 loss mask</text>
+</svg>
+<figcaption><b>从轨迹到梯度，全程无人参与。</b>三个打分器都是自动的：验证系统跑测试（任务合成工厂出厂自带，正是为了这一步）、事件日志机械计数、DAG 公式确定性计算——合成一个标量后，GRPO 式组内对比把它变成相对优势：同一任务温度采样出不同并行方案，好方案在组内冒尖。lead 和队友是同一份权重，整场配合好所有角色的 token 一起被强化——不需要逐角色记账，组对比替代了 critic。注意 r3 拿的是小正优势而非负分：组内对比给相对分，不完美策略仍被小幅强化，只是最优策略拿到最大推动，方向性保证策略向「真并行」漂移。（计数方式与权重为解读示意，原文未给数值；组相对机制由 5.1.4/5.2.1 顺推，5.3.5 未写优化器细节。）</figcaption>
+</figure>
+
+<p>这套奖励的<b>本质目的</b>可以一句话收束：教会模型「什么时候值得并行」的经济学决策。测试时算力有两根轴——串行深度（想得更久，现有 reasoning scaling）和并行宽度（分身同时干）——单 token 接一个 token 的串行轴快到头了，这份奖励设计买的是第二根轴。它也是「薄壳跑赢厚壳」那条发现的延续：连组队、分工、同步的编排逻辑本身，也从脚手架代码搬进了模型权重。回头看本章开头的评测曲线就不意外了：1 小时时限并行还没回本（13.59 vs 12.79），8–20 小时复利拉开（+9.7 / +4.7 分）——模型被精确训练去吃「时限越长、并行越赚」的区间。</p>
+
 <figure role="img" aria-label="多智能体对单智能体：ProgramBench 与 FrontierSWE v2 在不同时限下的成绩对比，多智能体每个时限都领先">
 <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <g font-family="Noto Sans SC" font-size="9.5" fill="currentColor" text-anchor="middle">
