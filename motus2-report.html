@@ -70,7 +70,7 @@
 <header class="masthead">
   <div class="kicker">Motus2 · arXiv 2608.30237 · 论文深潜</div>
   <h1>失败数据的第二人生</h1>
-  <p class="lede">Motus2（GensPI + 清华，朱军组）回答了一个所有做后训练的人都会撞上的问题：失败和次优的交互数据，除了扔掉还能干什么？它的答案是一套精密的管道——同一份权重暴露策略、模拟器、评估器三个接口，用「动作优先掩码」防止动作偷看未来，用「监督路由」把失败轨迹送往动力学和价值学习（而不是被模仿），再用 DiffusionNFT 把评估分数变回策略更新，闭成一个自演进环。本报告按论文全文逐机制拆解，是《想象的三种频率》里 Motus2 条目的深潜篇。</p>
+  <p class="lede">Motus2（GensPI + 清华，朱军组）回答了一个所有做后训练的人都会撞上的问题：失败和次优的交互数据，除了扔掉还能干什么？它的答案是一套精密的管道——同一份权重暴露策略、模拟器、评估器三个接口，用「动作优先掩码」防止动作偷看未来，用「监督路由」把失败轨迹送往动力学和价值学习（而不是被模仿），再用 DiffusionNFT 把评估分数变回策略更新，闭成一个自演进环。本报告按论文全文逐机制拆解，是《想象的三种频率》里 Motus2 条目的深潜篇；文末后记与三天后智元的 GE-Act 2.0 / AGILE 2.0 双发对照——反题与共鸣同样有信息量。</p>
 </header>
 
 <!-- ============ 1. 定位 ============ -->
@@ -748,10 +748,211 @@
 <figcaption><b>三条连接线，一条元判断。</b>①失败数据路由是 CyberGym「失败 rollout 怎么用」的具身答案：别模仿，学转移和结局；②r̂ 归一化 + 锚点 = GRPO 组思想的扩散策略版，我们在 DeepSeek V4.1 的 effort 分组里也见过「不跨组比较」的同一逻辑；③σ<sub>c</sub> 两段精炼让「大脑/小脑」在第三个系统里独立出现——模式收敛是最强的信号。而元判断是：Motus2 用 0% vs 84% 证明具身侧的瓶颈在预训练表征而非微调数据，这与语言侧「数据管线是一切」的结论在各自语境下同时成立。</figcaption>
 </figure>
 
-<p>如果只带走一句话：<b>失败数据不是垃圾，是放错位置的证据</b>——把它的动作从「模仿目标」降级为「条件变量」，它的转移和结局就都在教模型认识世界。这个判断在具身和语言两侧同样成立。</p>
+<!-- ============ 12. 后记：智元双发对照 ============ -->
+
+<h2>后记：三天后的反题——智元 GE-Act 2.0 / AGILE 2.0<span class="chip" style="background:var(--val-soft);color:var(--val)">同期对照</span></h2>
+<div class="claim">Motus2 论文更新三天后（09-04 提交、09-09 随发布会公开），智元同日双发 <b>GE-Act 2.0</b>（技能脑）与 <b>AGILE 2.0</b>（小脑），把 Motus2 的两个核心选择各撞了一次：<b>不继承视频生成器</b>、<b>失败数据换一种用法</b>。对照着读，两条路线的牌面都更清楚了。</div>
+
+<p>先看 AGILE 2.0 补的位置。此前全身控制栈基本是「盲动」——SONIC 路线的 MLP 小脑只吃状态估计、不吃像素；AGILE 2.0（AGIBOT Generative Intelligent Locomotion Engine）把视觉直接拉进控制环，六个环节压成一环：<b>环境观测→地形理解→动态可通行性→全身运动控制→接触状态切换→末端精细操作</b>，毫秒级视觉-运动协同。为什么踩球是硬门槛而不是杂耍营销：支撑面拓扑持续变化，本体反馈来不及，必须视觉前瞻加足底力闭环；跳长绳考视觉预判绳相位加毫秒级起跳窗口；协作搬箱把运动与操作合并。用《端到端的代价》的裁决式：全身动态平衡是<b>短视野 + 毫秒延迟敏感</b>任务，中间模块的接口截断误差代价最大，端到端赢——与 UniAD 在规划端选 E2E 同构，时间尺度再压一百倍。<span style="color:var(--ink-soft)">注意：AGILE 2.0 没有发技术报告，以上基于发布会与媒体报道；训练配方（大概率仿真 RL + 域随机化 + 真机蒸馏）是推测。</span></p>
+
+<figure role="img" aria-label="智元 9 月 9 日双发的三层栈：AGILE 2.0 小脑毫秒级视觉入环，GE-Act 2.0 技能脑约 10Hz，System-2 深思层空缺">
+<svg viewBox="0 0 720 272" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="58" y1="244" x2="58" y2="44" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+    <polygon points="54,48 62,48 58,36" fill="currentColor" opacity="0.55"/>
+    <g font-size="8" fill="currentColor" opacity="0.7" text-anchor="end">
+      <text x="88" y="64">秒级以上</text>
+      <text x="88" y="150">≈10Hz</text>
+      <text x="88" y="236">毫秒级</text>
+    </g>
+
+    <rect x="100" y="28" width="580" height="60" rx="8" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" stroke-dasharray="6 4"/>
+    <text x="118" y="52" font-size="12" font-weight="700" fill="var(--ink-soft)">System-2 · 深思 / 规划 / 记忆 — 空缺</text>
+    <text x="118" y="72" font-size="9" fill="currentColor" opacity="0.75">GE-Act 论文自认 future work：第三层全行业还没人补上</text>
+
+    <rect x="100" y="104" width="580" height="64" rx="8" fill="var(--sim-soft)" stroke="var(--sim)" stroke-width="1.8"/>
+    <text x="118" y="126" font-size="12" font-weight="700" fill="var(--sim)">GE-Act 2.0 · 技能脑（System-1）</text>
+    <text x="118" y="145" font-size="9" fill="currentColor">CoAE 24 token/帧 → SVP 单步想象 → IDM 52 动作 · 104ms/chunk（RTX 5090）</text>
+    <text x="118" y="160" font-size="9" fill="currentColor" opacity="0.75">arXiv 2609.05588 · 原生世界-动作模型，从零训练</text>
+
+    <rect x="100" y="180" width="580" height="64" rx="8" fill="var(--act-soft)" stroke="var(--act)" stroke-width="1.8"/>
+    <text x="118" y="202" font-size="12" font-weight="700" fill="var(--act)">AGILE 2.0 · 小脑（感控一体，视觉入环）</text>
+    <text x="118" y="221" font-size="9" fill="currentColor">观测→地形→动态可通行性→全身控制→接触切换→精细操作 · 毫秒级协同</text>
+    <text x="118" y="236" font-size="9" fill="currentColor" opacity="0.75">踩球（双足人形首次）/ 跳长绳 / 协作搬箱 · 无技术报告（产品级发布）</text>
+  </g>
+  <text x="390" y="264" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">9/9 当天中下两层齐了；两个模型的组合接口（谁在什么条件下接管）未公开——下一个观察点</text>
+</svg>
+<figcaption><b>智元双发的系统图景。</b>我们之前从 GR00T/SONIC 推的「大脑-小脑」分层，智元给出了官方组装，但多出一层：中间插了 GE-Act 这个「技能脑」。想象频率也在收敛——SVP 的 104ms/chunk ≈ 10Hz，恰好是机械臂控制频率：想象不再慢于动作，中频想象第一次与控制同频同环。</figcaption>
+</figure>
+
+<p>GE-Act 2.0 才是干货所在（有全文，arXiv 2609.05588）。它的核心主张是 Motus2 的<b>反题</b>：不继承预训练视频生成器，原生从零训练世界-动作模型——理由是继承来的 latent 是重建导向的（8×/16× 下采样、token 密集），不适合控制。CoAE 用 64× 下采样把一帧压到 24 个 token（Wan/Cosmos 的 1/16），再以多教师对齐（SigLIP2 / V-JEPA 2.1 / DINOv3）保住动作与指令相关信号——动作恢复探针以 1/16 的 token 追平 DINOv3，指令跟随 97.95% 五编码器最佳。</p>
+
+<figure role="img" aria-label="GE-Act 2.0 三件套数据流：CoAE 编码、SVP 单步想象、IDM 逆动力学；IDM 不接收语言，失败与无标签数据直接可用">
+<svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="20" width="230" height="58" rx="8" fill="none" stroke="var(--mem)" stroke-width="1.4"/>
+    <text x="145" y="43" font-size="11" font-weight="700" fill="var(--mem)" text-anchor="middle">无动作视频 39K h</text>
+    <text x="145" y="61" font-size="8.5" fill="currentColor" text-anchor="middle">SVP 预训练语料 · 另有 30K h 联训</text>
+
+    <rect x="310" y="20" width="240" height="58" rx="8" fill="none" stroke="var(--sim)" stroke-width="1.4"/>
+    <text x="430" y="43" font-size="11" font-weight="700" fill="var(--sim)" text-anchor="middle">语言指令 c · 冻结 Qwen3.5-2B</text>
+    <text x="430" y="61" font-size="8.5" fill="currentColor" text-anchor="middle">场景接地指令（「红碗左边」这类）</text>
+
+    <rect x="30" y="126" width="230" height="70" rx="8" fill="none" stroke="var(--mem)" stroke-width="1.4"/>
+    <text x="145" y="150" font-size="11" font-weight="700" fill="var(--mem)" text-anchor="middle">CoAE 编码器</text>
+    <text x="145" y="168" font-size="8.5" fill="currentColor" text-anchor="middle">64× 下采样 → 24 token/帧</text>
+    <text x="145" y="183" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">多教师对齐 SigLIP2 · V-JEPA · DINOv3</text>
+
+    <rect x="310" y="126" width="240" height="70" rx="8" fill="none" stroke="var(--sim)" stroke-width="1.4"/>
+    <text x="430" y="150" font-size="11" font-weight="700" fill="var(--sim)" text-anchor="middle">SVP 单步视觉规划器</text>
+    <text x="430" y="168" font-size="8.5" fill="currentColor" text-anchor="middle">MeanFlow 一次前向（可微接口）</text>
+    <text x="430" y="183" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">dense 4 帧（控制）+ sparse 2 帧（意图）</text>
+
+    <rect x="310" y="250" width="240" height="70" rx="8" fill="none" stroke="var(--act)" stroke-width="1.4"/>
+    <text x="430" y="274" font-size="11" font-weight="700" fill="var(--act)" text-anchor="middle">IDM 逆动力学</text>
+    <text x="430" y="292" font-size="8.5" fill="currentColor" text-anchor="middle">(观测, ẑ, 本体感觉) → 52 动作@30Hz</text>
+    <text x="430" y="307" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">flow matching · 执行前 30 个</text>
+
+    <rect x="30" y="250" width="230" height="70" rx="8" fill="var(--val-soft)" stroke="var(--val)" stroke-width="2.2"/>
+    <text x="145" y="274" font-size="11" font-weight="700" fill="var(--val)" text-anchor="middle">失败 · 无指令 · 部署数据 32K h</text>
+    <text x="145" y="292" font-size="8.5" fill="currentColor" text-anchor="middle">不需要成功标签，直接预训练 IDM</text>
+    <text x="145" y="307" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">失败数据的又一种「第二人生」</text>
+
+    <g stroke="currentColor" stroke-width="1.3">
+      <line x1="145" y1="80" x2="145" y2="119"/>
+      <line x1="260" y1="161" x2="303" y2="161"/>
+      <line x1="430" y1="80" x2="430" y2="119"/>
+      <line x1="430" y1="198" x2="430" y2="243"/>
+      <line x1="260" y1="285" x2="303" y2="285"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="141,119 149,119 145,126"/>
+      <polygon points="303,157 303,165 310,161"/>
+      <polygon points="426,119 434,119 430,126"/>
+      <polygon points="426,243 434,243 430,250"/>
+      <polygon points="303,281 303,289 310,285"/>
+    </g>
+    <g font-size="8" fill="currentColor" opacity="0.75">
+      <text x="152" y="106">预训练</text>
+      <text x="282" y="152" text-anchor="middle">latent</text>
+      <text x="437" y="106">条件 c_vlm</text>
+      <text x="437" y="228">ẑ 想象的未来</text>
+      <text x="282" y="276" text-anchor="middle">动作监督</text>
+    </g>
+
+    <path d="M 550 49 H 585 V 285 H 556" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+    <g stroke="var(--act)" stroke-width="2">
+      <line x1="580" y1="162" x2="590" y2="172"/>
+      <line x1="580" y1="172" x2="590" y2="162"/>
+    </g>
+    <text x="598" y="164" font-size="8.5" fill="var(--act)" font-weight="700">不看语言</text>
+    <text x="598" y="178" font-size="8" fill="currentColor" opacity="0.75">（关键一刀）</text>
+  </g>
+</svg>
+<figcaption><b>三件套流水线，串行分解换数据自由。</b>SVP 用 MeanFlow 单步生成完整未来——只有单步，动作梯度才回传得起，IDM 才能先在 32K 小时数据上单独预训练、再端到端接回；而「IDM 不接收语言」这一刀，让失败、无指令、部署数据<b>不需要 Motus2 式的路由就直接可用</b>。与 Motus2「一套权重三接口」是镜像选择：Motus2 共享骨干多接口，GE-Act 串行流水线各司其职。</figcaption>
+</figure>
+
+<p>联合训练时 GE-Act 撞上了 Motus2 同族的问题，但形态不同，解法也更巧。录制的 (z, a) 来自同一条轨迹、共享同一个结果模式（从左抓还是从右抓）；生成的 ẑ 却是独立采样——<b>ẑ 描绘的可能是另一种抓法，却拿 a 当监督</b>。注意这不是「生成得不像」：完美的边缘分布也保证不了 mode 耦合，而平方误差回归会把冲突目标平均成均值，动作模式坍缩，抹掉后续 RL 需要的多样性。KASO 的点睛之笔在高噪声探针：</p>
+
+<figure role="img" aria-label="KASO 机制：左，有效性缺口导致双峰动作分布被回归成均值；右，高噪声探针测量候选未来与录制未来的动作分歧，选能量最低者并重放保梯度">
+<svg viewBox="0 0 720 306" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="330" height="270" rx="10" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="40" y="50" font-size="11" font-weight="700" fill="currentColor">问题：有效性缺口（mode 错配）</text>
+
+    <rect x="40" y="66" width="140" height="50" rx="7" fill="none" stroke="var(--val)" stroke-width="1.4"/>
+    <text x="110" y="87" font-size="9.5" font-weight="700" fill="var(--val)" text-anchor="middle">录制 (z, a)</text>
+    <text x="110" y="104" font-size="8" fill="currentColor" text-anchor="middle">同一 mode：都从左抓</text>
+
+    <rect x="198" y="66" width="140" height="50" rx="7" fill="none" stroke="var(--sim)" stroke-width="1.4"/>
+    <text x="268" y="87" font-size="9.5" font-weight="700" fill="var(--sim)" text-anchor="middle">生成 ẑ</text>
+    <text x="268" y="104" font-size="8" fill="currentColor" text-anchor="middle">独立采样：可能从右抓</text>
+
+    <g stroke="currentColor" stroke-width="1.1">
+      <line x1="110" y1="118" x2="110" y2="142"/>
+      <line x1="268" y1="118" x2="268" y2="142"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="106,142 114,142 110,148"/>
+      <polygon points="264,142 272,142 268,148"/>
+    </g>
+
+    <line x1="50" y1="232" x2="330" y2="232" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+    <path d="M 90 232 Q 130 156 170 232 Z" fill="var(--val-soft)" stroke="var(--val)" stroke-width="1.3"/>
+    <path d="M 210 232 Q 250 156 290 232 Z" fill="var(--sim-soft)" stroke="var(--sim)" stroke-width="1.3"/>
+    <line x1="190" y1="150" x2="190" y2="232" stroke="var(--act)" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="190" y="142" font-size="8.5" fill="var(--act)" text-anchor="middle" font-weight="700">E2E 回归 → 均值（坍缩点）</text>
+    <g font-size="7.5" fill="currentColor" opacity="0.75" text-anchor="middle">
+      <text x="130" y="245">从左抓</text>
+      <text x="250" y="245">从右抓</text>
+    </g>
+    <text x="189" y="272" font-size="8.5" fill="currentColor" text-anchor="middle" opacity="0.8">监督的 mode 与数据的 mode 不一致，回归取均值</text>
+
+    <rect x="378" y="24" width="318" height="270" rx="10" fill="none" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="394" y="50" font-size="11" font-weight="700" fill="var(--val)">KASO：高噪声探针选兼容对</text>
+
+    <rect x="394" y="66" width="286" height="44" rx="7" fill="none" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="537" y="85" font-size="9.5" fill="currentColor" text-anchor="middle">① 采样 4 个候选 ẑₙ（no grad）</text>
+    <text x="537" y="100" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.7">视觉不同 ≠ 不兼容——支持同一动作即可</text>
+
+    <rect x="394" y="124" width="286" height="44" rx="7" fill="none" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="537" y="143" font-size="9.5" fill="currentColor" text-anchor="middle">② 探针动作 ã 加大噪声 tp = 0.95</text>
+    <text x="537" y="158" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.7">ã 自身不携带动作信息，速度场只能靠视觉推断</text>
+
+    <rect x="394" y="182" width="286" height="44" rx="7" fill="none" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="537" y="201" font-size="9.5" fill="currentColor" text-anchor="middle">③ 能量 Eₙ = ‖v(ã,ẑₙ) − v(ã,z)‖²</text>
+    <text x="537" y="216" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.7">在动作空间比较，不在像素空间</text>
+
+    <rect x="394" y="240" width="286" height="44" rx="7" fill="var(--val-soft)" stroke="var(--val)" stroke-width="1.6"/>
+    <text x="537" y="259" font-size="9.5" fill="var(--val)" text-anchor="middle" font-weight="700">④ 选 E 最小的 ẑ → 重放其噪声（保梯度）</text>
+    <text x="537" y="274" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">单步映射保证重放精确复现，联合损失端到端回传</text>
+
+    <g stroke="currentColor" stroke-width="1.1">
+      <line x1="537" y1="110" x2="537" y2="118"/>
+      <line x1="537" y1="168" x2="537" y2="176"/>
+      <line x1="537" y1="226" x2="537" y2="234"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="533,118 541,118 537,124"/>
+      <polygon points="533,176 541,176 537,182"/>
+      <polygon points="533,234 541,234 537,240"/>
+    </g>
+  </g>
+</svg>
+<figcaption><b>高噪声探针是点睛之笔。</b>低噪声下探针动作 ã ≈ a，速度场从动作本身就能预测，所有候选能量相似、查不出错配；tp=0.95 的高噪声下 ã 不携带动作信息，IDM 的速度场只能从视觉条件推断动作——能量差因此就是「从候选未来读出的动作」与「从录制未来读出的动作」的分歧。消融（300h 联训）：单物体抓取 40% vs E2E 的 12%。</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>维度</th><th>Motus2（GensPI + 清华）</th><th>GE-Act 2.0（智元）</th></tr></thead>
+  <tbody>
+    <tr><td class="c-m">起点</td><td>继承 Wan2.2 视频生成器（5B 起步）</td><td><b>从零原生训练</b>（反题）</td></tr>
+    <tr><td class="c-m">视觉编码</td><td>Wan latent（8×/16× 下采样）</td><td>CoAE 24 token/帧（1/16 token 量）+ 多教师对齐</td></tr>
+    <tr><td class="c-m">数据</td><td>130K h 自我中心人类视频</td><td>39K h 无动作视频 + 32K h 动作数据 + 30K h 联训</td></tr>
+    <tr><td class="c-v">失败数据</td><td>监督路由：去学 dynamics 与 value</td><td>IDM 直收：无指令 / 无标签 / 失败全可用</td></tr>
+    <tr><td class="c-s">想象</td><td>DiT 多步去噪</td><td>SVP MeanFlow 单步（可微接口）</td></tr>
+    <tr><td class="c-s">部署成本</td><td>Fast 路径免想象</td><td>104ms/chunk（RTX 5090，≈10Hz）</td></tr>
+    <tr><td class="c-a">scaling 证据</td><td>L*≈0.101−0.005·ln D（130K h）</td><td>17.1%→44.1% 无饱和（30K h），Pearson 0.80</td></tr>
+    <tr><td class="c-a">跨本体</td><td>—</td><td>G2-90D &lt;2% 数据 +17.7pp（免费午餐）</td></tr>
+  </tbody>
+</table>
+
+<p>两条路线短期分不出胜负，但对照本身给出三个判断。<b>①「失败数据可用」已从一家巧思变成两家共同的设计目标</b>——这是数据经济学，不是模型结构学。<b>②具身 scaling 曲线同月被两组独立数据验证不饱和</b>：GE-Act 300h→30K h 零样本成功率 17.1%→44.1%，非零任务 39→76，且覆盖决定能力分布——Wipe 有 824h 数据做到 76.7%，动作相似的 Sweep 只有 64.6h、仅 3.3%；顺序指令 13.3% 对应语料里 0.13% 的占比，句句都是「没见过就不会」。<b>③「监督与条件对齐」在三周内被三家独立解决</b>，正在升级为与 RL 算法同级的一级训练议题：</p>
+
+<table>
+  <thead><tr><th>系统</th><th>错配形态</th><th>解法</th></tr></thead>
+  <tbody>
+    <tr><td class="c-v">Motus2</td><td>失败数据被当模仿目标</td><td>监督路由：失败 → 仿真 / 评估模式；A 作条件不作目标</td></tr>
+    <tr><td class="c-v">DeepSeek V4.1</td><td>合成任务与验证系统错配</td><td>五角色工厂 + 可破解性审计（hackability audit）</td></tr>
+    <tr><td class="c-v">GE-Act 2.0</td><td>生成未来与录制动作 mode 错配</td><td>KASO 高噪声探针选兼容对 + 噪声重放保梯度</td></tr>
+  </tbody>
+</table>
+
+<p>对我们自己的直接映射有两条：<b>CoAE 的 24 token/帧 + 单步推理是 NPU 友好 profile</b>（低 token 量、算子简单），910B 上 1-3B WAM 的推理经济学可以直接参考；<b>KASO 几乎可以原样移植到 coevolve 的联训监督对齐</b>，与 CyberGym 失败 rollout 再利用是同一个问题结构。留三个观察点：AGILE 2.0 的技术报告（毫秒视觉闭环跑在什么算力上）、AGILE 与 GE-Act 的组合接口（谁在什么条件下接管）、System-2 层谁先补上。</p>
+
+<p>如果只带走一句话：<b>失败数据不是垃圾，是放错位置的证据</b>——把它的动作从「模仿目标」降级为「条件变量」，它的转移和结局就都在教模型认识世界。这个判断在具身和语言两侧同样成立；三天后智元用 IDM 和 KASO 又交了两份同题答卷——一家路由、一家直收，答案不同，题目相同。</p>
 
 <footer>
-  <p>2026-09-12 · 基于 arXiv 2608.30237v2 全文（GensPI + 清华，2026-08-31 提交 / 09-10 更新）· 深潜于《想象的三种频率》五系统框架</p>
+  <p>2026-09-12 · 基于 arXiv 2608.30237v2 全文（GensPI + 清华，2026-08-31 提交 / 09-10 更新）· 后记对照智元 GE-Act 2.0（arXiv 2609.05588）与 AGILE 2.0（2026-09-09 发布）· 深潜于《想象的三种频率》五系统框架</p>
   <p>系列首页：<a href="https://maxwell-ai-lab.github.io/archify-diagrams/">Maxwell-AI-Lab 架构图与报告索引</a> · 相关报告：想象的三种频率（WAM 五系统）· VLA 与 WAM 后训练 · 大脑与小脑 · 890 字节的上下文</p>
 </footer>
 </div>
