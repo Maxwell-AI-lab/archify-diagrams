@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三颗脑与一个飞轮</title>
+<meta name="description" content="智元（AGIbot）物理 AI 全栈方案洞察：GO 大脑（VLA 基座）+ GE 技能脑（原生世界-动作模型）+ AGILE 小脑（毫秒级感控一体）三线并进，AGIBOT WORLD / Genie Sim / Genie Studio 平台层托底，数据飞轮同构 Tesla 影子模式。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F7F6F2; --ink: #241F1A; --ink-soft: #6E655A;
+    --brain: #7C3AED; --brain-soft: #EFE7FC;
+    --skill: #1D4ED8; --skill-soft: #E0E9FC;
+    --cere: #C2410C; --cere-soft: #FBE9DD;
+    --fly: #047857; --fly-soft: #DCF2E9;
+    --line: #DED8CC; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #16140F; --ink: #E9E3D7; --ink-soft: #9A9083;
+      --brain: #C4A5F5; --brain-soft: #251C36;
+      --skill: #8FB0F8; --skill-soft: #1B2438;
+      --cere: #F0935B; --cere-soft: #2E1F14;
+      --fly: #5BC79E; --fly-soft: #142620;
+      --line: #312C24; --card: #1F1C16;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #16140F; --ink: #E9E3D7; --ink-soft: #9A9083;
+    --brain: #C4A5F5; --brain-soft: #251C36;
+    --skill: #8FB0F8; --skill-soft: #1B2438;
+    --cere: #F0935B; --cere-soft: #2E1F14;
+    --fly: #5BC79E; --fly-soft: #142620;
+    --line: #312C24; --card: #1F1C16;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  .claim b, p b { color: var(--ink); }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-br { color: var(--brain); font-weight: 600; }
+  .c-sk { color: var(--skill); font-weight: 600; }
+  .c-ce { color: var(--cere); font-weight: 600; }
+  .c-fl { color: var(--fly); font-weight: 600; }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--fly); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">AGIbot · 智元 · 方案洞察 · 2026-09</div>
+  <h1>三颗脑与一个飞轮</h1>
+  <p class="lede">9 月 9 日的 AGILE 2.0 + GE-Act 2.0 双发，单独看是两个模型，放回智元的棋盘上看是一整套方案的中段落子：GO 系列（大脑，VLA 基座）、GE 系列（技能脑，世界-动作模型）、AGILE 系列（小脑，毫秒级感控一体）三条模型线并进，下面垫着 AGIBOT WORLD 数据集、Genie Sim 仿真、Genie Studio 工具链三件平台，再下面是远征与灵犀两类本体。本报告把这张棋盘摊开，用频率 × 抽象层级读三颗脑的分工，用「WAM vs VLA 之争」读双线对冲，用 Tesla 影子模式的同构读那个越转越快的数据飞轮。GE-Act 2.0 的逐机制深拆见《失败数据的第二人生》后记，本篇不重复。</p>
+</header>
+
+<!-- ============ 1. 定位 ============ -->
+
+<h2>一句话定位<span class="chip" style="background:var(--brain-soft);color:var(--brain)">坐标</span></h2>
+<div class="claim">智元是目前少数把<b>数据 → 训练 → 仿真 → 部署</b>整条链都攥在自己手里的具身公司——模型不是它的全部，是飞轮上最亮眼的一环。<b>三颗频率不同的脑 + 一个数据飞轮</b>，就是它方案的全部骨架。</div>
+
+<p>先交代信息的地基，本报告的事实分三档：<b>论文级</b>（GE-Act 2.0，arXiv 2609.05588，全文可查）、<b>发布会级</b>（AGILE 2.0、GO-2，无技术报告，来自官方发布与媒体报道）、<b>推测级</b>（训练配方、组合接口，图中会明确标注）。分档读，才不会把营销当机制。</p>
+
+<!-- ============ 2. 全景 ============ -->
+
+<h2>全景：一张图看懂棋盘<span class="chip" style="background:var(--fly-soft);color:var(--fly)">总览</span></h2>
+
+<figure role="img" aria-label="智元物理 AI 全栈：模型层 GO/GE/AGILE 三线，平台层数据集/仿真/工具链三件，本体层远征/灵犀/数采集群，层间箭头构成数据上流与部署回流">
+<svg viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="20" y="20" width="640" height="230" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="36" y="46" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">模型层</text>
+
+    <rect x="34" y="60" width="194" height="176" rx="9" fill="var(--brain-soft)" stroke="var(--brain)" stroke-width="1.6"/>
+    <text x="131" y="84" font-size="11.5" font-weight="700" fill="var(--brain)" text-anchor="middle">GO · 大脑（VLA 基座）</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="131" y="106">GO-1 '25.03 · ViLLA 架构</text>
+      <text x="131" y="122">VLM + MoE · 泛化 +32%</text>
+      <text x="131" y="146">GO-2 '26.04</text>
+      <text x="131" y="162">动作思维链 + 异步双系统</text>
+      <text x="131" y="186">工业场景成功率 2-4×</text>
+      <text x="131" y="218" opacity="0.7">发布会级 · 无技术报告</text>
+    </g>
+
+    <rect x="243" y="60" width="194" height="176" rx="9" fill="var(--skill-soft)" stroke="var(--skill)" stroke-width="1.6"/>
+    <text x="340" y="84" font-size="11.5" font-weight="700" fill="var(--skill)" text-anchor="middle">GE · 技能脑（世界模型）</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="340" y="106">Genie Envisioner · 已开源</text>
+      <text x="340" y="122">GE-Base 视频扩散 + 160M 解码器</text>
+      <text x="340" y="146">GE-Act 2.0 '26.09.09</text>
+      <text x="340" y="162">原生 WAM · 从零训练</text>
+      <text x="340" y="186">scaling 无饱和 17.1→44.1%</text>
+      <text x="340" y="218" opacity="0.7">论文级 · arXiv 2609.05588</text>
+    </g>
+
+    <rect x="452" y="60" width="194" height="176" rx="9" fill="var(--cere-soft)" stroke="var(--cere)" stroke-width="1.6"/>
+    <text x="549" y="84" font-size="11.5" font-weight="700" fill="var(--cere)" text-anchor="middle">AGILE · 小脑（感控一体）</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="549" y="106">AGILE 1.0 · 打通感知-运动</text>
+      <text x="549" y="122">链路（ locomotion 基础）</text>
+      <text x="549" y="146">AGILE 2.0 '26.09.09</text>
+      <text x="549" y="162">视觉入毫秒级控制环</text>
+      <text x="549" y="186">踩球 / 跳长绳 / 协作搬箱</text>
+      <text x="549" y="218" opacity="0.7">发布会级 · 无论文</text>
+    </g>
+
+    <rect x="20" y="268" width="640" height="120" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="36" y="294" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">平台层</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <rect x="34" y="306" width="194" height="66" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.3"/>
+      <text x="131" y="330" font-size="10" font-weight="700" fill="var(--fly)">AGIBOT WORLD 数据集</text>
+      <text x="131" y="348">百万真机 · 商业场景 100%</text>
+      <text x="131" y="362">'26 版五阶段开源（至真机 RL）</text>
+
+      <rect x="243" y="306" width="194" height="66" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.3"/>
+      <text x="340" y="330" font-size="10" font-weight="700" fill="var(--fly)">Genie Sim 3.0 仿真</text>
+      <text x="340" y="348">1 万+小时仿真数据 · 200+ 任务</text>
+      <text x="340" y="362">自然语言造世界</text>
+
+      <rect x="452" y="306" width="194" height="66" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.3"/>
+      <text x="549" y="330" font-size="10" font-weight="700" fill="var(--fly)">Genie Studio 工具链</text>
+      <text x="549" y="348">采训推一体化开发平台</text>
+      <text x="549" y="362">集成基座模型 + 全工具链</text>
+    </g>
+
+    <rect x="20" y="406" width="640" height="110" rx="12" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="36" y="432" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">本体层</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <rect x="34" y="442" width="194" height="60" rx="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="131" y="464" font-size="10" font-weight="700" fill="currentColor">远征 A2 / A3</text>
+      <text x="131" y="482">工业场景 · A3 首发接入模型体系</text>
+      <text x="131" y="495">租赁模式商业化</text>
+
+      <rect x="243" y="442" width="194" height="60" rx="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="340" y="464" font-size="10" font-weight="700" fill="currentColor">灵犀 X2</text>
+      <text x="340" y="482">运动能力载体 · AGILE 2.0 搭载</text>
+      <text x="340" y="495">踩球 / 跳绳 demo 平台</text>
+
+      <rect x="452" y="442" width="194" height="60" rx="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="549" y="464" font-size="10" font-weight="700" fill="currentColor">数采集群</text>
+      <text x="549" y="482">商业空间 · 酒店 · 商超</text>
+      <text x="549" y="495">百台级真实作业产数据</text>
+    </g>
+
+    <g stroke="var(--fly)" stroke-width="1.6">
+      <line x1="340" y1="500" x2="340" y2="446"/>
+      <line x1="340" y1="382" x2="340" y2="262"/>
+    </g>
+    <g fill="var(--fly)">
+      <polygon points="335,448 345,448 340,438"/>
+      <polygon points="335,264 345,264 340,254"/>
+    </g>
+    <g font-size="8.5" fill="var(--fly)">
+      <text x="350" y="478">产数据</text>
+      <text x="350" y="360">喂数据 · 造考场</text>
+    </g>
+
+    <line x1="686" y1="130" x2="686" y2="468" stroke="var(--cere)" stroke-width="1.6"/>
+    <polygon points="681,466 691,466 686,476" fill="var(--cere)"/>
+    <g font-size="9" fill="var(--cere)" text-anchor="middle">
+      <text x="686" y="270">部</text>
+      <text x="686" y="288">署</text>
+      <text x="686" y="306">回</text>
+      <text x="686" y="324">流</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>棋盘全貌：三颗脑、三件平台、两类本体，加右侧一条部署回流。</b>注意模型三线用的完全不同的发布节奏与公开度——大脑和技能脑都开源（GO-1、Genie Envisioner），小脑闭源；这本身就是对各线竞争壁垒的判断：数据和方法可以换声量，运动控制的工程壁垒直接捂住。</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>线</th><th>定位</th><th>关键节点</th><th>公开度</th></tr></thead>
+  <tbody>
+    <tr><td class="c-br">GO 系列</td><td>大脑 · VLA 基座，听懂指令、编排任务</td><td>GO-1 ViLLA（VLM+MoE）→ GO-2 动作思维链 + 异步双系统，工业成功率 2-4×</td><td>GO-1 已全面开源</td></tr>
+    <tr><td class="c-sk">GE 系列</td><td>技能脑 · 世界-动作模型，数据越多越强</td><td>Genie Envisioner（GE-Base + 160M GE-Act）→ GE-Act 2.0 原生 WAM，scaling 无饱和</td><td>1.0 开源 · 2.0 论文级</td></tr>
+    <tr><td class="c-ce">AGILE 系列</td><td>小脑 · 感控一体，毫秒级全身控制</td><td>1.0 打通链路 → 2.0 视觉端到端入环，双足人形首次自主踩球</td><td>无论文（产品级）</td></tr>
+    <tr><td class="c-fl">平台三件套</td><td>数据底座 + 仿真考场 + 工具链</td><td>百万真机数据五阶段开源；1 万+小时仿真 200+ 任务；采训推一体</td><td>开源为主</td></tr>
+    <tr><td class="c-fl">本体</td><td>数据源头 + 商业化出口</td><td>远征 A3 首发接入模型体系并租赁铺量；灵犀 X2 为运动载体</td><td>出货级</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 3. 三颗脑 ============ -->
+
+<h2>三颗脑：频率 × 抽象层级<span class="chip" style="background:var(--brain-soft);color:var(--brain)">分工</span></h2>
+<div class="claim">工程上的「大脑/小脑」不是按生物脑区切的，是按<b>频率 × 抽象层级</b>切的——反应层（毫秒，不许想）、技能层（约 100ms，想一下）、深思层（秒级以上，好好想）。智元用三条产品线分别占位，而三条线<b>目前互不打通、分开演示</b>——分工画得清楚，组装还没发生。</div>
+
+<figure role="img" aria-label="三颗脑频率分层：GO-2 慢通道秒级与快通道百毫秒，GE-Act 约 10Hz，AGILE 毫秒级；左侧频率轴从毫秒到秒">
+<svg viewBox="0 0 720 316" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="58" y1="288" x2="58" y2="44" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+    <polygon points="54,48 62,48 58,36" fill="currentColor" opacity="0.55"/>
+    <g font-size="8" fill="currentColor" opacity="0.7" text-anchor="end">
+      <text x="88" y="64">秒级以上</text>
+      <text x="88" y="168">≈10Hz</text>
+      <text x="88" y="260">毫秒级</text>
+    </g>
+
+    <rect x="100" y="28" width="580" height="96" rx="8" fill="var(--brain-soft)" stroke="var(--brain)" stroke-width="1.8"/>
+    <text x="116" y="50" font-size="12" font-weight="700" fill="var(--brain)">GO-2 · 大脑（VLA 基座，异步双系统）</text>
+    <rect x="120" y="62" width="260" height="48" rx="7" fill="var(--card)" stroke="var(--brain)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="250" y="82" font-size="9.5" font-weight="700" fill="var(--brain)" text-anchor="middle">慢通道：VLM 深思 · 动作思维链</text>
+    <text x="250" y="99" font-size="8.5" fill="currentColor" text-anchor="middle">指令 → 拆解 → 子目标 / 意图（秒级）</text>
+    <rect x="400" y="62" width="260" height="48" rx="7" fill="var(--card)" stroke="var(--brain)" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="530" y="82" font-size="9.5" font-weight="700" fill="var(--brain)" text-anchor="middle">快通道：轻量执行策略</text>
+    <text x="530" y="99" font-size="8.5" fill="currentColor" text-anchor="middle">高频跟踪意图（约百毫秒）</text>
+
+    <rect x="100" y="140" width="580" height="64" rx="8" fill="var(--skill-soft)" stroke="var(--skill)" stroke-width="1.8"/>
+    <text x="116" y="162" font-size="12" font-weight="700" fill="var(--skill)">GE-Act 2.0 · 技能脑（System-1）</text>
+    <text x="116" y="181" font-size="9" fill="currentColor">CoAE 24 token/帧 → SVP 单步想象 → IDM 52 动作 · 104ms/chunk（RTX 5090）</text>
+    <text x="116" y="196" font-size="9" fill="currentColor" opacity="0.75">论文自认 System-1 only · 原生 WAM 从零训练</text>
+
+    <rect x="100" y="220" width="580" height="64" rx="8" fill="var(--cere-soft)" stroke="var(--cere)" stroke-width="1.8"/>
+    <text x="116" y="242" font-size="12" font-weight="700" fill="var(--cere)">AGILE 2.0 · 小脑（感控一体，视觉入环）</text>
+    <text x="116" y="261" font-size="9" fill="currentColor">观测→地形→动态可通行性→全身控制→接触切换→精细操作 · 毫秒级协同</text>
+    <text x="116" y="276" font-size="9" fill="currentColor" opacity="0.75">无技术报告（产品级发布）· 出厂能力固定，不学新技能</text>
+  </g>
+  <text x="390" y="308" font-family="Noto Sans SC" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">GE-Act 论文语境里「System-2 空缺」——但公司棋盘上 GO-2 的慢通道正在抢这个位置；三脑怎么拼装是最大看点</text>
+</svg>
+<figcaption><b>三层栈的公司级拼图。</b>我们此前从 GR00T/SONIC 推的「大脑-小脑」两层，智元多切了一层出来：中间的「技能脑」管按指令干活，上面的大脑管深思与编排，下面的小脑管别摔倒。注意 GO-2 自己内部又是快慢双系统——分层在每一层内部递归出现，和《想象的三种频率》的判断一致：<b>频率分层是具身系统的第一组织原则</b>。</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>维度</th><th class="c-ce">AGILE 2.0 小脑</th><th class="c-sk">GE-Act 2.0 技能脑</th><th class="c-br">GO-2 大脑</th></tr></thead>
+  <tbody>
+    <tr><td>输入</td><td>视觉 + 足底力 + 本体感觉</td><td>视觉 + 语言指令</td><td>语言 + 视觉（全场景）</td></tr>
+    <tr><td>输出</td><td>全身关节控制（步态/平衡/接触）</td><td>手臂动作块 52 步@30Hz</td><td>子目标与动作意图（慢通道）</td></tr>
+    <tr><td>频率</td><td class="c-ce">毫秒级</td><td class="c-sk">≈10Hz</td><td class="c-br">秒级（慢）· 百 ms（快）</td></tr>
+    <tr><td>想象</td><td>无，纯反应式闭环</td><td>有：SVP 单步想象未来</td><td>有：动作思维链（概念级）</td></tr>
+    <tr><td>学新技能</td><td>出厂固定</td><td>scaling 增长（不饱和）</td><td>真机数据回流增长</td></tr>
+    <tr><td>听指令</td><td>否</td><td>是（含场景接地）</td><td>是（主打能力）</td></tr>
+    <tr><td>公开度</td><td>无论文</td><td>论文级（全文可查）</td><td>发布会级</td></tr>
+  </tbody>
+</table>
+
+<p>一个容易忽略的细节：AGILE 2.0 肚子里其实不止「小脑」。链路里的「地形理解」「动态可通行性分析」已经是浓缩到百毫秒内的感知智能——认出「这是个会滚的球」「这个坑迈不过去」。它被切走的是<b>慢思考</b>（语言、任务理解、规划、记忆），不是感知。所以它是个「运动天才、认知婴儿」：你没法跟它说话，只能给它喂运动意图；发布会上层给意图的还是脚本或遥控。</p>
+
+<!-- ============ 4. AGILE ============ -->
+
+<h2>小脑睁眼：AGILE 2.0 拆的哪堵墙<span class="chip" style="background:var(--cere-soft);color:var(--cere)">毫秒级</span></h2>
+<div class="claim">此前全身控制栈基本是「盲动」——MLP 小脑只吃状态估计、不吃像素。AGILE 2.0 把视觉直接拉进控制环，六个环节压成一环。<b>踩球不是杂耍营销，是动态可通行性的极端测试</b>：支撑面拓扑持续变化，本体反馈来不及，必须视觉前瞻加足底力闭环。</div>
+
+<figure role="img" aria-label="盲动与睁眼对比：左侧旧方案摄像头未进环仅靠本体感觉与预设地形，右侧 AGILE 2.0 视觉与足底力进入端到端全身控制">
+<svg viewBox="0 0 720 312" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="336" height="266" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="192" y="50" font-size="11" font-weight="700" fill="currentColor" text-anchor="middle">之前：盲动</text>
+    <rect x="48" y="64" width="130" height="52" rx="7" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>
+    <text x="113" y="86" font-size="9" fill="var(--ink-soft)" text-anchor="middle">摄像头</text>
+    <text x="113" y="102" font-size="7.5" fill="var(--ink-soft)" text-anchor="middle">有，但没进控制环</text>
+    <rect x="206" y="64" width="130" height="52" rx="7" fill="none" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="271" y="86" font-size="9" font-weight="700" fill="var(--cere)" text-anchor="middle">本体感觉</text>
+    <text x="271" y="102" font-size="7.5" fill="currentColor" text-anchor="middle">关节角 · IMU · 足底力</text>
+    <rect x="48" y="160" width="180" height="56" rx="7" fill="none" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="138" y="182" font-size="9.5" font-weight="700" fill="var(--cere)" text-anchor="middle">MLP 全身控制器</text>
+    <text x="138" y="200" font-size="7.5" fill="currentColor" text-anchor="middle">+ 预设地形模型</text>
+    <rect x="256" y="160" width="80" height="56" rx="7" fill="none" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="296" y="186" font-size="9" font-weight="700" fill="var(--cere)" text-anchor="middle">全身</text>
+    <text x="296" y="202" font-size="9" font-weight="700" fill="var(--cere)" text-anchor="middle">关节</text>
+    <g stroke="currentColor" stroke-width="1.2">
+      <line x1="271" y1="118" x2="200" y2="158"/>
+    </g>
+    <polygon points="204,154 206,162 196,160" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="1.2">
+      <line x1="230" y1="188" x2="252" y2="188"/>
+    </g>
+    <polygon points="250,184 250,192 258,188" fill="currentColor"/>
+    <text x="192" y="252" font-size="8" fill="var(--ink-soft)" text-anchor="middle">只知道「我在哪」，不知道「地面是什么」</text>
+    <text x="192" y="270" font-size="8" fill="var(--ink-soft)" text-anchor="middle">踩不了球：支撑面在滚，预设模型没有这种地形</text>
+
+    <rect x="384" y="24" width="312" height="266" rx="10" fill="var(--cere-soft)" stroke="var(--cere)" stroke-width="1.6"/>
+    <text x="540" y="50" font-size="11" font-weight="700" fill="var(--cere)" text-anchor="middle">AGILE 2.0：睁眼</text>
+    <rect x="404" y="64" width="130" height="52" rx="7" fill="var(--card)" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="469" y="84" font-size="9" font-weight="700" fill="var(--cere)" text-anchor="middle">视觉 ★</text>
+    <text x="469" y="100" font-size="7.5" fill="currentColor" text-anchor="middle">地形拓扑 · 动态障碍</text>
+    <rect x="548" y="64" width="130" height="52" rx="7" fill="var(--card)" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="613" y="84" font-size="9" font-weight="700" fill="var(--cere)" text-anchor="middle">足底力 + 本体</text>
+    <text x="613" y="100" font-size="7.5" fill="currentColor" text-anchor="middle">接触状态实时反馈</text>
+    <rect x="404" y="160" width="274" height="56" rx="7" fill="var(--card)" stroke="var(--cere)" stroke-width="1.6"/>
+    <text x="541" y="182" font-size="9.5" font-weight="700" fill="var(--cere)" text-anchor="middle">端到端全身控制（六环节一环）</text>
+    <text x="541" y="200" font-size="7.5" fill="currentColor" text-anchor="middle">地形理解 · 动态可通行性 · 接触切换 · 末端操作</text>
+    <g stroke="var(--cere)" stroke-width="1.4">
+      <line x1="469" y1="118" x2="500" y2="158"/>
+      <line x1="613" y1="118" x2="582" y2="158"/>
+    </g>
+    <g fill="var(--cere)">
+      <polygon points="496,156 506,152 502,162"/>
+      <polygon points="586,152 596,156 590,162" transform="rotate(12 590,156)"/>
+    </g>
+    <text x="540" y="248" font-size="8" fill="currentColor" text-anchor="middle">踩球 = 视觉前瞻（球往哪滚）+ 足底闭环（表面怎么滑）</text>
+    <text x="540" y="266" font-size="8" fill="currentColor" text-anchor="middle">跳长绳 = 视觉预判绳相位 + 毫秒级起跳窗口</text>
+  </g>
+</svg>
+<figcaption><b>拆的墙：视觉与力反馈同时进入毫秒级闭环，中间模块全部消失。</b>用《端到端的代价》的裁决式：全身动态平衡是<b>短视野 + 毫秒延迟敏感</b>任务，中间模块的接口截断误差和延迟代价最大，端到端赢——与自动驾驶里 UniAD 在规划端选 E2E 同构，时间尺度再压一百倍。代价也是经典的那条：错误归因与调试更难，所以更需要仿真考场（Genie Sim 的另一重角色）。</figcaption>
+</figure>
+
+<p>AGILE 2.0 的技术报告没发，训练配方未知——大概率是仿真 RL + 域随机化 + 真机蒸馏（<b>推测</b>）。它真正值得盯的未公开部分是三个数字：毫秒级视觉闭环跑在什么算力上、模型多大、和上层怎么交接。这三个数字决定这套「睁眼小脑」能不能从 demo 走进产线。</p>
+
+<!-- ============ 5. GE ============ -->
+
+<h2>技能脑：GE 系的两步跳<span class="chip" style="background:var(--skill-soft);color:var(--skill)">原生 WAM</span></h2>
+<div class="claim">GE 系从 Genie Envisioner（GE-Base 视频扩散 + 160M 动作解码器，开源）到 GE-Act 2.0（原生世界-动作模型，从零训练），走的是「先验证控制接口、再押 scaling」的两步。2.0 的技术拆解在《失败数据的第二人生》后记里有逐机制深潜，这里只放骨架和最硬的数字。</div>
+
+<figure role="img" aria-label="GE-Act 2.0 三件套数据流：无动作视频与语言指令进入 CoAE 和 SVP，SVP 单步想象未来交给 IDM 翻译成动作，失败与无标签数据直接训练 IDM">
+<svg viewBox="0 0 720 292" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="20" width="200" height="56" rx="8" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.3"/>
+    <text x="130" y="42" font-size="10.5" font-weight="700" fill="var(--fly)" text-anchor="middle">无动作视频 39K h</text>
+    <text x="130" y="60" font-size="8" fill="currentColor" text-anchor="middle">SVP 预训练 · 另有 30K h 联训</text>
+
+    <rect x="280" y="20" width="200" height="56" rx="8" fill="var(--brain-soft)" stroke="var(--brain)" stroke-width="1.3"/>
+    <text x="380" y="42" font-size="10.5" font-weight="700" fill="var(--brain)" text-anchor="middle">语言指令 c · 冻结 VLM</text>
+    <text x="380" y="60" font-size="8" fill="currentColor" text-anchor="middle">只条件 SVP，不进 IDM</text>
+
+    <rect x="30" y="118" width="200" height="64" rx="8" fill="none" stroke="var(--fly)" stroke-width="1.3"/>
+    <text x="130" y="140" font-size="10.5" font-weight="700" fill="var(--fly)" text-anchor="middle">CoAE 编码器</text>
+    <text x="130" y="158" font-size="8" fill="currentColor" text-anchor="middle">64× 下采样 → 24 token/帧</text>
+    <text x="130" y="172" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">多教师对齐保控制信号</text>
+
+    <rect x="280" y="118" width="200" height="64" rx="8" fill="var(--skill-soft)" stroke="var(--skill)" stroke-width="1.6"/>
+    <text x="380" y="140" font-size="10.5" font-weight="700" fill="var(--skill)" text-anchor="middle">SVP 单步视觉规划器</text>
+    <text x="380" y="158" font-size="8" fill="currentColor" text-anchor="middle">MeanFlow 一次前向（可微）</text>
+    <text x="380" y="172" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">dense 4 帧 + sparse 2 帧</text>
+
+    <rect x="530" y="118" width="160" height="64" rx="8" fill="none" stroke="var(--cere)" stroke-width="1.3"/>
+    <text x="610" y="140" font-size="10.5" font-weight="700" fill="var(--cere)" text-anchor="middle">IDM 逆动力学</text>
+    <text x="610" y="158" font-size="8" fill="currentColor" text-anchor="middle">52 动作@30Hz</text>
+    <text x="610" y="172" font-size="8" fill="currentColor" text-anchor="middle" opacity="0.75">flow matching</text>
+
+    <rect x="30" y="218" width="200" height="60" rx="8" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="2.2"/>
+    <text x="130" y="240" font-size="10.5" font-weight="700" fill="var(--fly)" text-anchor="middle">失败 · 无标签数据 32K h</text>
+    <text x="130" y="258" font-size="8" fill="currentColor" text-anchor="middle">不需要成功标签，直训 IDM</text>
+
+    <rect x="300" y="218" width="390" height="60" rx="8" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="495" y="240" font-size="10" font-weight="700" fill="var(--skill)" text-anchor="middle">scaling：300h → 30K h 零样本 17.1% → 44.1%（无饱和）</text>
+    <text x="495" y="258" font-size="8.5" fill="currentColor" text-anchor="middle">技能覆盖 ↔ 成功 Pearson 0.80 · 跨本体 G2-90D &lt;2% 数据 +17.7pp</text>
+
+    <g stroke="currentColor" stroke-width="1.3">
+      <line x1="130" y1="78" x2="130" y2="114"/>
+      <line x1="232" y1="150" x2="274" y2="150"/>
+      <line x1="380" y1="78" x2="380" y2="114"/>
+      <line x1="482" y1="150" x2="524" y2="150"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="126,114 134,114 130,120"/>
+      <polygon points="274,146 274,154 280,150"/>
+      <polygon points="376,114 384,114 380,120"/>
+      <polygon points="524,146 524,154 530,150"/>
+    </g>
+    <g font-size="8" fill="currentColor" opacity="0.75">
+      <text x="137" y="102">预训练</text>
+      <text x="253" y="142" text-anchor="middle">latent</text>
+      <text x="387" y="102">条件</text>
+      <text x="503" y="142" text-anchor="middle">ẑ 想象的未来</text>
+    </g>
+    <path d="M 130 226 Q 200 226 260 190" fill="none" stroke="var(--fly)" stroke-width="1.4" stroke-dasharray="5 3"/>
+    <polygon points="256,186 264,192 258,196" fill="var(--fly)"/>
+    <text x="196" y="216" font-size="8" fill="var(--fly)">直收（无需路由）</text>
+  </g>
+</svg>
+<figcaption><b>GE-Act 2.0 骨架：CoAE 压到 24 token/帧，SVP 单步想象（可微接口），IDM 翻译成动作——「IDM 不看语言」让失败与无标签数据直通预训练。</b>最硬的数字是 scaling：100 倍数据换来 17.1%→44.1% 且无饱和迹象，同月 Motus2 用 130K 小时自我中心数据独立验证了同一条曲线。逐机制深拆（KASO 高噪声探针、validity gap、多教师对齐探针）见《失败数据的第二人生》后记。</figcaption>
+</figure>
+
+<!-- ============ 6. GO ============ -->
+
+<h2>大脑：GO 系的两次出手<span class="chip" style="background:var(--brain-soft);color:var(--brain)">VLA 基座</span></h2>
+<div class="claim">GO 系是产品主线：GO-1 用 ViLLA 架构（VLM + MoE）把「看懂 + 听懂」接进动作潜空间，小样本泛化 +32%，2025 年 9 月全面开源；GO-2 加了两个关键词——<b>动作思维链</b>（把指令拆成可执行的动作推理链）和<b>异步双系统</b>（快慢两条通道不等彼此）。内部结构未公开，下图是概念级示意。</div>
+
+<figure role="img" aria-label="GO-2 异步双系统概念图：慢通道 VLM 深思产出子目标进意图队列，快通道轻量执行策略高频跟踪，两通道异步不阻塞">
+<svg viewBox="0 0 720 304" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="60" y="24" width="600" height="76" rx="10" fill="var(--brain-soft)" stroke="var(--brain)" stroke-width="1.6"/>
+    <text x="360" y="48" font-size="11" font-weight="700" fill="var(--brain)" text-anchor="middle">慢通道：VLM 深思 · 动作思维链（秒级）</text>
+    <text x="360" y="68" font-size="8.5" fill="currentColor" text-anchor="middle">「把货架第三层的红色箱子搬到产线 B」</text>
+    <text x="360" y="86" font-size="8.5" fill="currentColor" text-anchor="middle">→ 理解 · 拆解 · 推理出子目标序列（不为执行节奏所迫，想清楚再给）</text>
+
+    <rect x="210" y="130" width="300" height="46" rx="23" fill="var(--card)" stroke="var(--brain)" stroke-width="1.8"/>
+    <text x="360" y="149" font-size="10" font-weight="700" fill="var(--brain)" text-anchor="middle">意图队列（异步接口）</text>
+    <text x="360" y="166" font-size="8" fill="currentColor" text-anchor="middle">慢通道只管生产，快通道只管消费，互不阻塞</text>
+
+    <rect x="60" y="206" width="600" height="66" rx="10" fill="var(--card)" stroke="var(--brain)" stroke-width="1.3"/>
+    <text x="360" y="230" font-size="11" font-weight="700" fill="var(--brain)" text-anchor="middle">快通道：轻量执行策略（约百毫秒）</text>
+    <text x="360" y="250" font-size="8.5" fill="currentColor" text-anchor="middle">高频跟踪当前意图 · 意图换了就平滑切换，执行节拍永不空等</text>
+
+    <g stroke="var(--brain)" stroke-width="1.6">
+      <line x1="360" y1="102" x2="360" y2="126"/>
+      <line x1="360" y1="178" x2="360" y2="202"/>
+    </g>
+    <g fill="var(--brain)">
+      <polygon points="355,124 365,124 360,132"/>
+      <polygon points="355,200 365,200 360,208"/>
+    </g>
+    <text x="372" y="118" font-size="8" fill="var(--brain)">子目标</text>
+    <text x="372" y="196" font-size="8" fill="var(--brain)">跟踪</text>
+  </g>
+  <text x="360" y="296" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">发布会级信息 · 内部结构未公开 · 图为概念示意</text>
+</svg>
+<figcaption><b>「异步双系统」= 在 GO-2 内部再做一次快慢分层。</b>这和《想象的三种频率》的判断完全一致：分层在每一层内部递归出现——公司棋盘分三颗脑，大脑内部又分快慢两通道，小脑内部又是感知-控制直连。<b>「异步」是关键词</b>：慢通道深思时不阻塞执行，快通道跟踪时不必等理解——这恰好是 DeepSeek V4.1 异步 RL 基础设施在生产侧的镜像（沙箱与 GPU 解耦、样本级调度），快慢解耦是同一组织原则在训练侧和部署侧的两次应用。</figcaption>
+</figure>
+
+<p>官方口径的战绩：GO-2 结合数万小时真机数据训练，工业场景任务成功率提升 2-4 倍，主打「知行合一」——弥合语义理解与运动执行之间的鸿沟。注意这条线的变量是<b>真机数据回流</b>而非模型架构：GO 系的天花板由飞轮转速决定。</p>
+
+<!-- ============ 7. 两条腿 ============ -->
+
+<h2>两条腿：WAM 与 VLA 的公司级对冲<span class="chip" style="background:var(--skill-soft);color:var(--skill)">路线之争</span></h2>
+<div class="claim">GO 押 VLA（语言先验、听懂话、任务编排），GE 押 WAM（物理先验、想象、scaling）——智元没有在两条路线里选边，<b>两个都做</b>。这是「WAM vs VLA 之争」目前最彻底的公司级对冲样本。</div>
+
+<figure role="img" aria-label="GO 与 GE 两条路线对冲图：GO 押语言先验主打产品交付，GE 押物理先验主打 scaling 天花板，底部汇合于智元全都要">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="210" y="24" width="300" height="46" rx="23" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.3"/>
+    <text x="360" y="43" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">分界问题：「听懂话」≠「想得对」</text>
+    <text x="360" y="60" font-size="8" fill="var(--ink-soft)" text-anchor="middle">语言先验解决语义，物理先验解决后果——缺一都到不了终点</text>
+
+    <rect x="40" y="106" width="300" height="140" rx="10" fill="var(--brain-soft)" stroke="var(--brain)" stroke-width="1.6"/>
+    <text x="190" y="132" font-size="12" font-weight="700" fill="var(--brain)" text-anchor="middle">GO 系 · VLA 路线</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="190" y="158">先验：语言（互联网级文本+多模态）</text>
+      <text x="190" y="178">牌：产品交付快 · 指令理解 · 任务编排</text>
+      <text x="190" y="198">风险：物理直觉靠间接学，后果预测弱</text>
+      <text x="190" y="226" font-weight="700" fill="var(--brain)">代表战绩：工业成功率 2-4×</text>
+    </g>
+
+    <rect x="380" y="106" width="300" height="140" rx="10" fill="var(--skill-soft)" stroke="var(--skill)" stroke-width="1.6"/>
+    <text x="530" y="132" font-size="12" font-weight="700" fill="var(--skill)" text-anchor="middle">GE 系 · WAM 路线</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="530" y="158">先验：物理（操作视频 + 动力学数据）</text>
+      <text x="530" y="178">牌：scaling 天花板 · 想象 · 失败数据经济学</text>
+      <text x="530" y="198">风险：语义与长程编排不在射程内</text>
+      <text x="530" y="226" font-weight="700" fill="var(--skill)">代表战绩：44.1% 无饱和 · 零样本</text>
+    </g>
+
+    <g stroke="currentColor" stroke-width="1.3" opacity="0.6">
+      <line x1="190" y1="70" x2="190" y2="102"/>
+      <line x1="530" y1="70" x2="530" y2="102"/>
+      <line x1="230" y1="248" x2="330" y2="284"/>
+      <line x1="490" y1="248" x2="390" y2="284"/>
+    </g>
+    <polygon points="186,100 194,100 190,107" fill="currentColor" opacity="0.6"/>
+    <polygon points="526,100 534,100 530,107" fill="currentColor" opacity="0.6"/>
+
+    <rect x="210" y="288" width="300" height="38" rx="19" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.8"/>
+    <text x="360" y="313" font-size="10.5" font-weight="700" fill="var(--fly)" text-anchor="middle">智元：全都要 —— 对冲而非站队</text>
+  </g>
+</svg>
+<figcaption><b>对冲的结构比胜负更有信息量。</b>目前看分工是：GO 管产品交付（听得懂人话，先上工业），GE 管能力天花板（数据越多越强，验证 scaling）。两条线的汇合点没人知道——GO 的慢通道会不会调 GE 的想象当「世界模型仿真器」？GE 的 scaling 会不会反过来吞掉 GO 的技能层？这是比「哪家模型强」更值得盯的问题。同月参照：Motus2（GensPI+清华）站在继承视频生成器的 WAM 路线上，Physical Intelligence 的 π 系站在 VLA+scaling 路线上——智元是少数两条腿都有量产本体的。</figcaption>
+</figure>
+
+<!-- ============ 8. 飞轮 ============ -->
+
+<h2>一个飞轮：数据-仿真-部署闭环<span class="chip" style="background:var(--fly-soft);color:var(--fly)">平台层</span></h2>
+<div class="claim">模型层的下面是一个五节点循环：本体产数据 → 数据集沉淀 → 仿真扩考场 → 模型迭代 → 部署回流。<b>结构与 Tesla FSD 的影子模式飞轮同构</b>——区别只在数据来自数采作业与租赁车队，而非乘用车队。</div>
+
+<figure role="img" aria-label="智元数据飞轮五节点循环：数采本体与租赁车队、AGIBOT WORLD 数据集、Genie Sim 仿真、模型迭代、部署上车，顺时针循环">
+<svg viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <g stroke="var(--fly)" stroke-width="1.8">
+      <line x1="360" y1="65" x2="507" y2="172"/>
+      <line x1="507" y1="172" x2="451" y2="345"/>
+      <line x1="451" y1="345" x2="269" y2="345"/>
+      <line x1="269" y1="345" x2="213" y2="172"/>
+      <line x1="213" y1="172" x2="360" y2="65"/>
+    </g>
+    <g fill="var(--fly)">
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(426,113) rotate(36)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(482,250) rotate(108)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(369,345) rotate(180)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(244,267) rotate(252)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(279,124) rotate(-36)"/>
+    </g>
+    <g font-size="8.5" fill="var(--fly)" font-weight="600">
+      <text x="443" y="106">采集入库</text>
+      <text x="496" y="264">造考场</text>
+      <text x="360" y="334" text-anchor="middle">训练 · 评测</text>
+      <text x="216" y="264" text-anchor="end">模型上车</text>
+      <text x="277" y="106" text-anchor="end">场景回流</text>
+    </g>
+
+    <rect x="270" y="34" width="180" height="62" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.5"/>
+    <text x="360" y="57" font-size="10" font-weight="700" fill="var(--fly)" text-anchor="middle">数采本体 + 租赁车队</text>
+    <text x="360" y="75" font-size="8" fill="currentColor" text-anchor="middle">商业空间 · 酒店 · 商超真实作业</text>
+
+    <rect x="417" y="141" width="180" height="62" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.5"/>
+    <text x="507" y="164" font-size="10" font-weight="700" fill="var(--fly)" text-anchor="middle">AGIBOT WORLD 数据集</text>
+    <text x="507" y="182" font-size="8" fill="currentColor" text-anchor="middle">百万真机 · '26 版五阶段开源</text>
+    <text x="507" y="196" font-size="8" fill="currentColor" text-anchor="middle">第三期真机 RL 已开源</text>
+
+    <rect x="361" y="314" width="180" height="62" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.5"/>
+    <text x="451" y="337" font-size="10" font-weight="700" fill="var(--fly)" text-anchor="middle">Genie Sim 3.0 仿真</text>
+    <text x="451" y="355" font-size="8" fill="currentColor" text-anchor="middle">1 万+h 仿真 · 200+ 任务</text>
+    <text x="451" y="369" font-size="8" fill="currentColor" text-anchor="middle">自然语言造世界 · 域随机化</text>
+
+    <rect x="179" y="314" width="180" height="62" rx="9" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>
+    <text x="269" y="337" font-size="10" font-weight="700" fill="currentColor" text-anchor="middle">模型迭代</text>
+    <text x="269" y="355" font-size="8" fill="currentColor" text-anchor="middle">GO · GE · AGILE 三线并进</text>
+    <text x="269" y="369" font-size="8" fill="currentColor" text-anchor="middle">开源换生态 · 闭源保壁垒</text>
+
+    <rect x="123" y="141" width="180" height="62" rx="9" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.5"/>
+    <text x="213" y="164" font-size="10" font-weight="700" fill="var(--fly)" text-anchor="middle">部署 · 远征 A3 / 灵犀 X2</text>
+    <text x="213" y="182" font-size="8" fill="currentColor" text-anchor="middle">租赁模式加速铺量</text>
+    <text x="213" y="196" font-size="8" fill="currentColor" text-anchor="middle">跑得越多，数据越多</text>
+
+    <text x="360" y="214" font-size="14" font-weight="900" fill="currentColor" text-anchor="middle">数据飞轮</text>
+    <text x="360" y="236" font-size="9" fill="var(--ink-soft)" text-anchor="middle">同构：Tesla 影子模式</text>
+    <text x="360" y="252" font-size="9" fill="var(--ink-soft)" text-anchor="middle">模型是飞轮上最亮眼的一环，不是全部</text>
+  </g>
+</svg>
+<figcaption><b>五节点循环，转一圈所有环节都变强。</b>三件平台的分工：AGIBOT WORLD 是燃料库（100% 真实商业场景采集，五阶段开源节奏从模仿学习一路开到真机 RL——第三期 8 月 31 日已落地）；Genie Sim 是考场（1 万+小时仿真数据、200+ 任务、「自然语言造世界」，AGILE 端到端化的调试成本也靠它消化）；Genie Studio 是传送带（采训推一体化）。对照《端到端的代价》里 Waymo 慢飞轮 vs Tesla 快飞轮的数据哲学：智元选的是「数采作业 + 租赁车队」的中间形态——比 Waymo 的路测队便宜，比 Tesla 的百万车主慢，但数据带着任务标注出厂。</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>平台</th><th>职能</th><th>规模指标</th></tr></thead>
+  <tbody>
+    <tr><td class="c-fl">AGIBOT WORLD</td><td>数据底座：真实场景燃料库</td><td>百万真机轨迹；'26 版五阶段开源，覆盖模仿学习 → 真机 RL</td></tr>
+    <tr><td class="c-fl">Genie Sim 3.0</td><td>仿真考场：扩展任务分布与域随机化</td><td>1 万+小时仿真数据 · 200+ 任务 · 自然语言造世界</td></tr>
+    <tr><td class="c-fl">Genie Studio</td><td>工具链：采训推一体开发平台</td><td>集成基座模型与全流程工具，降低外部开发者进场门槛</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 9. 时间线 ============ -->
+
+<h2>落子节奏：先大脑，后数据，再双线补齐<span class="chip" style="background:var(--fly-soft);color:var(--fly)">时间线</span></h2>
+
+<figure role="img" aria-label="智元落子时间线：2025 年 3 月 GO-1 发布，9 月 GO-1 开源与 AgiBot World，2025 年 Genie Envisioner 开源，2026 年 4 月发布周 GO-2 与平台三件套，9 月 9 日 AGILE 2.0 与 GE-Act 2.0 双发">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="40" y1="140" x2="672" y2="140" stroke="currentColor" stroke-width="1.6"/>
+    <polygon points="668,135 668,145 678,140" fill="currentColor"/>
+
+    <circle cx="90" cy="140" r="5" fill="var(--brain)"/>
+    <g font-size="8.5" text-anchor="middle">
+      <text x="90" y="112" font-weight="700" fill="var(--brain)">'25.03</text>
+      <text x="90" y="126" fill="currentColor">GO-1 发布</text>
+      <text x="90" y="166" fill="var(--ink-soft)">ViLLA 架构</text>
+      <text x="90" y="180" fill="var(--ink-soft)">VLM + MoE</text>
+    </g>
+
+    <circle cx="240" cy="140" r="5" fill="var(--brain)"/>
+    <g font-size="8.5" text-anchor="middle">
+      <text x="240" y="112" font-weight="700" fill="var(--brain)">'25.09</text>
+      <text x="240" y="126" fill="currentColor">GO-1 全面开源</text>
+      <text x="240" y="166" fill="var(--ink-soft)">AgiBot World 数据集</text>
+      <text x="240" y="180" fill="var(--ink-soft)">同步开放</text>
+    </g>
+
+    <circle cx="370" cy="140" r="5" fill="var(--skill)"/>
+    <g font-size="8.5" text-anchor="middle">
+      <text x="370" y="112" font-weight="700" fill="var(--skill)">'25 年内</text>
+      <text x="370" y="126" fill="currentColor">Genie Envisioner</text>
+      <text x="370" y="166" fill="var(--ink-soft)">行业首个动作驱动</text>
+      <text x="370" y="180" fill="var(--ink-soft)">世界模型开源平台</text>
+    </g>
+
+    <circle cx="500" cy="140" r="5" fill="var(--brain)"/>
+    <g font-size="8.5" text-anchor="middle">
+      <text x="500" y="98" font-weight="700" fill="var(--brain)">'26.04 发布周</text>
+      <text x="500" y="112" fill="currentColor">GO-2</text>
+      <text x="500" y="126" fill="var(--ink-soft)">动作思维链 + 异步双系统</text>
+      <text x="500" y="166" fill="var(--ink-soft)">AGIBOT WORLD '26</text>
+      <text x="500" y="180" fill="var(--ink-soft)">Genie Sim 3.0 同期</text>
+    </g>
+
+    <circle cx="628" cy="140" r="6" fill="var(--cere)" stroke="var(--skill)" stroke-width="2.5"/>
+    <g font-size="8.5" text-anchor="middle">
+      <text x="628" y="98" font-weight="700" fill="var(--cere)">'26.09.09</text>
+      <text x="628" y="112" fill="var(--cere)" font-weight="700">双发</text>
+      <text x="628" y="126" fill="var(--ink-soft)">AGILE 2.0 + GE-Act 2.0</text>
+      <text x="628" y="166" fill="var(--ink-soft)">技能脑 + 小脑同日补齐</text>
+      <text x="628" y="180" fill="var(--ink-soft)">三层栈中下两层到位</text>
+    </g>
+  </g>
+  <text x="360" y="240" font-size="9" fill="currentColor" text-anchor="middle" opacity="0.8">顺序有信息量：大脑（GO-1）最早落子——三层栈是先有头、再铺数据、最后补身体拼出来的，不是一天设计出来的</text>
+</svg>
+<figcaption><b>落子顺序本身就是战略信息。</b>2025 年先出大脑并开源换生态，同期铺数据底座；2026 年 4 月发布周把大脑升级（GO-2）与平台三件套打包；9 月双发补上技能脑与小脑。对外的叙事从「听得懂」推进到「学得会 + 动得稳」——每一步都在补上一块短板，而不是在单点上卷高度。</figcaption>
+</figure>
+
+<!-- ============ 10. 知识地图接口 ============ -->
+
+<h2>对我们知识地图的五个接口<span class="chip" style="background:var(--fly-soft);color:var(--fly)">连接</span></h2>
+
+<figure role="img" aria-label="智元方案与既有知识地图的五条连接：大小脑三层修正、WAM与VLA对冲、端到端裁决、想象频率、数据经济学">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="265" y="112" width="190" height="76" rx="10" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.8"/>
+    <text x="360" y="140" font-size="12" font-weight="700" fill="var(--fly)" text-anchor="middle">智元棋盘</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="160">三颗脑 + 一个飞轮</text>
+      <text x="360" y="178">系统组装的官方样本</text>
+    </g>
+
+    <rect x="30" y="24" width="200" height="72" rx="9" fill="none" stroke="var(--brain)" stroke-width="1.4"/>
+    <text x="130" y="48" font-size="9.5" font-weight="700" fill="var(--brain)" text-anchor="middle">大脑/小脑架构</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="130" y="68">分层修正为三层</text>
+      <text x="130" y="84">（频率 × 抽象层级）</text>
+    </g>
+
+    <rect x="490" y="24" width="200" height="72" rx="9" fill="none" stroke="var(--skill)" stroke-width="1.4"/>
+    <text x="590" y="48" font-size="9.5" font-weight="700" fill="var(--skill)" text-anchor="middle">WAM vs VLA 之争</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="590" y="68">公司级对冲样本</text>
+      <text x="590" y="84">终局更可能是组合</text>
+    </g>
+
+    <rect x="30" y="204" width="200" height="72" rx="9" fill="none" stroke="var(--cere)" stroke-width="1.4"/>
+    <text x="130" y="228" font-size="9.5" font-weight="700" fill="var(--cere)" text-anchor="middle">端到端的代价</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="130" y="248">AGILE 的裁决式</text>
+      <text x="130" y="264">短视野 + 毫秒延迟 → E2E 赢</text>
+    </g>
+
+    <rect x="490" y="204" width="200" height="72" rx="9" fill="none" stroke="var(--skill)" stroke-width="1.4"/>
+    <text x="590" y="228" font-size="9.5" font-weight="700" fill="var(--skill)" text-anchor="middle">想象的三种频率</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="590" y="248">104ms 与控制同频</text>
+      <text x="590" y="264">GO-2 慢通道 = 低频深思位</text>
+    </g>
+
+    <rect x="265" y="224" width="190" height="56" rx="9" fill="none" stroke="var(--fly)" stroke-width="1.4"/>
+    <text x="360" y="246" font-size="9.5" font-weight="700" fill="var(--fly)" text-anchor="middle">数据经济学</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle">
+      <text x="360" y="264">数采飞轮 vs 任务合成 vs 执行验证</text>
+    </g>
+  </g>
+  <g stroke="currentColor" stroke-width="1.2" opacity="0.55">
+    <line x1="230" y1="60" x2="316" y2="112"/>
+    <line x1="490" y1="60" x2="404" y2="112"/>
+    <line x1="230" y1="240" x2="316" y2="188"/>
+    <line x1="490" y1="240" x2="404" y2="188"/>
+    <line x1="360" y1="224" x2="360" y2="190"/>
+  </g>
+</svg>
+<figcaption><b>五条连接线，一条元判断。</b>元判断：智元棋盘对我们最大的价值不是任何一个模型，是它把「数据、考场、三颗脑、本体出口」当成一个系统落子的方式——而我们手里 CyberGym（执行验证）+ DeepSeek 后训练（数据合成）+ WAM 规划（压缩与对齐）恰好也是三块系统零件，缺的是把它们钉在同一张图纸上的自觉。</figcaption>
+</figure>
+
+
+<p><b>① 大脑/小脑架构的第三次实例化，且多切了一层。</b>SONIC（小脑盲控）→ Motus2 触觉专家（两段精炼）→ 智元三颗脑。新增的信息是中间层：技能脑从大脑里独立出来，因为「按指令干活」的频率（~10Hz）和「深思」(秒级)、「别摔倒」(毫秒) 都不同频。分层原则从两层修正为三层：<b>频率 × 抽象层级</b>。</p>
+
+<p><b>② WAM vs VLA 之争有了公司级对冲样本。</b>此前两条路线各有旗手（π 系 vs Motus2/DreamZero 系），智元是第一个两条腿都配齐量产本体和数据飞轮的。判断式更新：这不一定是「都做总能对一个」的稳妥牌，更可能是<b>两条路线服务的目标不同</b>——VLA 管语义到动作的翻译，WAM 管物理后果的想象，终局是组合而非替代。</p>
+
+<p><b>③ 数据飞轮 vs 数据合成：两种数据经济学。</b>智元用数采车队 + 仿真扩考场（物理世界的 scaling），DeepSeek V4.1 用任务合成工厂 + 验证系统（语言世界的 scaling），CyberGym 的执行验证是第三种（执行即真值）。三者共享同一内核：<b>数据的瓶颈从来不是数量，是带正确标签的覆盖度</b>——GE-Act 的 Wipe(824h)=76.7% vs Sweep(64.6h)=3.3% 把这一点量出来了。</p>
+
+<p><b>④ 快慢解构的两次应用。</b>GO-2 的异步双系统（部署侧：深思不阻塞执行）与 DeepSeek V4.1 的异步 RL 基础设施（训练侧：沙箱与 GPU 解耦、样本级调度）是同一组织原则——<b>把不同频率的工作单元拆开，用队列连接</b>。这个原则在我们的 RLinf 架构（Runner/Worker/引擎三层）里已经是骨架。</p>
+
+<p><b>⑤ NPU 侧的直接映射。</b>GE-Act 的 CoAE（24 token/帧）+ SVP 单步生成是低 token 量、简单算子的推理 profile，天然对 910B 友好；AGILE 的毫秒级视觉闭环提示另一类端侧负载（小模型、超低延迟、持续运行）。具身侧的推理经济学还没有 LLM 侧成熟，先到先得。</p>
+
+<p>三个观察点收尾：<b>AGILE 2.0 的技术报告</b>（毫秒视觉闭环的算力与模型尺寸——决定可复制性）；<b>三颗脑的组合接口</b>（谁在什么条件下接管——决定方案成立与否）；<b>System-2 的归属</b>（GO-2 慢通道、GE-Act 未来的深思层、还是独立的第三模型——决定下一轮架构叙事）。</p>
+
+<!-- ============ 11. 结语 ============ -->
+
+<h2>结语<span class="chip" style="background:var(--brain-soft);color:var(--brain)">带走一句</span></h2>
+
+<figure role="img" aria-label="竞赛维度切换：左边单模型时代卷单个模型高度，右边系统组装时代卷三颗脑与数据飞轮的完整度">
+<svg viewBox="0 0 720 196" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="280" height="140" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="164" y="50" font-size="11" font-weight="700" fill="currentColor" text-anchor="middle">单模型竞赛时代</text>
+    <rect x="140" y="66" width="48" height="76" rx="6" fill="var(--skill-soft)" stroke="var(--skill)" stroke-width="1.5"/>
+    <text x="164" y="106" font-size="9" font-weight="700" fill="var(--skill)" text-anchor="middle">一个</text>
+    <text x="164" y="120" font-size="9" font-weight="700" fill="var(--skill)" text-anchor="middle">大模型</text>
+    <text x="164" y="158" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">卷高度：参数 · 榜单 · 单点 demo</text>
+
+    <line x1="324" y1="94" x2="384" y2="94" stroke="var(--fly)" stroke-width="2"/>
+    <polygon points="382,88 382,100 394,94" fill="var(--fly)"/>
+    <text x="354" y="80" font-size="9" font-weight="700" fill="var(--fly)" text-anchor="middle">切换</text>
+
+    <rect x="416" y="24" width="280" height="140" rx="10" fill="var(--fly-soft)" stroke="var(--fly)" stroke-width="1.6"/>
+    <text x="556" y="50" font-size="11" font-weight="700" fill="var(--fly)" text-anchor="middle">系统组装时代</text>
+    <g font-size="8.5" text-anchor="middle">
+      <rect x="436" y="64" width="72" height="40" rx="6" fill="var(--card)" stroke="var(--brain)" stroke-width="1.3"/>
+      <text x="472" y="82" font-weight="700" fill="var(--brain)">大脑 GO</text>
+      <text x="472" y="96" fill="currentColor" opacity="0.7">秒级</text>
+      <rect x="520" y="64" width="72" height="40" rx="6" fill="var(--card)" stroke="var(--skill)" stroke-width="1.3"/>
+      <text x="556" y="82" font-weight="700" fill="var(--skill)">技能脑 GE</text>
+      <text x="556" y="96" fill="currentColor" opacity="0.7">10Hz</text>
+      <rect x="604" y="64" width="72" height="40" rx="6" fill="var(--card)" stroke="var(--cere)" stroke-width="1.3"/>
+      <text x="640" y="82" font-weight="700" fill="var(--cere)">小脑 AGILE</text>
+      <text x="640" y="96" fill="currentColor" opacity="0.7">毫秒</text>
+    </g>
+    <circle cx="556" cy="132" r="17" fill="var(--card)" stroke="var(--fly)" stroke-width="1.6"/>
+    <text x="556" y="136" font-size="9" font-weight="700" fill="var(--fly)" text-anchor="middle">飞轮</text>
+    <text x="556" y="158" font-size="8.5" fill="currentColor" text-anchor="middle">卷完整度：数据 · 考场 · 组合接口 · 出口</text>
+  </g>
+</svg>
+<figcaption><b>竞赛维度的切换。</b>模型会过时，飞轮不会——这也是为什么三条模型线里闭源的只有小脑：运动控制的工程壁垒，捂住比换声量值钱。</figcaption>
+</figure>
+
+
+<p>如果只带走一句话：<b>智元 9/9 双发不是发布两个模型，是亮出整套棋盘——三颗频率不同的脑，由一个越转越快的数据飞轮供电；具身侧的竞争已经从「单模型卷高度」切换到「系统组装卷完整度」。</b>模型会过时，飞轮不会——这也是为什么三条模型线里闭源的只有小脑：运动控制的工程壁垒，捂住比换声量值钱。</p>
+
+<p>对我们自己的位置：语言侧的 CyberGym + DeepSeek 后训练走的是「数据合成 + 执行验证」的飞轮，具身侧的 WAM 规划走的是「CoAE 式压缩 + KASO 式对齐」的路线——两个世界的共同底座都是<b>监督与条件的对齐</b>和<b>频率分层</b>。智元这张棋盘最大的启发不是任何一个模型，是它把「数据、考场、三颗脑、本体出口」当成一个系统来落子的方式。</p>
+
+<footer>
+  <p>2026-09-12 · 事实三档标注：论文级 = arXiv 2609.05588（GE-Act 2.0 全文）；发布会级 = AGILE 2.0 / GO-2（官方发布与媒体报道）；推测级已注明 · GE-Act 2.0 逐机制深拆见《失败数据的第二人生》后记</p>
+  <p>系列首页：<a href="https://maxwell-ai-lab.github.io/archify-diagrams/">Maxwell-AI-Lab 架构图与报告索引</a> · 相关报告：失败数据的第二人生（Motus2 深潜）· 想象的三种频率（WAM 五系统）· 大脑与小脑 · 端到端的代价 · 890 字节的上下文</p>
+</footer>
+</div>
+</body>
+</html>
