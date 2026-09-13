@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>演化的最后一块拼图</title>
+<meta name="description" content="Astar（阿里×浙大，arXiv 2608.27287）深潜：把「提出演化方向」——AI 系统迭代循环中最后的人类环节——训进权重。0.6B 打赢 GPT-5.5 与人类专家；两两配对把数百条演化史扩成监督语料；学到的验证器加执行审计锚定漂移；Lazada 二十轮连续自主迭代，GMV +4.86%。吸收曲线的又一实锤。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F6F5F1; --ink: #251F1A; --ink-soft: #6F6659;
+    --dir: #6D28D9; --dir-soft: #EFE8FC;
+    --mine: #92620C; --mine-soft: #F7ECD9;
+    --ver: #0F766E; --ver-soft: #DBF0ED;
+    --win: #B13A2F; --win-soft: #F9E3DF;
+    --line: #DED8CB; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14120E; --ink: #E9E3D5; --ink-soft: #99907E;
+      --dir: #B79BF5; --dir-soft: #241C36;
+      --mine: #D9A662; --mine-soft: #2A2114;
+      --ver: #63C1B2; --ver-soft: #122623;
+      --win: #E98A7F; --win-soft: #2C1A16;
+      --line: #302B23; --card: #1F1C16;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14120E; --ink: #E9E3D5; --ink-soft: #99907E;
+    --dir: #B79BF5; --dir-soft: #241C36;
+    --mine: #D9A662; --mine-soft: #2A2114;
+    --ver: #63C1B2; --ver-soft: #122623;
+    --win: #E98A7F; --win-soft: #2C1A16;
+    --line: #302B23; --card: #1F1C16;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-transform: uppercase; margin-bottom: 0.8rem; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  .claim b, p b { color: var(--ink); }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-d { color: var(--dir); font-weight: 600; }
+  .c-m { color: var(--mine); font-weight: 600; }
+  .c-v { color: var(--ver); font-weight: 600; }
+  .c-w { color: var(--win); font-weight: 600; }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--ver); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">Alibaba × 浙江大学 · Astar · arXiv 2608.27287 · 论文深潜</div>
+  <h1>演化的最后一块拼图</h1>
+  <p class="lede">一个工业 AI 系统的迭代循环有四段：提出改进方向 → 写代码 → 跑实验 → 看结果。后三段早就自动化了，第一段一直握在资深工程师手里——它依赖只存在于「这个系统自己的血泪史」里的隐性知识，GPT-5.5 也给不出对症的判断（实测还不如人类专家）。Astar（阿里×浙大，2026-08）把这块最后的拼图训进了权重：用系统自己的演化史（代码 diff + 损失曲线）当训练语料，一个 0.6B 的专用模型把「提方向」的成功率做到 54.35%——超过 GPT-5.5 的 30.71% 和人类专家的 32.29%；8B 版本 67.86%。Lazada 广告推荐系统上二十轮连续自主迭代，在线 GMV +4.86%。本报告逐机制拆解它怎么把几百条演化史炼成语料、怎么解决「验证太贵」、以及——放在我们「吸收曲线」的方向判断里看——它为什么是「编排入权重」至今最强的一块实锤。</p>
+</header>
+
+<!-- ============ 1. 定位 ============ -->
+
+<h2>一句话定位<span class="chip" style="background:var(--dir-soft);color:var(--dir)">坐标</span></h2>
+<div class="claim">Astar 回答的问题是：<b>「给这个已经在跑的 AI 系统提下一个改进方向」这件事，能不能不从人脑里来，而从权重里来？</b>答案是可以——前提是你把它当训练任务而不是提示工程，并把系统自己的演化史当语料。这是 RSI L2（闭环自改进）第一次以「提方向」这个粒度进入生产。</div>
+
+<p>事实分两档：<b>论文级</b>（arXiv 2608.27287，全文可查，本报告所有数字出自原文）和<b>媒体级</b>（机器之心的解读，用于中文语境核对，未引入额外数字）。论文八个作者来自阿里后端架构团队与浙大，系统已部署于 Lazada（阿里东南亚电商）广告召回。</p>
+
+<!-- ============ 2. 缺口 ============ -->
+
+<h2>先看缺口：循环的最后一个人环节<span class="chip" style="background:var(--dir-soft);color:var(--dir)">问题</span></h2>
+
+<figure role="img" aria-label="AI 系统迭代循环四阶段：写代码、跑实验、看结果三段已自动化，提出改进方向是最后的人类环节，Astar 将其填入">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="60" width="300" height="180" rx="12" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.8"/>
+    <text x="180" y="92" font-size="12.5" font-weight="700" fill="var(--dir)" text-anchor="middle">① 提出改进方向</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="180" y="118">「下一个实验做什么？」</text>
+      <text x="180" y="140">改优化器？调损失？动结构？</text>
+      <text x="180" y="168" font-weight="700" fill="var(--dir)">Astar 之前：资深专家垄断</text>
+      <text x="180" y="190">GPT-5.5 实测 30.71% ——</text>
+      <text x="180" y="208">给的是「万金油」建议，</text>
+      <text x="180" y="226">不对症这个系统</text>
+    </g>
+
+    <rect x="390" y="60" width="300" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.3"/>
+    <text x="540" y="88" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">② 写代码 ✓ 已自动化</text>
+    <text x="540" y="110" font-size="9" fill="var(--ink-soft)" text-anchor="middle">Code Agent 按 diff 语法实现</text>
+
+    <rect x="390" y="152" width="300" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.3"/>
+    <text x="540" y="180" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">③ 跑实验 ✓ 已自动化</text>
+    <text x="540" y="202" font-size="9" fill="var(--ink-soft)" text-anchor="middle">训练管线按配置执行，小时-天级</text>
+
+    <rect x="390" y="244" width="300" height="76" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.3"/>
+    <text x="540" y="272" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">④ 看结果 ✓ 已自动化</text>
+    <text x="540" y="294" font-size="9" fill="var(--ink-soft)" text-anchor="middle">损失曲线 / Hitrate / 在线 A/B 全链路可读</text>
+
+    <g stroke="currentColor" stroke-width="1.3" opacity="0.65">
+      <line x1="334" y1="120" x2="384" y2="102"/>
+      <line x1="334" y1="170" x2="384" y2="186"/>
+      <line x1="540" y1="140" x2="540" y2="148"/>
+      <line x1="540" y1="232" x2="540" y2="240"/>
+      <path d="M 388 292 Q 180 330 180 244" fill="none"/>
+    </g>
+    <polygon points="330,116 340,112 338,124" fill="currentColor" opacity="0.65"/>
+    <polygon points="176,250 184,250 180,242" fill="currentColor" opacity="0.65"/>
+    <text x="268" y="322" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">结果回流：演化史成为下一轮的输入</text>
+  </g>
+</svg>
+<figcaption><b>缺口的结构：</b>循环里三段是工程问题，早被自动化吃掉；「提方向」是判断问题——它依赖的隐性知识（什么改动在这个系统上有效、什么坑已经踩过）不在任何公开语料里，只在 git 提交记录和损失曲线里。<b>经验无法被提示注入，只能被训练注入</b>——这是整篇论文的第一性假设，也是 0.6B 能赢 GPT-5.5 的全部原因。</figcaption>
+</figure>
+
+<!-- ============ 3. 0.6B 之谜 ============ -->
+
+<h2>0.6B 打赢 GPT-5.5：隐性知识论<span class="chip" style="background:var(--win-soft);color:var(--win)">战绩</span></h2>
+<div class="claim">核心评测 S@1（单次提出的方向，真实执行后损失确实下降的比例）：Astar-8B <b>67.86%</b>，人类专家 <b>32.29%</b>，GPT-5.5 <b>30.71%</b>。最扎眼的数字是<b>连 0.6B 版本都有 54.35%</b>——参数规模差三个数量级，赢的原因只有一个：<b>它读过这个系统的演化史，GPT-5.5 没读过。</b></div>
+
+<figure role="img" aria-label="S@1 真实执行成功率条形图：Astar-8B 0.6786 最高，Astar-0.6B 0.5435，人类专家 0.3229，GPT-5.5 0.3071，Claude-4.8 0.2581，DeepSeek V4 Pro 0.2182">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="185" y1="30" x2="185" y2="260" stroke="var(--line)" stroke-width="1.2"/>
+    <g font-size="9.5" fill="currentColor" text-anchor="end">
+      <text x="175" y="52">Astar-8B</text>
+      <text x="175" y="90">Astar-0.6B</text>
+      <text x="175" y="128">人类专家</text>
+      <text x="175" y="166">GPT-5.5</text>
+      <text x="175" y="204">Claude-4.8-Opus</text>
+      <text x="175" y="242">DeepSeek V4 Pro</text>
+    </g>
+    <rect x="185" y="34" width="475" height="26" rx="4" fill="var(--dir)" opacity="0.92"/>
+    <text x="668" y="52" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="end">0.6786</text>
+    <rect x="185" y="72" width="380" height="26" rx="4" fill="var(--dir)" opacity="0.55"/>
+    <text x="573" y="90" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="end">0.5435</text>
+    <rect x="185" y="110" width="226" height="26" rx="4" fill="var(--win)" opacity="0.75"/>
+    <text x="419" y="128" font-size="10.5" font-weight="700" fill="var(--win)" text-anchor="end">0.3229</text>
+    <rect x="185" y="148" width="215" height="26" rx="4" fill="var(--ink-soft)" opacity="0.55"/>
+    <text x="408" y="166" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="end">0.3071</text>
+    <rect x="185" y="186" width="181" height="26" rx="4" fill="var(--ink-soft)" opacity="0.45"/>
+    <text x="374" y="204" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="end">0.2581</text>
+    <rect x="185" y="224" width="153" height="26" rx="4" fill="var(--ink-soft)" opacity="0.45"/>
+    <text x="346" y="242" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="end">0.2182</text>
+    <text x="360" y="288" font-size="9" fill="var(--ink-soft)" text-anchor="middle">S@1 = 提出的方向经真实训练执行后损失下降的比例（论文表 2，0-5 打分取 ≥3 为有效）</text>
+  </g>
+</svg>
+<figcaption><b>钱就在这张图里。</b>通用大模型全线低于人类专家——再大的参数规模也补不上「没见过这个系统」的缺陷；而 Astar 只要 0.6B 就翻倍超越。注意 S@3（提三个中至少一个有效）：Astar-8B 0.7857 vs 人类 0.4873——差距在放宽到多次尝试后依然保持。结论的分量：<b>领域演化经验是一个独立的、可训练的、与通用智能正交的能力轴</b>，它不随基础模型免费到来。</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>评测</th><th>Astar-8B</th><th>Astar-0.6B</th><th>人类专家</th><th>最强通用模型</th></tr></thead>
+  <tbody>
+    <tr><td>S@1 真实执行成功率</td><td class="num-cell c-d">0.6786</td><td class="num-cell c-d">0.5435</td><td class="num-cell c-w">0.3229</td><td class="num-cell">0.3071 (GPT-5.5)</td></tr>
+    <tr><td>S@3 多次尝试成功率</td><td class="num-cell c-d">0.7857</td><td class="num-cell c-d">0.6426</td><td class="num-cell c-w">0.4873</td><td class="num-cell">0.4615 (GPT-5.5)</td></tr>
+    <tr><td>验证器 AUC</td><td class="num-cell c-v">0.8487</td><td class="num-cell c-v">0.8094</td><td class="num-cell c-w">0.6142</td><td class="num-cell">0.5997 (Kimi-K2.6)</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 4. 数据炼金 ============ -->
+
+<h2>数据炼金：几百条演化史怎么炼成语料<span class="chip" style="background:var(--mine-soft);color:var(--mine)">四座大山</span></h2>
+<div class="claim">监督信号不是从天上来的：一份演化史只有几百条记录，一半还是「水」（日志、重构、改了个 job_name）。Astar 的四个设计每个都对着一座山——<b>把存量资产无中生有地扩成监督，是这门手艺的核心</b>，和 Motus2 的失败数据、DeepSeek 的任务合成是同一家族。</div>
+
+<table>
+  <thead><tr><th>山</th><th>问题</th><th>设计</th></tr></thead>
+  <tbody>
+    <tr><td class="c-m">C1 数据太少</td><td>演化史仅数百条，训不动</td><td><b>两两配对扩增</b>：任意两个版本配成样本，O(n)→O(n²)；用整条损失曲线对比自动打标</td></tr>
+    <tr><td class="c-m">C2 满库是水</td><td>commit 混日志/重构/杂项</td><td><b>两级过滤</b>：规则级（调用图可达性 + AST 归一化 + 配置白名单）+ LLM 级（演化意图语义判别）</td></tr>
+    <tr><td class="c-m">C3 空间太大</td><td>方向组合空间近乎无限</td><td><b>三级层级提示</b>：L1 粗方向（7 大类）→ L2 模块 → L3 具体动作，先粗后细地收窄生成</td></tr>
+    <tr><td class="c-m">C4 验证太贵</td><td>真跑一次实验数小时到数天</td><td><b>学到验证器</b>：用历史正负样本训 reward model，1 秒内预测「损失会不会降」</td></tr>
+  </tbody>
+</table>
+
+<figure role="img" aria-label="语料炼金流水线：实验快照与损失曲线经两两配对扩增、两级过滤、层级提示标注后成为训练语料">
+<svg viewBox="0 0 720 348" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="200" height="90" rx="9" fill="var(--mine-soft)" stroke="var(--mine)" stroke-width="1.5"/>
+    <text x="124" y="48" font-size="10.5" font-weight="700" fill="var(--mine)" text-anchor="middle">原始演化史</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="124" y="70">实验快照（代码+配置+diff）</text>
+      <text x="124" y="88">损失曲线 + 评测指标</text>
+      <text x="124" y="104">规模：数百条记录</text>
+    </g>
+
+    <rect x="260" y="24" width="200" height="90" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.4"/>
+    <text x="360" y="46" font-size="10.5" font-weight="700" fill="var(--mine)" text-anchor="middle">C1 两两配对</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="68">v₁↔v₅ 也算一对：跳过中间版本</text>
+      <text x="360" y="86">整条曲线定胜负（含振荡惩罚）</text>
+      <text x="360" y="102">样本量平方级放大</text>
+    </g>
+
+    <rect x="496" y="24" width="200" height="90" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.4"/>
+    <text x="596" y="46" font-size="10.5" font-weight="700" fill="var(--mine)" text-anchor="middle">C2 两级过滤</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="596" y="68">规则级：可达性·AST·白名单</text>
+      <text x="596" y="86">LLM 级：只留显式演化意图</text>
+      <text x="596" y="102">日志/重构/格式水份滤掉</text>
+    </g>
+
+    <rect x="142" y="168" width="200" height="90" rx="9" fill="var(--card)" stroke="var(--dir)" stroke-width="1.4"/>
+    <text x="242" y="190" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="middle">C3 三级层级提示</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="242" y="212">L1 粗方向（7 类）→ L2 模块</text>
+      <text x="242" y="230">→ L3 具体动作</text>
+      <text x="242" y="246">训练时聚类，推理时先粗后细</text>
+    </g>
+
+    <rect x="378" y="168" width="200" height="90" rx="9" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.6"/>
+    <text x="478" y="190" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="middle">训练语料成型</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="478" y="212">mid-training 112B token</text>
+      <text x="478" y="230">SFT 正样本 81.1M token</text>
+      <text x="478" y="246">RL（GRPO）8.06M token</text>
+    </g>
+
+    <rect x="24" y="288" width="672" height="46" rx="9" fill="var(--card)" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="360" y="317" font-size="9.5" fill="currentColor" text-anchor="middle">曲线打标公式：s = (1−α)·ℓ<sub>T</sub> + α·ℓ̄<sub>k</sub> + γ·σ̂<sub>k</sub> —— 最终损失 + 末段均值 + <tspan fill="var(--win)" font-weight="700">振荡惩罚项</tspan>（收敛越稳越好，抖上抖下的不算赢）</text>
+
+    <g stroke="currentColor" stroke-width="1.3">
+      <line x1="224" y1="69" x2="254" y2="69"/>
+      <line x1="460" y1="69" x2="490" y2="69"/>
+      <line x1="560" y1="114" x2="320" y2="164"/>
+      <line x1="480" y1="114" x2="240" y2="164"/>
+      <line x1="342" y1="213" x2="374" y2="213"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="250,65 250,73 258,69"/>
+      <polygon points="486,65 486,73 494,69"/>
+      <polygon points="326,166 314,162 316,174" transform="rotate(14 318,168)"/>
+      <polygon points="244,166 232,162 234,174" transform="rotate(-14 238,168)"/>
+      <polygon points="370,209 370,217 378,213"/>
+    </g>
+  </g>
+</svg>
+<figcaption><b>炼金流水线。</b>两个细节值得抄：①配对不限于相邻版本——v₁ 对 v₅ 的对比天然覆盖「短期微调」和「长期跃迁」两种监督粒度；②打标看整条曲线而不是终点，<b>振荡惩罚项 σ̂</b> 把「收敛稳定」编码进了什么叫「更好的系统」——这是把工程品味写进了损失函数。配置白名单的取舍也很有味道：<code>learning_rate</code>/<code>optimizer</code> 保留，<code>output_dir</code>/<code>gpu_count</code> 丢弃，未知项保守保留。</figcaption>
+</figure>
+
+<!-- ============ 5. 层级提示 ============ -->
+
+<h2>三级漏斗：把无限空间收窄成七张门牌<span class="chip" style="background:var(--dir-soft);color:var(--dir)">搜索空间</span></h2>
+
+<figure role="img" aria-label="三级层级提示漏斗：L1 七大类粗方向收窄到 L2 具体模块再收窄到 L3 具体动作，类比总架构师先定方向再谈细节">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <polygon points="120,24 600,24 540,90 180,90" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.5"/>
+    <text x="360" y="52" font-size="11" font-weight="700" fill="var(--dir)" text-anchor="middle">L1 粗方向 · 7 大类</text>
+    <text x="360" y="74" font-size="8.5" fill="currentColor" text-anchor="middle">模型结构 · 损失设计 · 优化策略 · 训练工程 · RL 策略 · 数据处理 · 代码重构</text>
+
+    <polygon points="180,102 540,102 480,168 240,168" fill="var(--card)" stroke="var(--dir)" stroke-width="1.3"/>
+    <text x="360" y="128" font-size="11" font-weight="700" fill="var(--dir)" text-anchor="middle">L2 模块</text>
+    <text x="360" y="150" font-size="8.5" fill="currentColor" text-anchor="middle">例：优化策略 → Muon 优化器 · 学习率调度 · 梯度裁剪</text>
+
+    <polygon points="240,180 480,180 440,238 280,238" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.3"/>
+    <text x="360" y="206" font-size="11" font-weight="700" fill="var(--dir)" text-anchor="middle">L3 具体动作</text>
+    <text x="360" y="226" font-size="8.5" fill="currentColor" text-anchor="middle">例：Muon → 在正交化前做谱去噪</text>
+
+    <g stroke="currentColor" stroke-width="1.2" opacity="0.6">
+      <line x1="360" y1="90" x2="360" y2="100"/>
+      <line x1="360" y1="168" x2="360" y2="178"/>
+    </g>
+    <text x="640" y="130" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle" transform="rotate(90 640 130)">空间收窄</text>
+  </g>
+</svg>
+<figcaption><b>像总架构师一样说话：先定方向，再谈模块，最后才谈动作。</b>训练时对历史 diff 聚类自动形成三级标签；推理时按 L1→L2→L3 逐级生成（或由人给 L1 锚点）。消融：去掉层级提示，验证器 AUC 从 0.8487 掉到 0.7910。这是「结构化先验换搜索效率」的又一次出现——和 GE-Act 的 dense+sparse 帧分层、DeepSeek 的 effort 分组是同一手法：<b>把一个巨大输出空间切成粗到细的层级，每一层都在给下一层定界</b>。</figcaption>
+</figure>
+
+<!-- ============ 6. 训练三段 ============ -->
+
+<h2>训练三段与消融阶梯<span class="chip" style="background:var(--dir-soft);color:var(--dir)">配方</span></h2>
+<div class="claim">Qwen3 0.6B/4B/8B 打底，<b>mid-training（语料上继续预训练）→ SFT（只用正样本对）→ GRPO（reward model 当奖励，组大小 16）</b>。消融阶梯告诉我们钱该花在哪一步。</div>
+
+<figure role="img" aria-label="训练阶段消融阶梯：基础模型 0.0380，mid-training 后 0.6041 跃升最大，加 SFT 0.6853，加 RL 0.7183">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="200" y1="240" x2="680" y2="240" stroke="var(--line)" stroke-width="1.2"/>
+    <g text-anchor="middle">
+      <rect x="215" y="196" width="90" height="44" fill="var(--ink-soft)" opacity="0.35"/>
+      <text x="260" y="176" font-size="10" font-weight="700" fill="currentColor">0.0380</text>
+      <text x="260" y="262" font-size="9" fill="var(--ink-soft)">Qwen3 裸底</text>
+
+      <rect x="335" y="80" width="90" height="160" fill="var(--mine)" opacity="0.85"/>
+      <text x="380" y="60" font-size="10" font-weight="700" fill="var(--mine)">0.6041</text>
+      <text x="380" y="262" font-size="9" fill="var(--ink-soft)">+ mid-training</text>
+
+      <rect x="455" y="52" width="90" height="188" fill="var(--dir)" opacity="0.65"/>
+      <text x="500" y="32" font-size="10" font-weight="700" fill="var(--dir)">0.6853</text>
+      <text x="500" y="262" font-size="9" fill="var(--ink-soft)">+ SFT</text>
+
+      <rect x="575" y="40" width="90" height="200" fill="var(--dir)" opacity="0.95"/>
+      <text x="620" y="20" font-size="10" font-weight="700" fill="var(--dir)">0.7183</text>
+      <text x="620" y="262" font-size="9" fill="var(--ink-soft)">+ GRPO (RM)</text>
+    </g>
+    <text x="380" y="122" font-size="8.5" fill="var(--card)" text-anchor="middle" font-weight="700">最大跳变</text>
+    <path d="M 428 84 Q 448 68 448 60" fill="none" stroke="var(--dir)" stroke-width="1.4"/>
+    <text x="440" y="100" font-size="8" fill="var(--dir)" text-anchor="end">语言建模即浸入</text>
+  </g>
+</svg>
+<figcaption><b>消融阶梯（RM@1 口径）：0.0380 → 0.6041 → 0.6853 → 0.7183。</b>最大的跳变来自 mid-training——在 112B token 的演化史语料上做普通「下一个词预测」就把能力从 4% 抬到 60%。这印证了第一性假设：<b>演化经验主要是一门语言建模任务</b>，模型要先「读过全部历史」，SFT 和 RL 是后 10 个点的精修。这个阶梯结构和 DeepSeek V4.1「算法零改动、全押数据管线」互为镜像：在数据侧做对，比在算法侧卷要值钱得多。</figcaption>
+</figure>
+
+<!-- ============ 7. 验证器 ============ -->
+
+<h2>学到的验证器 vs 执行的验证器<span class="chip" style="background:var(--ver-soft);color:var(--ver)">最深的一层</span></h2>
+<div class="claim">C4 的答案是 reward model：从历史正负样本学一个「1 秒预测损失会不会降」的代理评估器（AUC 0.8487），当 RL 的奖励也当推理时的预筛。<b>这是对 CyberGym「执行验证」路线的一次正面挑战</b>——两条路线的取舍，是本报告认为最值得深挖的一层。</div>
+
+<figure role="img" aria-label="验证器谱系：CyberGym 纯执行验证最慢但零漂移，DeepSeek 执行验证加防破解审计居中，Astar 学习式 RM 加周期执行审计最快">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="60" y1="150" x2="660" y2="150" stroke="var(--ver)" stroke-width="1.6"/>
+    <polygon points="656,145 656,155 668,150" fill="var(--ver)"/>
+    <text x="360" y="34" font-size="10.5" font-weight="700" fill="var(--ver)" text-anchor="middle">验证速度 →（慢 ←→ 快）</text>
+
+    <rect x="40" y="70" width="190" height="120" rx="10" fill="var(--ver-soft)" stroke="var(--ver)" stroke-width="1.6"/>
+    <text x="135" y="96" font-size="10.5" font-weight="700" fill="var(--ver)" text-anchor="middle">CyberGym</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="135" y="118">纯执行验证</text>
+      <text x="135" y="136">沙箱跑通=通过</text>
+      <text x="135" y="160" fill="var(--ver)">零漂移 · 最贵</text>
+      <text x="135" y="178">天级时钟</text>
+    </g>
+
+    <rect x="265" y="70" width="190" height="120" rx="10" fill="var(--card)" stroke="var(--ver)" stroke-width="1.3"/>
+    <text x="360" y="96" font-size="10.5" font-weight="700" fill="var(--ver)" text-anchor="middle">DeepSeek V4.1</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="118">执行验证 + 五角色质检</text>
+      <text x="360" y="136">（含防破解审计）</text>
+      <text x="360" y="160" fill="var(--ver)">锚在执行 · 防投机</text>
+      <text x="360" y="178">小时级时钟</text>
+    </g>
+
+    <rect x="490" y="70" width="190" height="120" rx="10" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.8"/>
+    <text x="585" y="96" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="middle">Astar</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="585" y="118">学习式 RM + 执行审计</text>
+      <text x="585" y="136">周期采样真跑校准</text>
+      <text x="585" y="160" fill="var(--dir)">秒级时钟 · 有漂移</text>
+      <text x="585" y="178">漂移由审计环兜底</text>
+    </g>
+
+    <rect x="60" y="220" width="600" height="64" rx="9" fill="var(--card)" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="360" y="244" font-size="9.5" fill="currentColor" text-anchor="middle"><tspan font-weight="700" fill="var(--ver)">共同底线：三个系统的「真值锚」都是真实执行</tspan>——区别只在执行被调用的频率：每次（CyberGym）/ 抽检（DeepSeek）/ 周期审计（Astar）</text>
+    <text x="360" y="266" font-size="9" fill="var(--ink-soft)" text-anchor="middle">一般律：自演进循环的转速 ≤ 验证器的时钟频率——想转快，先造一个又快又准的验证器</text>
+  </g>
+</svg>
+<figcaption><b>验证器谱系：执行验证是锚，学习验证是转速。</b>Astar 的贡献是把锚和转速解耦：日常用 RM 以秒级时钟筛方向，同时跑一个审计环（论文算法 1）——周期性抽最近的提案真执行、对答案，<b>预测与真值持续不一致（超阈值且连续 M 次）就停下 RL、用校准集更新 RM 再继续</b>。注意这就是我们 RSI 报告里「变化率熔断」的工程化实现：代理验证器允许漂移，但不允许不被检查地漂移。对 CyberGym 路线的含义不是「被替代」，而是「被分层」：执行验证退到审计位，转速位让给学到的验证器。</figcaption>
+</figure>
+
+<!-- ============ 8. 上线 ============ -->
+
+<h2>上线：二十轮连续演化与吞吐量跃迁<span class="chip" style="background:var(--win-soft);color:var(--win)">生产</span></h2>
+
+<figure role="img" aria-label="Astar 六段连续演化闭环：Astar 提方向、Code Agent 实现代码、训练评估上线、样本采集、结构化过滤、回训 Astar">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <g stroke="var(--win)" stroke-width="1.6">
+      <line x1="360" y1="55" x2="515" y2="150"/>
+      <line x1="515" y1="175" x2="405" y2="258"/>
+      <line x1="380" y1="260" x2="244" y2="200"/>
+      <line x1="237" y1="182" x2="270" y2="82"/>
+      <line x1="300" y1="64" x2="325" y2="58"/>
+    </g>
+    <g fill="var(--win)">
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(433,97) rotate(33)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(435,240) rotate(145)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(295,238) rotate(214)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(251,120) rotate(-62)"/>
+      <polygon points="-6,-4.5 -6,4.5 7,0" transform="translate(315,60) rotate(-7)"/>
+    </g>
+
+    <rect x="265" y="24" width="190" height="62" rx="9" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.8"/>
+    <text x="360" y="47" font-size="10" font-weight="700" fill="var(--dir)" text-anchor="middle">① Astar 提方向</text>
+    <text x="360" y="66" font-size="8" fill="currentColor" text-anchor="middle">层级提示 → 演化想法</text>
+
+    <rect x="420" y="144" width="190" height="62" rx="9" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.3"/>
+    <text x="515" y="167" font-size="10" font-weight="700" fill="currentColor" text-anchor="middle">② Code Agent 实现</text>
+    <text x="515" y="186" font-size="8" fill="currentColor" text-anchor="middle">按 diff 语法写码（Qwen/Claude）</text>
+
+    <rect x="215" y="228" width="190" height="62" rx="9" fill="var(--win-soft)" stroke="var(--win)" stroke-width="1.5"/>
+    <text x="310" y="251" font-size="10" font-weight="700" fill="var(--win)" text-anchor="middle">③ 训练·评估·上线</text>
+    <text x="310" y="270" font-size="8" fill="currentColor" text-anchor="middle">损失/Hitrate/在线 A/B</text>
+
+    <rect x="30" y="144" width="190" height="62" rx="9" fill="var(--mine-soft)" stroke="var(--mine)" stroke-width="1.4"/>
+    <text x="125" y="167" font-size="10" font-weight="700" fill="var(--mine)" text-anchor="middle">④⑤ 采集·过滤</text>
+    <text x="125" y="186" font-size="8" fill="currentColor" text-anchor="middle">结果 → 结构化样本（去噪）</text>
+
+    <rect x="155" y="40" width="190" height="62" rx="9" fill="var(--ver-soft)" stroke="var(--ver)" stroke-width="1.5"/>
+    <text x="250" y="63" font-size="10" font-weight="700" fill="var(--ver)" text-anchor="middle">⑥ 回训 Astar</text>
+    <text x="250" y="82" font-size="8" fill="currentColor" text-anchor="middle">RM 审计 + 增量继续训练</text>
+
+    <text x="360" y="150" font-size="10.5" font-weight="900" fill="currentColor" text-anchor="middle">活着的模型</text>
+    <text x="360" y="170" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">与目标系统共同演化</text>
+  </g>
+</svg>
+<figcaption><b>六段闭环：提方向 → 写码 → 跑真 → 采集 → 过滤 → 回训。</b>部署在 Lazada 广告召回上：连续 20 轮迭代、约两周无人干预（论文 §5.4），离线 Hitrate@200 累计 +23.6%；2026-07-01~05 在线 A/B：GMV +4.86%、广告收入 +1.82%、点击 +0.84%、订单 +1.79%（p&lt;0.05）。吞吐量跃迁同样重要：<b>人工 Θ(1)-Θ(10) 个方向/周 → Θ(100)/周，单个方向的劳动从小时级降到分钟级</b>——这正是「飞轮转速」被量化出来的样子。</figcaption>
+</figure>
+
+<p>两个被论文精选取出的方向样本，说明它提的不是万金油：①观察到生成式召回中不同层级（RQ-VAE 码本层）学习难度异质，提出<b>层级专用解码器 FFN→MoE</b>，用确定性层级路由，FLOPs 中性；②观察到 Muon 优化器的正交化在噪声主导的推荐场景会放大噪声，提出<b>谱去噪：用 Marchenko-Pastur 律给出噪声边界 σ<sub>th</sub>=σ<sub>noise</sub>(1+√γ)²，边界内的奇异值衰减、边界外的照常正交化</b>——零可学习参数。诚实标注：S@1 0.68 意味着仍有约三分之一的提案无效，案例是高分样本；但「0.68 vs 人类 0.32」的两倍差距是全量测出来的。</p>
+
+<!-- ============ 9. 结合方向 ============ -->
+
+<h2>放进吸收曲线：这是哪一块实锤<span class="chip" style="background:var(--dir-soft);color:var(--dir)">方向判断</span></h2>
+<div class="claim">我们此前的方向下注：认知职能持续从脚手架/人脑迁入权重（「编排入权重」），吸收时刻的确认信号是<b>「更小的专用模型在领域内打赢外挂的通用大模型」</b>。Astar 同时给出了两样：被吸收的职能是「提演化方向」——此前最像「人的判断」的环节；证据形态是 0.6B 碾压 GPT-5.5。<b>吸收曲线在算法演化这个域上第一次全段走完。</b></div>
+
+<figure role="img" aria-label="吸收曲线时间线：写码入权重、评估入权重、提方向入权重已发生，人手里还剩建什么系统和验证真值两样；下方推论：同一剧本将复制到具身侧的数据飞轮调度">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="50" y1="120" x2="660" y2="120" stroke="currentColor" stroke-width="1.6"/>
+    <polygon points="656,115 656,125 668,120" fill="currentColor"/>
+
+    <circle cx="140" cy="120" r="5" fill="var(--mine)"/>
+    <text x="140" y="88" font-size="10" font-weight="700" fill="var(--mine)" text-anchor="middle">写码 → 权重</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="140" y="146">2024-25</text>
+      <text x="140" y="162">Cursor / Claude Code</text>
+      <text x="140" y="178">从补全到整段实现</text>
+    </g>
+
+    <circle cx="330" cy="120" r="5" fill="var(--ver)"/>
+    <text x="330" y="88" font-size="10" font-weight="700" fill="var(--ver)" text-anchor="middle">评估 → 权重</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="330" y="146">2025-26</text>
+      <text x="330" y="162">自评 / 执行验证自动化</text>
+      <text x="330" y="178">含防破解审计</text>
+    </g>
+
+    <circle cx="520" cy="120" r="7" fill="var(--dir)" stroke="var(--dir)" stroke-width="3"/>
+    <text x="520" y="84" font-size="10.5" font-weight="700" fill="var(--dir)" text-anchor="middle">提方向 → 权重 ★</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="520" y="148">2026.08 · Astar</text>
+      <text x="520" y="164">0.6B &gt; GPT-5.5 &gt; 人</text>
+      <text x="520" y="180">吸收时刻信号响起</text>
+    </g>
+
+    <rect x="40" y="216" width="640" height="44" rx="9" fill="var(--card)" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="360" y="243" font-size="9.5" fill="currentColor" text-anchor="middle">人手里还剩两样：<tspan font-weight="700" fill="var(--win)">决定建什么系统</tspan>（目标与边界）+ <tspan font-weight="700" fill="var(--ver)">验证的最终真值</tspan>（真实执行 / 真实业务）</text>
+
+    <rect x="40" y="272" width="640" height="44" rx="9" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text x="360" y="299" font-size="9.5" fill="var(--dir)" text-anchor="middle">对具身的推论：数据飞轮的「方向盘」——下一个技能练什么、下批数据采什么、实验排什么——也将从研究员的直觉迁入权重（具身版 Astar）</text>
+  </g>
+</svg>
+<figcaption><b>吸收曲线的第三块实锤。</b>写码入权重（2024-25）、评估入权重（2025-26）、现在提方向入权重（2026.08）——迭代循环里最后一个人环节倒了。还留在人手里的恰好是 RSI 框架预言的两样：回路外的目标定义与真值锚。往具身侧的推论也顺理成章：GE-Act 证明了「覆盖决定能力分布」，但<b>今天决定覆盖什么的是人类研究员</b>——智元飞轮的调度（练哪个技能、采哪块数据）是下一个可被演化学到的判断，那将是具身侧的 Astar 时刻。时序判断：语言侧闭环以分钟-小时转，具身飞轮以周-月转，所以语言侧先发生、具身侧滞后 1-2 年是结构性的，不是能力差距。</figcaption>
+</figure>
+
+<!-- ============ 10. RSI 对位 ============ -->
+
+<h2>RSI 框架对位与监督对齐家族<span class="chip" style="background:var(--ver-soft);color:var(--ver)">框架</span></h2>
+
+<p>放进我们《递归自演进》的三级划分：GPT-5.5 基线组是 <b>L1</b>（工具性使用——模型没变强，只是被调用）；Astar 是<b>工业级 L2</b>（输出回流改权重，且进入生产拿真金白银的 A/B）；论文的未来工作（多轮反思、创新者/批评者/验证者多智能体共判）在往 <b>L3</b> 的门槛张望但未跨过——训练 Astar 的管线本身还不是 Astar 改进的对象。六十年无人实现 L3 的判断不变，但 L2 的「生产化深度」又加了一层：从改权重（STaR/Self-Rewarding）到改任务（DeepSeek 任务合成）再到<b>改整个工业系统</b>（Astar），回流的箭头越来越粗。</p>
+
+<table>
+  <thead><tr><th>系统</th><th>错配形态</th><th>解法</th></tr></thead>
+  <tbody>
+    <tr><td class="c-m">Motus2</td><td>失败数据被当模仿目标</td><td>监督路由：失败 → 仿真/评估模式</td></tr>
+    <tr><td class="c-m">DeepSeek V4.1</td><td>合成任务与验证系统错配</td><td>五角色工厂 + 防破解审计</td></tr>
+    <tr><td class="c-m">GE-Act 2.0</td><td>生成未来与录制动作 mode 错配</td><td>KASO 高噪声探针 + 噪声重放</td></tr>
+    <tr><td class="c-m">Astar</td><td>演化记录混入非因果噪声（日志/重构）；配对样本可能不同批不可比</td><td>两级意图过滤 + 曲线打标；RM 周期执行审计校准漂移</td></tr>
+  </tbody>
+</table>
+
+<p>监督对齐家族凑成四家了，而且 Astar 补上了家族里缺的那一环：<b>代理验证器自身的漂移对齐</b>（前三家对齐的是监督与条件，这一家对齐的是评估器与真值）。值得留意的同源风险：Astar 的回训闭环意味着它的输出会逐渐主导自己的训练分布——自我消耗的分布漂移和 DeepSeek「低信息增益内容=隐性重复」是同一头兽，RM 审计环是目前看到的缰绳。</p>
+
+<!-- ============ 11. 对我们的映射 ============ -->
+
+<h2>对我们的映射：你的演化史就是语料<span class="chip" style="background:var(--mine-soft);color:var(--mine)">落地</span></h2>
+<div class="claim">这份论文对我们最值钱的不是结论，是<b>配方可以直接抄</b>：12 节点 910B 集群上跑 CyberGym + RL 后训练的每一次实验——git 提交、reward 曲线、S1-S3 评测轨迹——就是一份现成的「演化史」。照 Astar 的流水线处理它，就能训一个「RL 后训练版 Astar」。</div>
+
+<p>具体五步：①导出实验历史（代码 diff + 训练曲线 + 评测结果），实验快照按提交对齐；②两两配对——reward 曲线对比打标，振荡惩罚项直接照抄（RL 训练的抖动问题比推荐系统更尖锐）；③两级过滤——配置白名单（学习率/优化器/GRPO 超参保留，节点数/输出路径丢弃）+ LLM 意图过滤（只留显式训练策略改动）；④层级提示——L1 粗方向可先分：奖励塑形 / 训练超参 / 数据配比 / 基础设施策略 / 评测方法；⑤Qwen3-4B 打底 mid-train → SFT → 训 RM——<b>而你的执行验证（S1-S3）正好当 RM 的审计锚</b>，这是 CyberGym 路线和 Astar 路线的天然合体点。产出：一个 0.6-8B 的「下一个实验做什么」提案器，910B 单卡可部署，把你的试错吞吐从每周 Θ(10) 提到 Θ(100)。这不是替代你的判断——是把「哪些方向显然不值得试」这个最耗时的初筛外包给读过全部历史的模型。</p>
+
+<figure role="img" aria-label="RL 后训练版 Astar 五步配方：实验历史导出、配对打标、两级过滤、层级提示、三段训练与 RM 审计，产出 910B 可部署的实验方向提案器">
+<svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="200" height="66" rx="9" fill="var(--mine-soft)" stroke="var(--mine)" stroke-width="1.5"/>
+    <text x="124" y="48" font-size="10" font-weight="700" fill="var(--mine)" text-anchor="middle">你手里的资产</text>
+    <text x="124" y="68" font-size="8" fill="currentColor" text-anchor="middle">git 提交 · reward 曲线 · S1-S3 轨迹</text>
+
+    <rect x="254" y="24" width="90" height="66" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.2"/>
+    <text x="299" y="46" font-size="9.5" font-weight="700" fill="var(--mine)" text-anchor="middle">①导出</text>
+    <text x="299" y="64" font-size="7.5" fill="currentColor" text-anchor="middle">快照对齐提交</text>
+
+    <rect x="374" y="24" width="90" height="66" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.2"/>
+    <text x="419" y="46" font-size="9.5" font-weight="700" fill="var(--mine)" text-anchor="middle">②配对打标</text>
+    <text x="419" y="64" font-size="7.5" fill="currentColor" text-anchor="middle">曲线定胜负+振荡惩罚</text>
+
+    <rect x="494" y="24" width="90" height="66" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.2"/>
+    <text x="539" y="46" font-size="9.5" font-weight="700" fill="var(--mine)" text-anchor="middle">③两级过滤</text>
+    <text x="539" y="64" font-size="7.5" fill="currentColor" text-anchor="middle">白名单+意图判别</text>
+
+    <rect x="614" y="24" width="82" height="66" rx="9" fill="var(--card)" stroke="var(--mine)" stroke-width="1.2"/>
+    <text x="655" y="46" font-size="9.5" font-weight="700" fill="var(--mine)" text-anchor="middle">④层级提示</text>
+    <text x="655" y="64" font-size="7.5" fill="currentColor" text-anchor="middle">五类粗方向</text>
+
+    <rect x="150" y="140" width="200" height="66" rx="9" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.5"/>
+    <text x="250" y="162" font-size="9.5" font-weight="700" fill="var(--dir)" text-anchor="middle">⑤三段训练（Qwen3-4B 打底）</text>
+    <text x="250" y="180" font-size="7.5" fill="currentColor" text-anchor="middle">mid-train → SFT → GRPO(RM)</text>
+    <text x="250" y="196" font-size="7.5" fill="var(--ver)" text-anchor="middle">S1-S3 执行验证 = RM 审计锚</text>
+
+    <rect x="400" y="140" width="296" height="66" rx="9" fill="var(--win-soft)" stroke="var(--win)" stroke-width="1.6"/>
+    <text x="548" y="164" font-size="10" font-weight="700" fill="var(--win)" text-anchor="middle">产出：实验方向提案器（0.6-8B）</text>
+    <text x="548" y="184" font-size="8" fill="currentColor" text-anchor="middle">910B 单卡部署 · 试错吞吐 Θ(10)→Θ(100)/周</text>
+
+    <g stroke="currentColor" stroke-width="1.2">
+      <line x1="224" y1="57" x2="250" y2="57"/>
+      <line x1="344" y1="57" x2="370" y2="57"/>
+      <line x1="464" y1="57" x2="490" y2="57"/>
+      <line x1="584" y1="57" x2="610" y2="57"/>
+      <line x1="655" y1="90" x2="420" y2="136"/>
+      <line x1="280" y1="173" x2="396" y2="173"/>
+    </g>
+    <g fill="currentColor">
+      <polygon points="246,53 246,61 254,57"/>
+      <polygon points="366,53 366,61 374,57"/>
+      <polygon points="486,53 486,61 494,57"/>
+      <polygon points="606,53 606,61 614,57"/>
+      <polygon points="424,134 432,140 424,146" transform="rotate(38 424,138)"/>
+      <polygon points="392,169 392,177 400,173"/>
+    </g>
+  </g>
+</svg>
+<figcaption><b>RL 后训练版 Astar 的五步配方。</b>关键合体点在⑤：Astar 的 RM 需要「便宜但会漂移」的代理验证，CyberGym 的 S1-S3 是「贵但零漂移」的执行验证——两者拼起来正好是论文第七节的「学习验证器 + 执行审计」架构，而这两块资产你现在都有。第一批语料不用大：演化史数百条就够起步（配对扩增是平方级的），你的集群已经跑了多少轮实验，语料就有多少。</figcaption>
+</figure>
+
+<!-- ============ 12. 结语 ============ -->
+
+<h2>结语<span class="chip" style="background:var(--dir-soft);color:var(--dir)">带走一句</span></h2>
+
+<figure role="img" aria-label="两个时钟的对比：语言侧自演进闭环分钟到小时级，具身侧数据飞轮周到月级，物理时钟决定滞后">
+<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="320" height="150" rx="10" fill="var(--dir-soft)" stroke="var(--dir)" stroke-width="1.5"/>
+    <text x="184" y="52" font-size="11.5" font-weight="700" fill="var(--dir)" text-anchor="middle">语言/系统侧闭环</text>
+    <text x="184" y="84" font-size="26" font-weight="900" fill="var(--dir)" text-anchor="middle" font-family="IBM Plex Mono">分钟-小时</text>
+    <text x="184" y="118" font-size="8.5" fill="currentColor" text-anchor="middle">Astar：提方向→写码→跑真→回训</text>
+    <text x="184" y="138" font-size="8.5" fill="currentColor" text-anchor="middle">瓶颈已从「想」移到「验证」</text>
+    <text x="184" y="158" font-size="8.5" fill="currentColor" text-anchor="middle">每周 Θ(100) 个方向</text>
+
+    <rect x="376" y="24" width="320" height="150" rx="10" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.3"/>
+    <text x="536" y="52" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">具身侧飞轮</text>
+    <text x="536" y="84" font-size="26" font-weight="900" fill="currentColor" text-anchor="middle" font-family="IBM Plex Mono">周-月</text>
+    <text x="536" y="118" font-size="8.5" fill="currentColor" text-anchor="middle">智元：数采→数据集→仿真→模型→部署</text>
+    <text x="536" y="138" font-size="8.5" fill="currentColor" text-anchor="middle">瓶颈是物理时钟（采集/真机）</text>
+    <text x="536" y="158" font-size="8.5" fill="currentColor" text-anchor="middle">同一剧本滞后 1-2 年是结构性的</text>
+  </g>
+</svg>
+<figcaption><b>两个时钟，一个剧本。</b>自演进的传播顺序由验证器的时钟决定：语言侧验证（训练执行）以小时计，所以闭环先在那里闭死；具身侧验证（物理采集与真机）以周月计，所以吸收会迟到但不会缺席。中间的桥梁恰好是我们的两个世界：用语言侧的转速（任务合成、Astar 式提案器）去加速具身侧的飞轮调度。</figcaption>
+</figure>
+
+<p>如果只带走一句话：<b>「提出改进方向」是 AI 系统迭代循环里最后一个被认为不可能自动化的人类职能，Astar 用 0.6B 证明它和写码、评估一样——只要演化史在，它就能被训进权重；人在循环里剩下的，只有决定建什么，和守住什么是真的。</b></p>
+
+<footer>
+  <p>2026-09-13 · 基于 arXiv 2608.27287v1 全文（阿里 × 浙大，2026-08-27 提交）+ 机器之心解读交叉核对 · 方向判断承接《具身趋势判断 2026-09》与《递归自演进》框架</p>
+  <p>系列首页：<a href="https://maxwell-ai-lab.github.io/archify-diagrams/">Maxwell-AI-Lab 架构图与报告索引</a> · 相关报告：递归自演进 · 890 字节的上下文（DeepSeek V4.1）· 失败数据的第二人生（Motus2）· 三颗脑与一个飞轮（智元全栈）</p>
+</footer>
+</div>
+</body>
+</html>
