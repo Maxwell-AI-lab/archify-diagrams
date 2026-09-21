@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>经验的复利</title>
+<meta name="description" content="RPent（清华×无问芯穹×正行创新，RLinf 核心团队）深潜：把 GPT-6/Claude Code 当规划器、VLA/WAM 当手、三层记忆当复利的开源具身智能体基础设施。LIBERO-PRO 92.63%，Flash Mode 7× 提速，记忆让位置交换任务 31%→87%。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #F5F5F0; --ink: #241F1A; --ink-soft: #6E655A;
+    --plan: #4338CA; --plan-soft: #E8E6FC;
+    --hand: #C2410C; --hand-soft: #FBE9DD;
+    --memo: #15803D; --memo-soft: #DCF2E4;
+    --wire: #9333EA; --wire-soft: #F3E6FC;
+    --line: #DED8CB; --card: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14120E; --ink: #E9E3D5; --ink-soft: #99907E;
+      --plan: #A5B0F5; --plan-soft: #1E1C36;
+      --hand: #F0935B; --hand-soft: #2E1F14;
+      --memo: #6BC796; --memo-soft: #122619;
+      --wire: #CE9BF2; --wire-soft: #241430;
+      --line: #302B23; --card: #1F1C16;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14120E; --ink: #E9E3D5; --ink-soft: #99907E;
+    --plan: #A5B0F5; --plan-soft: #1E1C36;
+    --hand: #F0935B; --hand-soft: #2E1F14;
+    --memo: #6BC796; --memo-soft: #122619;
+    --wire: #CE9BF2; --wire-soft: #241430;
+    --line: #302B23; --card: #1F1C16;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans SC", sans-serif; background: var(--paper); color: var(--ink); line-height: 1.85; font-size: 16px; }
+  .page { max-width: 780px; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header.masthead { border-bottom: 3px solid var(--ink); padding-bottom: 2rem; margin-bottom: 3rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.18em; color: var(--ink-soft); text-uppercase; margin-bottom: 0.8rem; text-transform: uppercase; }
+  h1 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: clamp(2.4rem, 6vw, 3.5rem); line-height: 1.15; }
+  .masthead p.lede { margin-top: 1.2rem; font-size: 1.05rem; color: var(--ink-soft); max-width: 42em; }
+  h2 { font-family: "Noto Serif SC", serif; font-weight: 900; font-size: 1.7rem; margin: 3.5rem 0 0.4rem; text-wrap: balance; }
+  h2 .chip { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 10px; vertical-align: middle; margin-left: 0.6rem; letter-spacing: 0.08em; }
+  .claim { font-size: 1.02rem; color: var(--ink-soft); border-left: 3px solid var(--line); padding: 0.4rem 0 0.4rem 1rem; margin: 0.6rem 0 1.6rem; }
+  .claim b, p b { color: var(--ink); }
+  p { margin: 0.9rem 0; max-width: 42em; }
+  figure { margin: 2rem 0; }
+  figure svg { width: 100%; height: auto; display: block; color: var(--ink); }
+  figcaption { font-size: 0.86rem; color: var(--ink-soft); margin-top: 0.7rem; line-height: 1.6; border-top: 1px solid var(--line); padding-top: 0.6rem; }
+  figcaption b { color: var(--ink); }
+  code { font-family: "IBM Plex Mono", monospace; font-size: 0.88em; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 0.08em 0.4em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.4rem 0; font-size: 0.88rem; }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.05em; text-align: left; color: var(--ink-soft); }
+  th, td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line); }
+  .num-cell { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-p { color: var(--plan); font-weight: 600; }
+  .c-h { color: var(--hand); font-weight: 600; }
+  .c-m { color: var(--memo); font-weight: 600; }
+  .c-w { color: var(--wire); font-weight: 600; }
+  footer { margin-top: 4rem; border-top: 3px solid var(--ink); padding-top: 1.2rem; font-size: 0.85rem; color: var(--ink-soft); }
+  footer a { color: var(--memo); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="masthead">
+  <div class="kicker">RPent · 清华 × 无问芯穹 × 正行创新 · RLinf 核心团队 · 2026-09</div>
+  <h1>经验的复利</h1>
+  <p class="lede">RLinf 团队的第二落子：从训练框架（RLinf）到运行时中枢（RPent）。RPent（Recursive Physical Agent）把「GPT-6 Astra / Claude Code 当规划器 + VLA/WAM 当手 + 三层记忆当复利」组装成开源具身智能体基础设施：LIBERO-PRO 八套件总成功率 <b>92.63%（741/800）</b>，记忆让位置交换任务 <b>31.0%→87.0%</b>，Flash Mode 把端到端耗时 <b>283.6s→40.9s（约 7×）</b>。本报告逐层拆它的四层架构、MCP/RPC/MHS 三接口、记忆与任务卡机制，并放进本月的外脑三部曲里读——它是「GPT-as-Policy 裁判形态」的下一步：<b>裁判 + 教练 + 台账</b>，经验第一次成了可复利的资产。</p>
+</header>
+
+<!-- ============ 1. 定位 ============ -->
+
+<h2>一句话定位<span class="chip" style="background:var(--plan-soft);color:var(--plan)">坐标</span></h2>
+<div class="claim">RPent 回答的问题是：<b>「在基座模型冻结的前提下，具身智能体的能力上限由什么决定？」</b>它的答案：由<b>经验的复利方式</b>决定——规划器可以换（GPT-6 Astra / Opus / Claude Code 都行）、手可以换（π₀.₅ / RLDX-1 / LingBot / DreamZero），但「验证过的经验如何被记录、升级、隔离、复用」是这个系统的真骨架。论文锚点 Harness VLA（arXiv 2607.08448），Apache-2.0 开源，647 stars。</div>
+
+<p>事实分档：<b>仓库级</b>（GitHub README 与 readthedocs 排行榜，数字为官方口径）与<b>媒体级</b>（量子位授权发布，用于机制描述）。仓库今天仍在活跃推送——这是一个正在跑的项目，不是论文存档。</p>
+
+<!-- ============ 2. 三部曲 ============ -->
+
+<h2>本月外脑三部曲：裁判 → 教练 → 台账<span class="chip" style="background:var(--plan-soft);color:var(--plan)">脉络</span></h2>
+<div class="claim">把 RPent 和两周前的 GPT-as-Policy 放在一起读才完整：<b>同样的「LLM 外脑 + 冻结 VLA」骨架，RPent 多了三样东西——记忆、复用、接口标准</b>，成功率从 48% 跳到 92.6%（不同考场，但方向一致）。</div>
+
+<table>
+  <thead><tr><th>维度</th><th>GPT-as-Policy（9 月上旬）</th><th>RPent（9 月下旬）</th></tr></thead>
+  <tbody>
+    <tr><td class="c-p">外脑角色</td><td>裁判：块边界审查，纠错 14.4% 步</td><td>规划器 + 教练：拆任务、选手、收经验</td></tr>
+    <tr><td class="c-h">执行者</td><td>π₀.₅（固定）</td><td>VLA/WAM 可插拔（π₀.₅ / RLDX-1 / LingBot / DreamZero）</td></tr>
+    <tr><td class="c-m">经验</td><td>一次性：每集从零开始</td><td><b>三层记忆 + Task Card，跨任务复利</b></td></tr>
+    <tr><td class="c-w">接口</td><td>私有协议（3 个阻塞工具）</td><td><b>MCP / RPC / MHS 三层标准接口</b></td></tr>
+    <tr><td>速度</td><td>未作为目标</td><td>Flash Mode：7× 提速</td></tr>
+    <tr><td>成绩</td><td>RoboDojo 48%</td><td>LIBERO-PRO 92.63% / RoboCasa 59.2% / RoboTwin 62.4%</td></tr>
+    <tr><td>形态</td><td>单案例评测代码</td><td>开源基础设施（CLI + Dashboard + 真机扩展）</td></tr>
+  </tbody>
+</table>
+
+<p>注意两件事的分寸。第一，两边的考场不同（RoboDojo vs LIBERO-PRO），数字不能直接对比——能比的是<b>架构方向</b>：裁判形态证明了外脑有价值，台账形态证明了价值可以被存下来放大。第二，RPent 的 92.63% 是 Codex/GPT-6 Astra 规划器 + 记忆的总和成绩，其对照组 π<sub>RLinf</sub>（纯 VLA，无外脑无记忆）在 LIBERO-PRO 上是 <b>50.0%</b>——「外脑 + 记忆」合计贡献了 42.6 个点，这是整个系统存在的理由。</p>
+
+<figure role="img" aria-label="外脑三部曲：GPT-as-Policy 裁判形态与 RPent 台账形态的对照，RPent 增加记忆复用与接口标准两层">
+<svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="320" height="240" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.3"/>
+    <text x="184" y="52" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">GPT-as-Policy：裁判形态</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <rect x="64" y="70" width="240" height="40" rx="7" fill="var(--plan-soft)" stroke="var(--plan)" stroke-width="1.2"/>
+      <text x="184" y="88" font-weight="700" fill="var(--plan)">GPT-6：块边界审查</text>
+      <text x="184" y="103" font-size="8" opacity="0.75">failed/misaligned 才接管</text>
+      <rect x="64" y="126" width="240" height="40" rx="7" fill="var(--hand-soft)" stroke="var(--hand)" stroke-width="1.2"/>
+      <text x="184" y="144" font-weight="700" fill="var(--hand)">π₀.₅：开车</text>
+      <text x="184" y="159" font-size="8" opacity="0.75">50×14 动作块</text>
+      <text x="184" y="196" font-size="8.5" fill="var(--ink-soft)">经验一次性：每集从零开始</text>
+      <text x="184" y="216" font-size="8.5" fill="var(--ink-soft)">接口私有 · 无速度优化</text>
+      <text x="184" y="243" font-size="10" font-weight="700" fill="var(--hand)">RoboDojo 48%</text>
+    </g>
+
+    <rect x="376" y="24" width="320" height="240" rx="10" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.8"/>
+    <text x="536" y="52" font-size="11.5" font-weight="700" fill="var(--memo)" text-anchor="middle">RPent：台账形态</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <rect x="396" y="70" width="280" height="40" rx="7" fill="var(--card)" stroke="var(--plan)" stroke-width="1.2"/>
+      <text x="536" y="88" font-weight="700" fill="var(--plan)">规划器（GPT-6/Claude Code 可换）</text>
+      <text x="536" y="103" font-size="8" opacity="0.75">拆任务 + 选原语 + 收经验</text>
+      <rect x="396" y="126" width="280" height="40" rx="7" fill="var(--card)" stroke="var(--hand)" stroke-width="1.2"/>
+      <text x="536" y="144" font-weight="700" fill="var(--hand)">手可插拔：VLA / WAM(DreamZero)</text>
+      <text x="536" y="159" font-size="8" opacity="0.75">π₀.₅ · RLDX-1 · LingBot</text>
+      <text x="536" y="196" font-size="8.5" font-weight="700" fill="var(--memo)">三层记忆 + Task Card：经验复利</text>
+      <text x="536" y="216" font-size="8.5" fill="var(--ink-soft)">MCP/RPC/MHS 标准接口 · Flash Mode 7×</text>
+      <text x="536" y="243" font-size="10" font-weight="700" fill="var(--memo)">LIBERO-PRO 92.63%（对照 π 50.0%）</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>从裁判到台账：外脑的第二次进化。</b>裁判形态回答「外脑该不该插手」，台账形态回答「插手换来的经验去哪了」。GPT-as-Policy 每集都是第一次见世界（它的 SKILL 里明写「Prior episodes are not evidence」）；RPent 反其道——上一集验证过的流程就是下一集的资产。48%→92.6% 的跨越（不同考场）里，记忆是最大的单项杠杆。</figcaption>
+</figure>
+
+<!-- ============ 3. 四层架构 ============ -->
+
+<h2>四层架构：智能层与环境层完全解耦<span class="chip" style="background:var(--wire-soft);color:var(--wire)">骨架</span></h2>
+
+<figure role="img" aria-label="RPent 四层架构：用户层 CLI 与 Dashboard，智能层规划器加动作原语加代理循环，接口层统一机器人调用，环境层四个仿真器与真机扩展">
+<svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="24" width="660" height="72" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="50" y="50" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">用户层</text>
+    <text x="360" y="52" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">CLI（像 Claude Code / Codex 一样对话）+ Web Dashboard</text>
+    <text x="360" y="74" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">任务下发 · 过程可视 · 记忆资产管理</text>
+
+    <rect x="30" y="116" width="660" height="120" rx="10" fill="var(--plan-soft)" stroke="var(--plan)" stroke-width="1.6"/>
+    <text x="50" y="142" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">智能层（独立进程）</text>
+    <rect x="50" y="156" width="300" height="64" rx="8" fill="var(--card)" stroke="var(--plan)" stroke-width="1.3"/>
+    <text x="200" y="180" font-size="10.5" font-weight="700" fill="var(--plan)" text-anchor="middle">Agentic Planner</text>
+    <text x="200" y="200" font-size="8.5" fill="currentColor" text-anchor="middle">Codex ✅ Claude Code ✅ 自定义 ✅</text>
+    <rect x="370" y="156" width="300" height="64" rx="8" fill="var(--card)" stroke="var(--hand)" stroke-width="1.3"/>
+    <text x="520" y="180" font-size="10.5" font-weight="700" fill="var(--hand)" text-anchor="middle">Action Primitives（标准化工具）</text>
+    <text x="520" y="200" font-size="8.5" fill="currentColor" text-anchor="middle">VLA: π₀.₅·RLDX-1·LingBot ｜ WAM: DreamZero</text>
+    <text x="360" y="238" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Agentic Loop：规划 → 执行 → 反馈 → 记忆更新 → 再规划</text>
+
+    <rect x="30" y="256" width="660" height="52" rx="10" fill="var(--wire-soft)" stroke="var(--wire)" stroke-width="1.4"/>
+    <text x="50" y="282" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">接口层</text>
+    <text x="380" y="280" font-size="10.5" font-weight="700" fill="var(--wire)" text-anchor="middle">MCP（能力描述） · RPC（服务互联） · MHS（物理设备读写）</text>
+    <text x="380" y="298" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">机器人之外可扩展到实验仪器 · 家居设备 · 工业系统</text>
+
+    <rect x="30" y="328" width="660" height="44" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="50" y="352" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">环境层（独立进程）</text>
+    <text x="400" y="355" font-size="9.5" fill="currentColor" text-anchor="middle">LIBERO-PRO · RoboCasa · RoboTwin · RoboDojo ｜ 真机：Franka 单臂/双臂</text>
+  </g>
+</svg>
+<figcaption><b>两个「独立进程」是架构上最重要的一笔。</b>智能层（规划器 + 原语）与环境层（仿真器/真机）各自独立部署、以接口层相连——这正是训练侧 RLinf「沙箱与 GPU 解耦」的运行时镜像，也是 DeepSeek 异步 RL 基础设施的组织原则第三次出现：<b>把不同频率、不同故障域的单元拆开，用标准接口连接</b>。规划器直接复用 Codex / Claude Code 两个现成的编程 agent CLI，印证了 GPT-as-Policy 发现的形态：<b>策略 = 带工具的编程 agent</b>。</figcaption>
+</figure>
+
+<!-- ============ 4. 三接口 ============ -->
+
+<h2>MCP / RPC / MHS：组合接口的标准化提前到来了<span class="chip" style="background:var(--wire-soft);color:var(--wire)">接口</span></h2>
+<div class="claim">我们在趋势判断里说「12-24 个月内，三层栈的组合接口会成为争夺点」——RPent 把它提前做出来了，而且拆成了三份：<b>MCP 管「能力怎么被描述」、RPC 管「服务怎么互联」、MHS 管「物理设备怎么读写」</b>。MHS 的野心值得注意：不止机器人，还包括仪器、家居、工业设备——这是在定义「物理世界的 function calling」。</div>
+
+<figure role="img" aria-label="三接口分工：MCP 向规划器统一描述能力，RPC 连接工具模型服务与机器人环境独立部署，MHS 统一物理设备读写控制">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="40" y="30" width="200" height="180" rx="10" fill="var(--wire-soft)" stroke="var(--wire)" stroke-width="1.6"/>
+    <text x="140" y="58" font-size="11.5" font-weight="700" fill="var(--wire)" text-anchor="middle">MCP</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="140" y="86">能力统一描述层</text>
+      <text x="140" y="112">把 VLA / WAM / 工具</text>
+      <text x="140" y="130">包装成规划器认识的</text>
+      <text x="140" y="148">标准工具（tool）</text>
+      <text x="140" y="184" font-size="8" fill="var(--ink-soft)">回答：能力怎么被发现</text>
+    </g>
+
+    <rect x="260" y="30" width="200" height="180" rx="10" fill="var(--card)" stroke="var(--wire)" stroke-width="1.3"/>
+    <text x="360" y="58" font-size="11.5" font-weight="700" fill="var(--wire)" text-anchor="middle">RPC</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="360" y="86">服务互联层</text>
+      <text x="360" y="112">工具 / 模型服务 / 机器人环境</text>
+      <text x="360" y="130">独立部署、独立扩缩</text>
+      <text x="360" y="148">故障域互不传染</text>
+      <text x="360" y="184" font-size="8" fill="var(--ink-soft)">回答：服务怎么连起来</text>
+    </g>
+
+    <rect x="480" y="30" width="200" height="180" rx="10" fill="var(--wire-soft)" stroke="var(--wire)" stroke-width="1.6"/>
+    <text x="580" y="58" font-size="11.5" font-weight="700" fill="var(--wire)" text-anchor="middle">MHS</text>
+    <g font-size="9" fill="currentColor" text-anchor="middle">
+      <text x="580" y="86">物理设备统一抽象</text>
+      <text x="580" y="112">机器人 · 实验仪器</text>
+      <text x="580" y="130">家居 · 工业系统</text>
+      <text x="580" y="148">统一读写与控制</text>
+      <text x="580" y="184" font-size="8" fill="var(--ink-soft)">回答：物理世界怎么接入</text>
+    </g>
+
+    <g stroke="currentColor" stroke-width="1.3" opacity="0.6">
+      <line x1="240" y1="120" x2="260" y2="120"/>
+      <line x1="460" y1="120" x2="480" y2="120"/>
+    </g>
+    <rect x="40" y="230" width="640" height="40" rx="9" fill="var(--card)" stroke="var(--line)" stroke-width="1.1"/>
+    <text x="360" y="255" font-size="9.5" fill="currentColor" text-anchor="middle">分层逻辑：发现（语义）→ 连接（部署）→ 触达（物理）——每层换实现不动其它两层</text>
+  </g>
+</svg>
+<figcaption><b>接口分层的真正价值：换脑子不动手，换手不动环境。</b>规划器从 Codex 换 Claude Code、执行器从 π₀.₅ 换 DreamZero、环境从 LIBERO 换真机 Franka，都只是各自层的替换。排行榜上同一 RPent 配不同基座的对比能成立，正是因为接口把变量隔离开了——这是「评测卫生学」在系统层的延伸。</figcaption>
+</figure>
+
+<!-- ============ 5. 记忆 ============ -->
+
+<h2>记忆系统：复利的账本怎么记<span class="chip" style="background:var(--memo-soft);color:var(--memo)">核心</span></h2>
+<div class="claim">三层记忆按<b>复用范围</b>分层；每条记录带 <b>scope / type / confidence / evidence</b> 四个字段；新经验要<b>通过验证才能升级置信度</b>；冲突记录<b>隔离保存不互相覆盖</b>；可迁移的是 <b>Recipe（任务逻辑）而不是固定坐标</b>；探索模式可写、<b>评测模式只读冻结</b>。这一节是全系统设计密度最高的地方——它就是 Astar「演化史」的运行时版。</div>
+
+<figure role="img" aria-label="记忆机制：经验记录带范围类型置信度证据四字段，验证升级置信度，冲突隔离，任务逻辑以配方可迁移形式保存">
+<svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="30" y="24" width="660" height="130" rx="10" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.5"/>
+    <text x="50" y="50" font-family="IBM Plex Mono" font-size="10" letter-spacing="2" fill="var(--ink-soft)">三层记忆（按复用范围）</text>
+    <g font-size="9" text-anchor="middle">
+      <rect x="50" y="66" width="190" height="66" rx="8" fill="var(--card)" stroke="var(--memo)" stroke-width="1.1"/>
+      <text x="145" y="90" font-weight="700" fill="var(--memo)">任务内记忆</text>
+      <text x="145" y="108" font-size="8" fill="currentColor">当前回合的观测与步骤</text>
+      <rect x="265" y="66" width="190" height="66" rx="8" fill="var(--card)" stroke="var(--memo)" stroke-width="1.1"/>
+      <text x="360" y="90" font-weight="700" fill="var(--memo)">任务间记忆</text>
+      <text x="360" y="108" font-size="8" fill="currentColor">同类任务的验证经验</text>
+      <rect x="480" y="66" width="190" height="66" rx="8" fill="var(--card)" stroke="var(--memo)" stroke-width="1.3"/>
+      <text x="575" y="90" font-weight="700" fill="var(--memo)">跨任务 Recipe</text>
+      <text x="575" y="108" font-size="8" fill="currentColor">可迁移任务逻辑（非坐标）</text>
+    </g>
+
+    <rect x="30" y="178" width="320" height="128" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="190" y="204" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">记录的四字段</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="190" y="228">scope（复用范围）· type（类型）</text>
+      <text x="190" y="250">confidence（置信度）· evidence（证据）</text>
+      <text x="190" y="278" font-size="8" fill="var(--ink-soft)">新经验：验证通过 → 置信度升级</text>
+      <text x="190" y="296" font-size="8" fill="var(--ink-soft)">冲突记录：隔离保存，不覆盖不污染</text>
+    </g>
+
+    <rect x="380" y="178" width="310" height="128" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="535" y="204" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">读写纪律</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="535" y="228">探索模式：可写（攒资产）</text>
+      <text x="535" y="250">评测模式：只读冻结（保公平）</text>
+      <text x="535" y="278" font-size="8" fill="var(--ink-soft)">记忆资产可跨智能体分发</text>
+      <text x="535" y="296" font-size="8" fill="var(--ink-soft)">（一个智能体攒，大家用）</text>
+    </g>
+  </g>
+</svg>
+<figcaption><b>四条纪律各堵一个洞。</b>验证升级堵「幻觉经验」；冲突隔离堵「相互污染」（一条错误记录不会覆写掉正确记录）；Recipe 存逻辑不存坐标堵「环境一换全报废」；评测只读冻结堵「跑分时偷偷学习」——最后这条和 GPT-as-Policy 的「冻结面板」、CyberGym 的 S1-S3 是同一评测伦理。<b>实测杠杆：LIBERO-Pro Goal 位置交换任务 31.0% → 87.0%</b>，记忆是全系统最大的单项增益。</figcaption>
+</figure>
+
+<!-- ============ 6. Flash Mode ============ -->
+
+<h2>Flash Mode：把经验压缩成任务卡<span class="chip" style="background:var(--memo-soft);color:var(--memo)">7×</span></h2>
+<div class="claim">探索期（慢、完整）验证过的成功流程被压缩成 <b>Task Card</b>——任务阶段、动作原语、关键目标、检查条件，<b>不含固定坐标</b>。闪电期直接按卡执行，视觉重定位对齐场景，<b>只有检查失败或环境偏离时才召回规划器</b>。这就是 DeepSeek Engram 的「196B 条件记忆」在任务层的直系亲属：常用流程存外周，昂贵的深思按需调用。</div>
+
+<figure role="img" aria-label="双阶段执行：探索期完整代理循环并压缩成任务卡，闪电期按卡执行视觉重定位，检查失败才召回规划器">
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="24" width="320" height="230" rx="10" fill="var(--card)" stroke="var(--line)" stroke-width="1.3"/>
+    <text x="184" y="50" font-size="11.5" font-weight="700" fill="currentColor" text-anchor="middle">探索期（第一次见这类任务）</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="184" y="78">完整 Agentic Loop：</text>
+      <text x="184" y="98">规划 → 原语执行 → 反馈 → 记忆更新 → 再规划</text>
+      <text x="184" y="126" fill="var(--ink-soft)">慢（GPT-6 逐步深思）但完整</text>
+      <rect x="54" y="146" width="260" height="60" rx="8" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.4"/>
+      <text x="184" y="170" font-weight="700" fill="var(--memo)">成功后压缩 → Task Card</text>
+      <text x="184" y="190" font-size="8">阶段·原语·关键目标·检查条件（无固定坐标）</text>
+      <text x="184" y="234" font-size="8" fill="var(--ink-soft)">验证过的流程才入卡</text>
+    </g>
+
+    <rect x="376" y="24" width="320" height="230" rx="10" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.8"/>
+    <text x="536" y="50" font-size="11.5" font-weight="700" fill="var(--memo)" text-anchor="middle">闪电期（同类任务再来）</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="536" y="78">按 Task Card 直接执行：</text>
+      <text x="536" y="98">视觉重定位对齐新场景 → 逐阶段跑原语</text>
+      <text x="536" y="126" fill="var(--ink-soft)">规划器不参与（不再逐步深思）</text>
+      <rect x="406" y="146" width="260" height="60" rx="8" fill="var(--card)" stroke="var(--memo)" stroke-width="1.2"/>
+      <text x="536" y="170" font-weight="700" fill="var(--memo)">检查失败 / 环境偏离 → 召回规划器</text>
+      <text x="536" y="190" font-size="8">回到探索期逻辑修复，修好更新卡</text>
+      <text x="536" y="234" font-size="8" fill="var(--ink-soft)">另：非推理模式可再省约 40% 时间</text>
+    </g>
+
+    <g stroke="var(--memo)" stroke-width="1.8">
+      <line x1="344" y1="176" x2="372" y2="176"/>
+    </g>
+    <polygon points="370,171 370,181 380,176" fill="var(--memo)"/>
+  </g>
+</svg>
+<figcaption><b>数字：LIBERO Object 200 次评测，平均端到端耗时 283.6s → 40.9s（约 7×），成功率只降 3.5 个百分点。</b>机制上这是「缓存」在智能体层的发明：任务卡 = 指令缓存，视觉重定位 = 地址重绑定，检查失败 = 缓存失效回源。把它和 8 月的非推理模式（再省 40%）叠起来看，RPent 对延迟的攻击是系统性的——外脑的贵和慢，正在被「经验复用 + 推理分级」两头挤掉。</figcaption>
+</figure>
+
+<figure role="img" aria-label="两个杠杆的双柱对比：记忆让位置交换任务成功率从 31.0 升到 87.0，Flash Mode 让耗时从 283.6 秒降到 40.9 秒">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="80" y1="210" x2="340" y2="210" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="210" y="34" font-size="11" font-weight="700" fill="var(--memo)" text-anchor="middle">记忆杠杆：成功率（%）</text>
+    <rect x="120" y="149" width="70" height="61" rx="4" fill="var(--ink-soft)" opacity="0.45"/>
+    <text x="155" y="138" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">31.0</text>
+    <text x="155" y="232" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">无记忆</text>
+    <rect x="230" y="39" width="70" height="171" rx="4" fill="var(--memo)" opacity="0.9"/>
+    <text x="265" y="28" font-size="10.5" font-weight="700" fill="var(--memo)" text-anchor="middle">87.0</text>
+    <text x="265" y="232" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">三层记忆</text>
+    <text x="210" y="252" font-size="8" fill="var(--ink-soft)" text-anchor="middle">LIBERO-Pro Goal 位置交换任务</text>
+
+    <line x1="420" y1="210" x2="680" y2="210" stroke="var(--line)" stroke-width="1.2"/>
+    <text x="550" y="34" font-size="11" font-weight="700" fill="var(--plan)" text-anchor="middle">速度杠杆：单任务耗时（秒）</text>
+    <rect x="470" y="39" width="70" height="171" rx="4" fill="var(--ink-soft)" opacity="0.45"/>
+    <text x="505" y="28" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">283.6</text>
+    <text x="505" y="232" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">探索期</text>
+    <rect x="580" y="152" width="70" height="58" rx="4" fill="var(--plan)" opacity="0.9"/>
+    <text x="615" y="141" font-size="10.5" font-weight="700" fill="var(--plan)" text-anchor="middle">40.9</text>
+    <text x="615" y="232" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">Flash Mode</text>
+    <text x="550" y="252" font-size="8" fill="var(--ink-soft)" text-anchor="middle">LIBERO Object 200 次评测 · 成功率仅降 3.5pp</text>
+  </g>
+</svg>
+<figcaption><b>两个杠杆分别解决外脑的两大痛点。</b>记忆解决「每次都从头学」（成功率 2.8×），任务卡解决「每次都全程深思」（耗时 6.9×）。合起来读：外脑的贵与慢不是宿命，是可以被经验资产摊薄的固定成本——这正是「从一次任务到一类任务」的经济含义。</figcaption>
+</figure>
+
+<!-- ============ 7. 排行榜 ============ -->
+
+<h2>排行榜：基座差异在扰动场景被放大<span class="chip" style="background:var(--plan-soft);color:var(--plan)">数字</span></h2>
+
+<table>
+  <thead><tr><th>考场</th><th>方法（规划器/原语）</th><th>成绩</th><th>备注</th></tr></thead>
+  <tbody>
+    <tr><td class="c-p">LIBERO-PRO（八套件）</td><td>RPent / GPT-6 Astra</td><td class="num-cell c-m">92.63%（741/800）</td><td>低推理档 + 记忆批次冻结</td></tr>
+    <tr><td class="c-p">LIBERO-PRO</td><td>RPent / Opus-4.7</td><td class="num-cell">82.4%</td><td>同框架换基座</td></tr>
+    <tr><td class="c-p">LIBERO-PRO</td><td>π<sub>RLinf</sub>（纯 VLA，无外脑）</td><td class="num-cell c-h">50.0%</td><td>对照组：外脑+记忆 = +42.6pp</td></tr>
+    <tr><td class="c-p">RoboCasa365 Target50</td><td>RPent / GPT-6 Astra</td><td class="num-cell">59.20%</td><td>RLDX-1 为原语</td></tr>
+    <tr><td class="c-p">RoboTwin C2R</td><td>RPent / GPT-5.5</td><td class="num-cell">62.4%</td><td>LingBot-VLA 双臂</td></tr>
+    <tr><td class="c-p">LIBERO</td><td>RPent / Opus-4.7</td><td class="num-cell">96.0%</td><td>常规场景接近饱和</td></tr>
+  </tbody>
+</table>
+
+<p>两个读数值得单独说。<b>第一，基座差距在扰动场景被放大</b>：GPT-6 Astra 与 Opus-4.7 在常规 LIBERO 上都能到 96% 上下，但在带位置交换扰动的 LIBERO-PRO 上拉开 92.63 vs 82.4——扰动把「谁的空间-语言推理更硬」暴露出来了，这与 GE-Act 论文「held-out 场景才是真考场」的立场一致。<b>第二，π<sub>RLinf</sub> 的 50.0% 是最有价值的一根柱子</b>：RLinf 自己训的 π 放在榜上被自己团队的外脑框架翻倍超越——用排行榜承认「纯 VLA 的天花板」，这个诚实本身就是 RLinf 生态的方法论表态。</p>
+
+<!-- ============ 8. 三记忆 ============ -->
+
+<h2>三记忆并立：System-2 缺口的第一批砖<span class="chip" style="background:var(--memo-soft);color:var(--memo)">模式</span></h2>
+<div class="claim">一个月内，「经验资产化」在三个互不相识的系统里独立出现——<b>这不是巧合，是 System-2 缺口（记忆层）在同时被三批工程师砌墙</b>。</div>
+
+<table>
+  <thead><tr><th>系统</th><th>存的什么</th><th>复用方式</th><th>验证纪律</th></tr></thead>
+  <tbody>
+    <tr><td class="c-m">DeepSeek Engram</td><td>条件→行为（196B 参数级）</td><td>前缀命中直接改写注意力</td><td>训练时嵌入（权重内）</td></tr>
+    <tr><td class="c-m">Astar</td><td>演化方向 + 结果</td><td>训练进权重（提方向）</td><td>RM + 周期执行审计</td></tr>
+    <tr><td class="c-m">RPent 记忆/任务卡</td><td>验证过的任务流程</td><td>运行时复用（外周资产）</td><td>验证升级 + 冲突隔离 + 评测只读</td></tr>
+  </tbody>
+</table>
+
+<figure role="img" aria-label="三种记忆形态在吸收曲线上的位置：Engram 和 Astar 已进权重，RPent 任务卡还在外周，箭头指向未来蒸馏进权重的方向">
+<svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <line x1="60" y1="130" x2="660" y2="130" stroke="currentColor" stroke-width="1.6"/>
+    <polygon points="656,125 656,135 668,130" fill="currentColor"/>
+    <text x="360" y="40" font-size="10.5" font-weight="700" fill="currentColor" text-anchor="middle">经验资产的位置：外周 ⟶ 权重（吸收方向）</text>
+
+    <rect x="90" y="86" width="180" height="60" rx="9" fill="var(--card)" stroke="var(--memo)" stroke-width="1.4"/>
+    <text x="180" y="110" font-size="10" font-weight="700" fill="var(--memo)" text-anchor="middle">RPent Task Card</text>
+    <text x="180" y="130" font-size="8" fill="currentColor" text-anchor="middle">外周资产 · 运行时复用</text>
+
+    <rect x="290" y="86" width="180" height="60" rx="9" fill="var(--card)" stroke="var(--memo)" stroke-width="1.4"/>
+    <text x="380" y="110" font-size="10" font-weight="700" fill="var(--memo)" text-anchor="middle">Astar 演化史</text>
+    <text x="380" y="130" font-size="8" fill="currentColor" text-anchor="middle">训练时蒸馏进权重</text>
+
+    <rect x="490" y="86" width="160" height="60" rx="9" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.6"/>
+    <text x="570" y="110" font-size="10" font-weight="700" fill="var(--memo)" text-anchor="middle">DeepSeek Engram</text>
+    <text x="570" y="130" font-size="8" fill="currentColor" text-anchor="middle">已在权重内（196B）</text>
+
+    <g stroke="var(--memo)" stroke-width="1.3" stroke-dasharray="5 3">
+      <line x1="272" y1="116" x2="288" y2="116"/>
+      <line x1="472" y1="116" x2="488" y2="116"/>
+    </g>
+    <text x="360" y="186" font-size="9" fill="var(--ink-soft)" text-anchor="middle">RPent 的任务卡今天在外周——它是未来「经验蒸馏进基座」的现成语料（吸收曲线的下一跳）</text>
+    <text x="360" y="210" font-size="9" fill="var(--ink-soft)" text-anchor="middle">三层栈的第三层（System-2：深思+记忆）正在从三个方向同时被砌起来</text>
+  </g>
+</svg>
+<figcaption><b>同一个洞，三种砌法。</b>Engram 把经验烧进权重（最彻底但最贵）、Astar 用演化史训练判断（元能力）、RPent 把经验放在外周账本（最灵活可分发）。三者不冲突——RPent 的账本攒到足够厚，就是 Astar 式蒸馏的原料；蒸馏后的模型又能当 RPent 的更聪明的规划器。<b>记忆层的外周形态和权重形态会长期共存，像 CPU 缓存和内存的分层。</b></figcaption>
+</figure>
+
+<!-- ============ 9. 知识地图接口 ============ -->
+
+<h2>对我们知识地图的六个接口<span class="chip" style="background:var(--wire-soft);color:var(--wire)">连接</span></h2>
+
+<figure role="img" aria-label="RPent 与知识地图的六条连接：接口标准化、记忆先行、吸收曲线、RLinf 闭环、WAM 一等公民、两个时钟">
+<svg viewBox="0 0 720 310" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="265" y="118" width="190" height="72" rx="10" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.8"/>
+    <text x="360" y="146" font-size="12" font-weight="700" fill="var(--memo)" text-anchor="middle">RPent</text>
+    <g font-size="8.5" fill="currentColor" text-anchor="middle">
+      <text x="360" y="166">规划器 + 手 + 经验资产</text>
+      <text x="360" y="182">开源基础设施形态</text>
+    </g>
+
+    <rect x="30" y="28" width="200" height="64" rx="9" fill="none" stroke="var(--wire)" stroke-width="1.3"/>
+    <text x="130" y="50" font-size="9.5" font-weight="700" fill="var(--wire)" text-anchor="middle">组合接口标准化</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle"><text x="130" y="70">趋势预测的「接口争夺」</text><text x="130" y="84">提前落地（MCP/RPC/MHS）</text></g>
+
+    <rect x="490" y="28" width="200" height="64" rx="9" fill="none" stroke="var(--memo)" stroke-width="1.3"/>
+    <text x="590" y="50" font-size="9.5" font-weight="700" fill="var(--memo)" text-anchor="middle">记忆先于深思</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle"><text x="590" y="70">System-2 从记忆补起更划算</text><text x="590" y="84">遗忘不能等，深思可以慢来</text></g>
+
+    <rect x="30" y="216" width="200" height="64" rx="9" fill="none" stroke="var(--plan)" stroke-width="1.3"/>
+    <text x="130" y="238" font-size="9.5" font-weight="700" fill="var(--plan)" text-anchor="middle">吸收曲线下一跳</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle"><text x="130" y="258">Task Card = 蒸馏语料</text><text x="130" y="272">与 14.4% 纠错数据同构</text></g>
+
+    <rect x="490" y="216" width="200" height="64" rx="9" fill="none" stroke="var(--plan)" stroke-width="1.3"/>
+    <text x="590" y="238" font-size="9.5" font-weight="700" fill="var(--plan)" text-anchor="middle">RLinf 生态闭环</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle"><text x="590" y="258">训练(RLinf/昇腾)+运行(RPent)</text><text x="590" y="272">+评测 全生命周期卖铲子位</text></g>
+
+    <rect x="265" y="242" width="190" height="52" rx="9" fill="none" stroke="var(--hand)" stroke-width="1.3"/>
+    <text x="360" y="262" font-size="9.5" font-weight="700" fill="var(--hand)" text-anchor="middle">WAM 一等公民 + 两个时钟</text>
+    <g font-size="8" fill="currentColor" text-anchor="middle"><text x="360" y="281">DreamZero 原语位 · 任务卡 7× 解时差</text></g>
+  </g>
+  <g stroke="currentColor" stroke-width="1.2" opacity="0.5">
+    <line x1="230" y1="62" x2="305" y2="120"/>
+    <line x1="490" y1="62" x2="415" y2="120"/>
+    <line x1="230" y1="246" x2="305" y2="188"/>
+    <line x1="490" y1="246" x2="415" y2="188"/>
+    <line x1="360" y1="242" x2="360" y2="192"/>
+  </g>
+</svg>
+<figcaption><b>六条连接线，一条元判断。</b>元判断：RPent 是「押具身训练基础设施」路线的活样本——它不押哪个模型赢，它让所有模型都能插进来干活，然后靠经验资产越用越值钱。<b>基础设施的复利比模型的复利更稳</b>：模型每代过时，接口和账本跨代存活。</figcaption>
+</figure>
+
+
+<p><b>① 组合接口标准化的第一枪。</b>趋势判断说 12-24 个月内「意图怎么下发、谁接管」会成为争夺点——RPent 的 MCP/RPC/MHS 把它拆成了发现/连接/触达三层，且 MHS 的触角伸向机器人之外的物理设备。谁定义物理世界的 function calling，谁就拿到了具身侧的操作系统位——这场仗现在开打了。</p>
+
+<p><b>② 记忆是 System-2 缺口的第一块砖，且比想象中早到。</b>我们以为第三层要从「深思」补起，RPent 显示「先补记忆」更划算：31%→87% 的增益不需要更聪明的规划器，只需要把验证过的经验留下来。深思可以慢点来，遗忘不能等。</p>
+
+<p><b>③ Task Card 是吸收曲线的下一跳。</b>外周任务卡 → 蒸馏语料 → 进权重，路径和 GPT-as-Policy 的 14.4% 纠错数据、Astar 的演化史完全同构：外脑时期攒的每一类数据，都是吸收时期的训练集。</p>
+
+<p><b>④ RLinf 生态的方法论闭环。</b>训练侧 RLinf（支持昇腾）+ 运行时 RPent + 考场 LIBERO-PRO/RoboDojo + 对照组 π<sub>RLinf</sub>——这支团队同时握着训练、运行、评测三件套，等于把「具身训练基础设施」这个卖铲子位从训练扩展到了全生命周期。这是你方向判断里那条「押基础设施」路线的活样本。</p>
+
+<p><b>⑤ WAM 首次成为一等公民。</b>RPent 的动作原语列表里 DreamZero（WAM）和 VLA 并列——用户侧的 WAM 路线第一次有了现成的接入位：实现 RPent 的原语接口，你的 WAM 就能被 GPT-6/Claude Code 调度。这是接入生态最便宜的时机。</p>
+
+<p><b>⑥ 两个时钟的脚手架解。</b>「语言侧分钟级 vs 具身侧周月级」的时差问题，RPent 用任务卡给出了系统层答案（7×）——不是让物理变快，而是让昂贵的深思按需出场。这为具身侧争取到了与语言侧对齐的迭代节奏。</p>
+
+<!-- ============ 10. 行动清单 ============ -->
+
+<h2>给自己的行动清单<span class="chip" style="background:var(--hand-soft);color:var(--hand)">落地</span></h2>
+
+<p>四件事按优先级：<b>①跑通 RPent 的 LIBERO-PRO 复现</b>（它就是 RLinf 生态，910B 上 π<sub>RLinf</sub> 已有先例；CLI 形态和 Claude Code 一致，上手成本低）——拿到自己环境下的外脑基线。<b>②把 CyberGym 的验证纪律映射进 RPent 评测模式</b>：它的「评测只读冻结」与 S1-S3 分级验证同构，你的执行验证经验可以直接变成它的记忆置信度规则。<b>③给 DreamZero 原语位写一个 910B 版实现</b>——WAM 接入生态的第一张门票。<b>④用 Astar 配方处理 RPent 记忆</b>：任务卡 + 执行结果 = 现成的演化史语料，「RL 后训练版 Astar」和「RPent 记忆蒸馏」是同一件事的两个名字。</p>
+
+<!-- ============ 11. 结语 ============ -->
+
+<h2>结语<span class="chip" style="background:var(--plan-soft);color:var(--plan)">带走一句</span></h2>
+
+<figure role="img" aria-label="外脑形态收敛：规划器、手、经验资产三块收敛成同一形状，右侧吸收箭头指向蒸馏进权重的未来">
+<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g font-family="Noto Sans SC">
+    <rect x="24" y="40" width="480" height="120" rx="12" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>
+    <g font-size="9" text-anchor="middle">
+      <rect x="44" y="64" width="130" height="60" rx="8" fill="var(--plan-soft)" stroke="var(--plan)" stroke-width="1.3"/>
+      <text x="109" y="88" font-weight="700" fill="var(--plan)">通用模型</text>
+      <text x="109" y="106">当规划器（可换）</text>
+      <rect x="194" y="64" width="130" height="60" rx="8" fill="var(--hand-soft)" stroke="var(--hand)" stroke-width="1.3"/>
+      <text x="259" y="88" font-weight="700" fill="var(--hand)">专用模型</text>
+      <text x="259" y="106">当手（可插拔）</text>
+      <rect x="344" y="64" width="140" height="60" rx="8" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.6"/>
+      <text x="414" y="88" font-weight="700" fill="var(--memo)">验证过的经验</text>
+      <text x="414" y="106">当资产（复利）</text>
+    </g>
+
+    <line x1="516" y1="100" x2="600" y2="100" stroke="var(--memo)" stroke-width="2" stroke-dasharray="6 4"/>
+    <polygon points="598,94 598,106 612,100" fill="var(--memo)"/>
+    <text x="560" y="84" font-size="9" font-weight="700" fill="var(--memo)" text-anchor="middle">吸收</text>
+    <rect x="616" y="64" width="80" height="60" rx="8" fill="var(--memo-soft)" stroke="var(--memo)" stroke-width="1.4"/>
+    <text x="656" y="88" font-size="9.5" font-weight="700" fill="var(--memo)" text-anchor="middle">权重内</text>
+    <text x="656" y="106" font-size="8" fill="currentColor" text-anchor="middle">基座</text>
+    <text x="264" y="184" font-size="8.5" fill="var(--ink-soft)" text-anchor="middle">今天的任务卡，就是明天蒸馏的语料——外周与权重长期分层共存，像缓存与内存</text>
+  </g>
+</svg>
+<figcaption><b>收敛中的形状。</b>一个月三份证据（GPT-as-Policy、Astar、RPent）指向同一结构：判断、执行、记忆三分离，验证过的经验做粘合剂。差别只在经验放在哪——外周账本（RPent）、训练语料（Astar）还是权重内（Engram）。</figcaption>
+</figure>
+
+
+<p>如果只带走一句话：<b>外脑时期的最优形态正在收敛成同一个形状——通用模型当规划器、专用模型当手、验证过的经验当资产；RPent 的贡献是把这个形状做成了开源基础设施，而它攒下的每一张任务卡，都是吸收时期蒸馏进权重的现成语料。</b></p>
+
+<p>对我们的位置：RPent 出自 RLinf 团队——同一支人马，训练侧给昇腾生态做了 RLinf，运行时侧做了 RPent。你在 910B 上的训练栈和它的运行时栈天然同源：跑通它的复现、接管它的记忆纪律、占住它的 WAM 原语位，就是把自己放进这条生态的最短路径。</p>
+
+<footer>
+  <p>2026-09-21 · 事实两档：仓库级 = github.com/RLinf/RPent（Apache-2.0，647 stars）与 readthedocs 排行榜官方口径；媒体级 = 量子位授权发布（机制描述经仓库交叉核对）· 论文锚点 Harness VLA（arXiv 2607.08448）</p>
+  <p>系列首页：<a href="https://maxwell-ai-lab.github.io/archify-diagrams/">Maxwell-AI-Lab 架构图与报告索引</a> · 相关报告：演化的最后一块拼图（Astar）· GPT-as-Policy 架构分析 · 三颗脑与一个飞轮 · 具身趋势判断 2026-09</p>
+</footer>
+</div>
+</body>
+</html>
